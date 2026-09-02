@@ -1,0 +1,30 @@
+1. Live Hindustan | Uttar Pradesh
+https://api.livehindustan.com/feeds/rss/uttar-pradesh/rssfeed.xml
+2. Live Hindustan | Varanasi
+https://api.livehindustan.com/feeds/rss/uttar-pradesh/varanasi/rssfeed.xml
+3. Live Hindustan | Jaunpur
+https://api.livehindustan.com/feeds/rss/uttar-pradesh/jaunpur/rssfeed.xml
+4. Live Hindustan | Ghazipur
+https://api.livehindustan.com/feeds/rss/uttar-pradesh/ghazipur/rssfeed.xml
+5. Live Hindustan | Chandauli
+https://api.livehindustan.com/feeds/rss/uttar-pradesh/chandauli/rssfeed.xml
+6. Live Hindustan | New Delhi
+https://api.livehindustan.com/feeds/rss/ncr/new-delhi/rssfeed.xml
+7. Live Hindustan | Bihar
+https://api.livehindustan.com/feeds/rss/bihar/rssfeed.xml
+8. Amar Ujala | Uttar Pradesh
+https://www.amarujala.com/rss/uttar-pradesh.xml
+9. Amar Ujala | Varanasi
+https://www.amarujala.com/rss/varanasi.xml
+10. Amar Ujala | Jaunpur
+https://www.amarujala.com/rss/jaunpur.xml
+11. Amar Ujala | Delhi NCR
+https://www.amarujala.com/rss/delhi-ncr.xml
+12. Amar Ujala | Bihar
+https://www.amarujala.com/rss/bihar.xml
+13. ABP Live Hindi | Uttar Pradesh / Uttarakhand
+https://www.abplive.com/news/states/up-uk/feed
+14. ABP Live Hindi | Delhi NCR
+https://www.abplive.com/news/states/delhi-ncr/feed
+15. ABP Live Hindi | Bihar
+https://www.abplive.com/news/states/bihar/feed

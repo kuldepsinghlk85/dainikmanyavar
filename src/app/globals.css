@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand: #f97316;
+  --brand-dark: #c2410c;
+  --ink: #171717;
+  --muted: #666666;
+  --line: #e8e8e8;
+  --soft: #fff7ed;
+  --white: #ffffff;
+  --green: #16a34a;
+  --yellow: #fbbf24;
+  --red: #dc2626;
+  --radius: 10px;
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --max: 1180px;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, "Noto Sans Devanagari", sans-serif;
+  color: var(--ink);
+  background-color: #ffffff;
+}
+
+.wrap {
+  max-width: var(--max);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+/* Tag Chip Styles */
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  background-color: #fff1e6;
+  color: #c2410c;
+  border: 1px solid #fdba74;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  transition: all 0.2s ease-in-out;
+}
+
+.tag-chip:hover {
+  background-color: #ffedd5;
+  border-color: #f97316;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #fff7ed;
+}
+::-webkit-scrollbar-thumb {
+  background: #fdb174;
+  border-radius: 3px;
+}

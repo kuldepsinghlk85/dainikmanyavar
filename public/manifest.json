@@ -1,0 +1,22 @@
+{
+  "name": "दैनिक मान्यवर - समाचार पोर्टल",
+  "short_name": "दैनिक मान्यवर",
+  "description": "दैनिक मान्यवर - सरल, तेज़ और आधुनिक हिंदी समाचार पोर्टल",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFF7ED",
+  "theme_color": "#F97316",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

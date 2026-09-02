@@ -1,0 +1,77 @@
+[
+  {
+    "source": "Live Hindustan",
+    "region": "Uttar Pradesh",
+    "url": "https://api.livehindustan.com/feeds/rss/uttar-pradesh/rssfeed.xml"
+  },
+  {
+    "source": "Live Hindustan",
+    "region": "Varanasi",
+    "url": "https://api.livehindustan.com/feeds/rss/uttar-pradesh/varanasi/rssfeed.xml"
+  },
+  {
+    "source": "Live Hindustan",
+    "region": "Jaunpur",
+    "url": "https://api.livehindustan.com/feeds/rss/uttar-pradesh/jaunpur/rssfeed.xml"
+  },
+  {
+    "source": "Live Hindustan",
+    "region": "Ghazipur",
+    "url": "https://api.livehindustan.com/feeds/rss/uttar-pradesh/ghazipur/rssfeed.xml"
+  },
+  {
+    "source": "Live Hindustan",
+    "region": "Chandauli",
+    "url": "https://api.livehindustan.com/feeds/rss/uttar-pradesh/chandauli/rssfeed.xml"
+  },
+  {
+    "source": "Live Hindustan",
+    "region": "New Delhi",
+    "url": "https://api.livehindustan.com/feeds/rss/ncr/new-delhi/rssfeed.xml"
+  },
+  {
+    "source": "Live Hindustan",
+    "region": "Bihar",
+    "url": "https://api.livehindustan.com/feeds/rss/bihar/rssfeed.xml"
+  },
+  {
+    "source": "Amar Ujala",
+    "region": "Uttar Pradesh",
+    "url": "https://www.amarujala.com/rss/uttar-pradesh.xml"
+  },
+  {
+    "source": "Amar Ujala",
+    "region": "Varanasi",
+    "url": "https://www.amarujala.com/rss/varanasi.xml"
+  },
+  {
+    "source": "Amar Ujala",
+    "region": "Jaunpur",
+    "url": "https://www.amarujala.com/rss/jaunpur.xml"
+  },
+  {
+    "source": "Amar Ujala",
+    "region": "Delhi NCR",
+    "url": "https://www.amarujala.com/rss/delhi-ncr.xml"
+  },
+  {
+    "source": "Amar Ujala",
+    "region": "Bihar",
+    "url": "https://www.amarujala.com/rss/bihar.xml"
+  },
+  {
+    "source": "ABP Live Hindi",
+    "region": "Uttar Pradesh / Uttarakhand",
+    "url": "https://www.abplive.com/news/states/up-uk/feed"
+  },
+  {
+    "source": "ABP Live Hindi",
+    "region": "Delhi NCR",
+    "url": "https://www.abplive.com/news/states/delhi-ncr/feed"
+  },
+  {
+    "source": "ABP Live Hindi",
+    "region": "Bihar",
+    "url": "https://www.abplive.com/news/states/bihar/feed"
+  }
+]

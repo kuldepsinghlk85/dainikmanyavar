@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ऑफ़लाइन - दैनिक मान्यवर</title>
+  <style>
+    body {
+      font-family: Arial, "Noto Sans Devanagari", sans-serif;
+      background-color: #FFF7ED;
+      color: #171717;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      margin: 0;
+      text-align: center;
+      padding: 20px;
+    }
+    .box {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      border: 1px solid #FED7AA;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+      max-width: 400px;
+    }
+    h1 { color: #EA580C; font-size: 24px; margin-bottom: 12px; }
+    p { color: #666; font-size: 15px; margin-bottom: 20px; }
+    button {
+      background: #F97316;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>इंटरनेट कनेक्शन नहीं है</h1>
+    <p>आप वर्तमान में ऑफ़लाइन हैं। कृपया अपना इंटरनेट कनेक्शन जांचें और पुनः प्रयास करें।</p>
+    <button onclick="window.location.reload()">पुनः प्रयास करें</button>
+  </div>
+</body>
+</html>
