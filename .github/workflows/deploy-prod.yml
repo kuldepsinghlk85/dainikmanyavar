@@ -1,9 +1,12 @@
-# Deploy to QA — manual trigger.
-# Builds from the qa branch then deploys.
+# Deploy to Production — automatically triggers on push to testing branch, or via manual dispatch.
+# Builds from testing branch then deploys.
 
 name: Deploy to Production
 
 on:
+  push:
+    branches:
+      - testing
   workflow_dispatch: {}
 
 permissions:
@@ -13,7 +16,7 @@ permissions:
 
 jobs:
   build:
-    name: 🔨 Build & Push Image (qa)
+    name: 🔨 Build & Push Image (testing)
     uses: ./.github/workflows/build.yml
     with:
       git_branch: testing
