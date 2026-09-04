@@ -100,11 +100,19 @@ jobs:
           cache-from: |
             type=local,src=/tmp/.buildx-cache
             type=registry,ref=${{ env.IMAGE }}:buildcache
+          # Local cache stays mode=max (disk-local on the self-hosted runner, cheap).
+          # Registry cache is mode=min: mode=max re-uploaded every intermediate
+          # layer — the full dev node_modules tree included — to GitLab on every
+          # build. min exports only the final image layers; the local cache and the
+          # persistent `encora-builder` cover intermediate-stage reuse.
           cache-to: |
             type=local,dest=/tmp/.buildx-cache-new,mode=max
-            type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
-          provenance: true
-          sbom: true
+            type=registry,ref=${{ env.IMAGE }}:buildcache,mode=min,image-manifest=true,oci-mediatypes=true
+          # SBOM generation scans the whole filesystem and is a large slice of
+          # build wall-clock; provenance mode=min keeps the build attestation
+          # without the full materials list.
+          provenance: mode=min
+          sbom: false
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}

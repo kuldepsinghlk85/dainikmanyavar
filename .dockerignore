@@ -40,3 +40,6 @@ README.md
 # OS
 .DS_Store
 Thumbs.db
+
+# extra context dirs (not needed in image)
+github_deploy_html

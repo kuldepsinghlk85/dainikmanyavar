@@ -9,10 +9,10 @@ echo "============================================================"
 if [ -n "$DATABASE_URL" ]; then
 
     echo "[Dainik Manyavar] Syncing Prisma database schema..."
-    npx prisma db push --skip-generate
+    ./node_modules/.bin/prisma db push --skip-generate
 
     echo "[Dainik Manyavar] Running main Prisma seed..."
-    npx prisma db seed
+    ./node_modules/.bin/prisma db seed
 
     echo "[Dainik Manyavar] Running articles seed..."
     node prisma/seed_articles.js
