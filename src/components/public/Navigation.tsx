@@ -21,7 +21,6 @@ const DEFAULT_NAV_ITEMS: { name: string; slug: string; path: string }[] = [
   { name: 'होम', slug: 'home', path: '/' },
   { name: 'ताजा खबर', slug: 'latest', path: '/category/latest' },
   { name: 'उत्तर प्रदेश', slug: 'uttar-pradesh', path: '/category/uttar-pradesh' },
-  { name: 'जौनपुर', slug: 'jaunpur', path: '/category/jaunpur' },
   { name: 'राजनीति', slug: 'rajneeti', path: '/category/rajneeti' },
   { name: 'देश', slug: 'desh', path: '/category/desh' },
   { name: 'शिक्षा', slug: 'shiksha', path: '/category/shiksha' },
