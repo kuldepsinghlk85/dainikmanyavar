@@ -2,6 +2,8 @@ import React from 'react';
 import { db } from '@/lib/db';
 import { Mail, Download } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default async function NewsletterAdminPage() {
   const subscribers = await db.newsletterSubscriber.findMany({
     orderBy: { subscribedAt: 'desc' },

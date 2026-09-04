@@ -3,6 +3,8 @@ import { db } from '@/lib/db';
 import { Link as LinkIcon, ExternalLink } from 'lucide-react';
 import { formatCount } from '@/lib/utils';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ShortLinksAdminPage() {
   const shortLinks = await db.shortLink.findMany({
     orderBy: { createdAt: 'desc' },

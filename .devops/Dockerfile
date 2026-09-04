@@ -41,7 +41,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ARG NEXT_PUBLIC_SITE_URL=https://dainikmanyavar.com
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 
-ARG DATABASE_URL="file:./dainik-manyawar.db"
+ARG DATABASE_URL="file:./dainik-manyawar.db?connection_limit=1&connect_timeout=30"
 ENV DATABASE_URL=$DATABASE_URL
 
 # Copy application source

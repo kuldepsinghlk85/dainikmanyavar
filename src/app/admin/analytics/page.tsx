@@ -3,6 +3,8 @@ import { db } from '@/lib/db';
 import { formatCount } from '@/lib/utils';
 import { Eye, Heart, Share2, Volume2, TrendingUp, BarChart3 } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AnalyticsAdminPage() {
   const [
     totalViews,

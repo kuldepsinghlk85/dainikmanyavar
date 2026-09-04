@@ -2,6 +2,8 @@ import React from 'react';
 import { db } from '@/lib/db';
 import { Users, UserCheck } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AuthorsAdminPage() {
   const authors = await db.author.findMany({
     orderBy: { name: 'asc' },

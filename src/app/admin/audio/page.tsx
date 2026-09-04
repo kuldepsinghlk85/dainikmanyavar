@@ -3,6 +3,8 @@ import { db } from '@/lib/db';
 import { Volume2, CheckCircle2 } from 'lucide-react';
 import { formatCount } from '@/lib/utils';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AudioAdminPage() {
   const audios = await db.articleAudio.findMany({
     orderBy: { generatedAt: 'desc' },

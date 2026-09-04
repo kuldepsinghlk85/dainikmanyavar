@@ -4,6 +4,8 @@ import { db } from '@/lib/db';
 import { formatCount } from '@/lib/utils';
 import { Newspaper, Eye, Heart, Share2, Volume2, Users, FolderTree, PlusCircle } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminDashboardPage() {
   const [
     totalArticles,

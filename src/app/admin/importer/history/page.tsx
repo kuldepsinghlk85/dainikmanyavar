@@ -2,6 +2,8 @@ import React from 'react';
 import { db } from '@/lib/db';
 import { History, CheckCircle2, AlertTriangle } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default async function HistoryAdminPage() {
   const logs = await db.newsImportLog.findMany({
     orderBy: { startedAt: 'desc' },
