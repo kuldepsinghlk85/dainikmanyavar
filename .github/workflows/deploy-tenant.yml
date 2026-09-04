@@ -46,7 +46,7 @@ env:
 jobs:
   deploy:
     name: 🚀 Deploy to ${{ inputs.environment }}
-    runs-on: [self-hosted, encora, encora-deploy]
+    runs-on: [self-hosted, cl-ks-build]
     timeout-minutes: 15
     environment:
       name: ${{ inputs.environment }}

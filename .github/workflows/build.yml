@@ -44,7 +44,7 @@ env:
 jobs:
   build:
     name: 🔨 Build & Push Image
-    runs-on: [self-hosted, encora]
+    runs-on: [self-hosted, cl-ks-build]
     timeout-minutes: 30
     outputs:
       image_tag: ${{ steps.meta.outputs.short_sha }}
@@ -75,7 +75,7 @@ jobs:
           driver-opts: |
             image=moby/buildkit:latest
             network=host
-          name: encora-builder
+          name: cl-ks-builder
           use: true
 
       - name: 🔐 Login to GitLab Container Registry
@@ -104,7 +104,7 @@ jobs:
           # Registry cache is mode=min: mode=max re-uploaded every intermediate
           # layer — the full dev node_modules tree included — to GitLab on every
           # build. min exports only the final image layers; the local cache and the
-          # persistent `encora-builder` cover intermediate-stage reuse.
+          # persistent `cl-ks-builder` cover intermediate-stage reuse.
           cache-to: |
             type=local,dest=/tmp/.buildx-cache-new,mode=max
             type=registry,ref=${{ env.IMAGE }}:buildcache,mode=min,image-manifest=true,oci-mediatypes=true
