@@ -8,7 +8,7 @@ export default function SettingsAdminPage() {
     site_name: 'दैनिक मान्यवर',
     site_subtitle: 'सच के साथ... समाज के लिए...',
     site_logo: '/logo.png',
-    whatsapp_number: '+91 93352 48009',
+    whatsapp_number: '+91 93361 81297',
     contact_email: 'info@dainikmanyawar.in',
     contact_address: 'जौनपुर, उत्तर प्रदेश, भारत',
     tts_provider: 'web_speech',

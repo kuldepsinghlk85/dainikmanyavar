@@ -4,7 +4,7 @@ import React from 'react';
 
 export default function SocialConnect() {
   const socials = [
-    { name: 'WhatsApp', url: 'https://wa.me/919335248009', bg: 'bg-[#16A34A]', text: 'text-white' },
+    { name: 'WhatsApp', url: 'https://wa.me/919336181297', bg: 'bg-[#16A34A]', text: 'text-white' },
     { name: 'Facebook', url: 'https://facebook.com/dainikmanyawar', bg: 'bg-[#1877F2]', text: 'text-white' },
     { name: 'YouTube', url: 'https://youtube.com/@dainikmanyawar', bg: 'bg-[#FF0000]', text: 'text-white' },
     { name: 'Instagram', url: 'https://instagram.com/dainikmanyawar', bg: 'bg-[#E4405F]', text: 'text-white' },

@@ -127,7 +127,7 @@ export default function Header({ festivalBanner }: HeaderProps) {
             </form>
 
             <a
-              href="https://wa.me/919335248009"
+              href="https://wa.me/919336181297"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-[#16A34A] hover:bg-green-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs whitespace-nowrap text-center transition-colors flex items-center justify-center gap-1 shadow-sm"

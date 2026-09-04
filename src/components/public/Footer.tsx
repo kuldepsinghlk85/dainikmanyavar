@@ -32,19 +32,22 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <span className="text-[#8C6D58]/60 cursor-not-allowed select-none" title="सामग्री अभी उपलब्ध नहीं है">
-                  हमारे बारे में
-                </span>
+                <a
+                  href="https://wa.me/919336181297"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-[#16A34A] transition-colors font-semibold flex items-center gap-1 text-emerald-800"
+                >
+                  <span>📲 WhatsApp: 9336181297</span>
+                </a>
               </li>
               <li>
-                <span className="text-[#8C6D58]/60 cursor-not-allowed select-none" title="सामग्री अभी उपलब्ध नहीं है">
-                  संपर्क करें
-                </span>
-              </li>
-              <li>
-                <span className="text-[#8C6D58]/60 cursor-not-allowed select-none" title="सामग्री अभी उपलब्ध नहीं है">
-                  विज्ञापन दरें
-                </span>
+                <a
+                  href="tel:+919336181297"
+                  className="hover:text-[#EA580C] transition-colors font-semibold flex items-center gap-1"
+                >
+                  <span>📞 संपर्क: +91 93361 81297</span>
+                </a>
               </li>
             </ul>
           </div>

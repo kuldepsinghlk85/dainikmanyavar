@@ -432,7 +432,7 @@ async function main() {
   const defaultSettings = [
     { key: 'site_name', value: 'दैनिक मान्यवर' },
     { key: 'site_subtitle', value: 'सच के साथ... समाज के लिए...' },
-    { key: 'whatsapp_number', value: '+91 93352 48009' },
+    { key: 'whatsapp_number', value: '+91 93361 81297' },
     { key: 'contact_email', value: 'info@dainikmanyawar.in' },
     { key: 'contact_address', value: 'जौनपुर, उत्तर प्रदेश, भारत' },
     { key: 'tts_provider', value: 'web_speech' },
