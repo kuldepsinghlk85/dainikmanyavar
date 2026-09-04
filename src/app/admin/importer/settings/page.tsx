@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Upload, FileCode, CheckCircle2, Sliders } from 'lucide-react';
+import ImporterSubNav from '@/components/admin/ImporterSubNav';
 
 export default function ImporterSettingsAdminPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -40,6 +41,7 @@ export default function ImporterSettingsAdminPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
+      <ImporterSubNav />
       <div>
         <h1 className="text-2xl font-extrabold text-stone-900">इम्पोर्ट सेटिंग्स एवं मैनुअल फ़ाइल अपलोड</h1>
         <p className="text-xs text-stone-500">JSON / CSV फ़ाइल से समाचार इम्पोर्ट करें व वैश्विक इम्पोर्ट नियम सेट करें</p>

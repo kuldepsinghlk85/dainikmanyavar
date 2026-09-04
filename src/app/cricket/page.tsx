@@ -15,7 +15,10 @@ export const metadata = {
   description: 'भारत व अंतरराष्ट्रीय क्रिकेट मैच स्कोर, शेड्यूल, नतीजे व क्रिकेट ताज़ा ख़बरें दैनिक मान्यवर पर।',
 };
 
+import { ensureDailyDataSynced } from '@/lib/autoUpdateService';
+
 export default async function CricketPage() {
+  await ensureDailyDataSynced();
   const matches = await db.cricketMatch.findMany({
     where: { status: 'PUBLISHED' },
     orderBy: { createdAt: 'desc' },

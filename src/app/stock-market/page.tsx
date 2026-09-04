@@ -15,7 +15,11 @@ export const metadata = {
   description: 'सेंसेक्स, निफ्टी, शेयर भाव, बाजार रुझान व अर्थजगत की ताज़ा खबरें दैनिक मान्यवर पर।',
 };
 
+import { getLiveStockMarketData, ensureDailyDataSynced } from '@/lib/autoUpdateService';
+
 export default async function StockMarketPage() {
+  await ensureDailyDataSynced();
+  const live = getLiveStockMarketData();
   const updates = await db.stockMarketUpdate.findMany({
     where: { status: 'PUBLISHED' },
     orderBy: { publishedAt: 'desc' },
@@ -46,12 +50,14 @@ export default async function StockMarketPage() {
           <div className="bg-emerald-950/20 border border-emerald-500/30 p-4 rounded-2xl flex justify-between items-center">
             <div>
               <span className="text-xs font-black text-stone-700">SENSEX</span>
-              <p className="text-xl font-mono font-black text-stone-900 mt-0.5">85,240.50</p>
+              <p className="text-xl font-mono font-black text-stone-900 mt-0.5">{live.sensex.value}</p>
             </div>
             <div className="text-right">
-              <span className="inline-flex items-center text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded">
-                <ArrowUpRight className="w-3.5 h-3.5" />
-                <span>+480.20 (+0.57%)</span>
+              <span className={`inline-flex items-center text-xs font-bold px-2 py-0.5 rounded ${
+                live.sensex.isUp ? 'text-emerald-600 bg-emerald-100' : 'text-red-600 bg-red-100'
+              }`}>
+                {live.sensex.isUp ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+                <span>{live.sensex.change}</span>
               </span>
             </div>
           </div>
@@ -59,12 +65,14 @@ export default async function StockMarketPage() {
           <div className="bg-emerald-950/20 border border-emerald-500/30 p-4 rounded-2xl flex justify-between items-center">
             <div>
               <span className="text-xs font-black text-stone-700">NIFTY 50</span>
-              <p className="text-xl font-mono font-black text-stone-900 mt-0.5">26,015.80</p>
+              <p className="text-xl font-mono font-black text-stone-900 mt-0.5">{live.nifty.value}</p>
             </div>
             <div className="text-right">
-              <span className="inline-flex items-center text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded">
-                <ArrowUpRight className="w-3.5 h-3.5" />
-                <span>+145.60 (+0.56%)</span>
+              <span className={`inline-flex items-center text-xs font-bold px-2 py-0.5 rounded ${
+                live.nifty.isUp ? 'text-emerald-600 bg-emerald-100' : 'text-red-600 bg-red-100'
+              }`}>
+                {live.nifty.isUp ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+                <span>{live.nifty.change}</span>
               </span>
             </div>
           </div>
@@ -72,12 +80,14 @@ export default async function StockMarketPage() {
           <div className="bg-stone-50 border border-stone-200 p-4 rounded-2xl flex justify-between items-center">
             <div>
               <span className="text-xs font-black text-stone-700">BANK NIFTY</span>
-              <p className="text-xl font-mono font-black text-stone-900 mt-0.5">54,120.30</p>
+              <p className="text-xl font-mono font-black text-stone-900 mt-0.5">{live.bankNifty.value}</p>
             </div>
             <div className="text-right">
-              <span className="inline-flex items-center text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded">
-                <ArrowUpRight className="w-3.5 h-3.5" />
-                <span>+210.40 (+0.39%)</span>
+              <span className={`inline-flex items-center text-xs font-bold px-2 py-0.5 rounded ${
+                live.bankNifty.isUp ? 'text-emerald-600 bg-emerald-100' : 'text-red-600 bg-red-100'
+              }`}>
+                {live.bankNifty.isUp ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+                <span>{live.bankNifty.change}</span>
               </span>
             </div>
           </div>
@@ -85,12 +95,12 @@ export default async function StockMarketPage() {
           <div className="bg-red-950/10 border border-red-200 p-4 rounded-2xl flex justify-between items-center">
             <div>
               <span className="text-xs font-black text-stone-700">USD / INR</span>
-              <p className="text-xl font-mono font-black text-stone-900 mt-0.5">₹83.92</p>
+              <p className="text-xl font-mono font-black text-stone-900 mt-0.5">{live.usdInr.value}</p>
             </div>
             <div className="text-right">
               <span className="inline-flex items-center text-xs font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded">
                 <ArrowDownRight className="w-3.5 h-3.5" />
-                <span>-0.08 (-0.09%)</span>
+                <span>{live.usdInr.change}</span>
               </span>
             </div>
           </div>

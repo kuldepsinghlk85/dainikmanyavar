@@ -15,7 +15,10 @@ export const metadata = {
   description: 'राष्ट्रीय व अंतरराष्ट्रीय खेल जगत की ताज़ा खबरें, मैच अपडेट्स व खिलाड़ियों के इंटरव्यू दैनिक मान्यवर पर।',
 };
 
+import { ensureDailyDataSynced } from '@/lib/autoUpdateService';
+
 export default async function SportsPage() {
+  await ensureDailyDataSynced();
   const cricketMatches = await db.cricketMatch.findMany({
     where: { status: 'PUBLISHED' },
     orderBy: { createdAt: 'desc' },

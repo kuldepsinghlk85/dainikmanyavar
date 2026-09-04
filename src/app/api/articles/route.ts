@@ -20,7 +20,9 @@ export async function GET(request: Request) {
 
     const where: any = {};
 
-    if (status !== 'ALL') {
+    if (status === 'ACTIVE') {
+      where.status = { not: 'ARCHIVED' };
+    } else if (status !== 'ALL') {
       where.status = status;
     }
 
@@ -28,8 +30,15 @@ export async function GET(request: Request) {
       where.category = { slug: categorySlug };
     }
 
-    if (districtSlug) {
-      where.location = { slug: districtSlug };
+    const district = districtSlug || searchParams.get('location') || searchParams.get('locationId');
+    if (district) {
+      where.location = {
+        OR: [
+          { slug: district },
+          { name: district },
+          { id: district },
+        ],
+      };
     }
 
     if (tagSlug) {

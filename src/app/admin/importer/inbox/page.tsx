@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Inbox, RefreshCw, Trash2, FileText, Eye, CheckSquare, Square, AlertOctagon, Zap } from 'lucide-react';
+import ImporterSubNav from '@/components/admin/ImporterSubNav';
 
 interface ImportItem {
   id: string;
@@ -159,6 +160,9 @@ export default function ImportInboxAdminPage() {
 
   return (
     <div className="space-y-6 max-w-5xl">
+      {/* Sub Navigation Links */}
+      <ImporterSubNav />
+
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
         <div>
@@ -178,10 +182,10 @@ export default function ImportInboxAdminPage() {
           <button
             onClick={handleSyncAllFeeds}
             disabled={syncingAll}
-            className="bg-green-600 hover:bg-green-700 text-white font-black text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-md transition-all cursor-pointer"
+            className="bg-[#16A34A] hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-md transition-all cursor-pointer"
           >
             <Zap className={`w-4 h-4 text-amber-300 ${syncingAll ? 'animate-bounce' : ''}`} />
-            <span>{syncingAll ? 'सोर्सेज सिंक हो रहे हैं...' : '⚡ सभी सोर्सेज से सिंक करें (Sync Live Feeds)'}</span>
+            <span className="text-white font-bold">{syncingAll ? 'सोर्सेज सिंक हो रहे हैं...' : 'सभी सोर्सेज सिंक करें (Sync Live Feeds)'}</span>
           </button>
 
           {/* Solid Red Clear All Inbox Button */}
@@ -189,7 +193,7 @@ export default function ImportInboxAdminPage() {
             <button
               onClick={handleClearAll}
               disabled={bulkLoading}
-              className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-md transition-all cursor-pointer flex-shrink-0"
+              className="bg-[#DC2626] hover:bg-red-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-md transition-all cursor-pointer flex-shrink-0"
             >
               <AlertOctagon className="w-4 h-4 text-white flex-shrink-0" />
               <span className="text-white font-bold whitespace-nowrap">इनबॉक्स खाली करें ({items.length})</span>

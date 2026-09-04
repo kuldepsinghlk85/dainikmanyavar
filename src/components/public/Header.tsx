@@ -19,6 +19,7 @@ interface HeaderProps {
 export default function Header({ festivalBanner }: HeaderProps) {
   const [query, setQuery] = useState('');
   const [siteBanner, setSiteBanner] = useState<any>(null);
+  const [siteLogo, setSiteLogo] = useState<string>('/logo.png');
   const router = useRouter();
 
   useEffect(() => {
@@ -26,6 +27,9 @@ export default function Header({ festivalBanner }: HeaderProps) {
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.data) {
+          if (data.data.site_logo) {
+            setSiteLogo(data.data.site_logo);
+          }
           setSiteBanner({
             enabled: data.data.festival_banner_enabled === 'true',
             imageUrl: data.data.festival_banner_image,
@@ -61,11 +65,12 @@ export default function Header({ festivalBanner }: HeaderProps) {
         <div className="flex items-center justify-center lg:justify-start">
           <Link href="/" className="block">
             <Image
-              src="/logo.png"
+              src={siteLogo || '/logo.png'}
               alt="दैनिक मान्यवर"
               width={460}
               height={100}
               priority
+              unoptimized
               className="h-12 sm:h-14 md:h-15 w-auto object-contain"
             />
           </Link>

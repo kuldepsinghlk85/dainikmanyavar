@@ -44,7 +44,7 @@ export default function HoroscopeWidget() {
       </div>
 
       {/* Zodiac Sign Chips Selector */}
-      <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap no-scrollbar py-1">
+      <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap py-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {zodiacList.map((z) => (
           <button
             key={z.sign}

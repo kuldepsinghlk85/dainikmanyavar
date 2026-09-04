@@ -33,6 +33,7 @@ import {
   Flame,
   Globe,
   Compass,
+  FileText,
 } from 'lucide-react';
 
 interface AdminSidebarProps {
@@ -55,9 +56,23 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
         { label: 'डैशबोर्ड (Dashboard)', href: '/admin', icon: LayoutDashboard },
         { label: 'सभी समाचार (All News)', href: '/admin/news', icon: Newspaper },
         { label: 'नया समाचार जोड़ें', href: '/admin/news/new', icon: PlusCircle },
+        { label: '🔥 ब्रेकिंग न्यूज़ टिकर (Breaking Ticker)', href: '/admin/breaking', icon: Flame },
         { label: '📥 न्यूज़ इम्पोर्ट इनबॉक्स', href: '/admin/importer/inbox', icon: Inbox },
         { label: '📥 विशेष फ़ीड इनबॉक्स', href: '/admin/external-content/inbox', icon: Radio },
         { label: '📦 आर्काइव्ड समाचार (Archive)', href: '/admin/archive/news', icon: Archive },
+      ],
+    },
+    {
+      id: 'epaper-management',
+      title: '📰 E-Paper Management',
+      icon: Newspaper,
+      items: [
+        { label: 'Upload New Edition', href: '/admin/epaper/upload', icon: PlusCircle },
+        { label: 'Published Editions', href: '/admin/epaper/published', icon: Newspaper },
+        { label: 'Draft Editions', href: '/admin/epaper/drafts', icon: Edit3 },
+        { label: 'Page Management', href: '/admin/epaper/pages', icon: FolderTree },
+        { label: 'Advertisement Management', href: '/admin/epaper/ads', icon: Megaphone },
+        { label: 'E-Paper Analytics', href: '/admin/epaper/analytics', icon: BarChart3 },
       ],
     },
     {
@@ -84,6 +99,7 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
         { label: '🔮 राशिफल (Horoscope)', href: '/admin/horoscope', icon: Sparkles },
         { label: '📈 शेयर बाजार (Stock Market)', href: '/admin/stock-market', icon: TrendingUp },
         { label: '🪙 सोना-चांदी भाव (Gold-Silver)', href: '/admin/gold-silver', icon: Coins },
+        { label: '🎛️ विगेट्स ऑन/ऑफ (Homepage Control)', href: '/admin/homepage', icon: Sliders },
       ],
     },
     {
@@ -108,6 +124,7 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
   // Keep all sections open by default so admin can access everything instantly
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     'editor-workspace': true,
+    'epaper-management': true,
     'rss-library': true,
     'special-modules': true,
     'admin-settings': true,

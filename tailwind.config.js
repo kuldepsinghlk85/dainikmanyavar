@@ -18,8 +18,8 @@ module.exports = {
         ink: "#171717",
         muted: "#666666",
         line: "#E8E8E8",
-        green: "#16A34A",
-        red: "#DC2626",
+        'brand-green': "#16A34A",
+        'brand-red': "#DC2626",
         tag: {
           bg: "#FFF1E6",
           text: "#C2410C",

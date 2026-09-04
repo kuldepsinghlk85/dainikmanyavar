@@ -69,7 +69,7 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
       where: {
         status: 'PUBLISHED',
         id: { not: article.id },
-        categoryId: article.categoryId,
+        primaryCategoryId: article.primaryCategoryId,
       },
       orderBy: { publishedAt: 'desc' },
       take: 4,

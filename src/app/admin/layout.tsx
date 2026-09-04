@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { LogOut, Menu, X, Globe, ShieldCheck } from 'lucide-react';
@@ -11,22 +11,37 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const activeUser = {
     name: 'एडमिन यूजर',
     role: 'SUPER_ADMIN',
   };
 
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex bg-stone-100 font-sans" suppressHydrationWarning>
+        <div className="flex-1 flex items-center justify-center p-8 text-xs font-bold text-stone-400">
+          दैनिक मान्यवर एडमिन कंसोल लोड हो रहा है...
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex bg-stone-100 font-sans">
+    <div className="min-h-screen flex bg-stone-100 font-sans" suppressHydrationWarning>
       {/* Desktop Sidebar (Sticky Left) */}
-      <div className="hidden md:block sticky top-0 h-screen flex-shrink-0 z-30">
+      <div className="hidden md:block sticky top-0 h-screen flex-shrink-0 z-30" suppressHydrationWarning>
         <AdminSidebar userName={activeUser.name} userRole={activeUser.role} />
       </div>
 
       {/* Mobile Drawer Sidebar */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 flex md:hidden">
+        <div className="fixed inset-0 z-50 flex md:hidden" suppressHydrationWarning>
           <div
             className="fixed inset-0 bg-black/60 backdrop-blur-xs"
             onClick={() => setMobileMenuOpen(false)}
@@ -44,7 +59,7 @@ export default function AdminLayout({
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0" suppressHydrationWarning>
         {/* Top Navigation Header */}
         <header className="bg-white border-b border-stone-200 py-3 px-4 sm:px-6 flex items-center justify-between shadow-xs sticky top-0 z-20">
           <div className="flex items-center gap-3">
@@ -60,36 +75,31 @@ export default function AdminLayout({
             <Link
               href="/"
               target="_blank"
-              className="text-xs bg-orange-100 text-[#EA580C] border border-orange-200 px-3 py-1.5 rounded-xl font-bold hover:bg-orange-200 transition-colors flex items-center gap-1.5"
+              className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-stone-600 hover:text-[#EA580C] px-3 py-1.5 rounded-lg border border-stone-200 hover:border-orange-200 transition-colors"
             >
-              <Globe className="w-3.5 h-3.5" />
+              <Globe className="w-3.5 h-3.5 text-[#EA580C]" />
               <span>मुख्य वेबसाइट देखें</span>
             </Link>
-
-            <span className="hidden sm:inline-flex text-[11px] bg-green-100 text-green-700 px-2.5 py-1 rounded-lg font-bold border border-green-200">
-              🟢 सर्वर सक्रिय (Online)
-            </span>
           </div>
 
+          {/* Right Header Status */}
           <div className="flex items-center gap-3">
-            <span className="text-xs text-stone-500 font-bold hidden lg:inline">
-              दैनिक मान्यवर कंट्रोल पैनल | {new Date().toLocaleDateString('hi-IN')}
-            </span>
+            <div className="flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1 rounded-full text-[11px] font-bold border border-green-200">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span>सर्वर सक्रिय (Online)</span>
+            </div>
 
-            <form action="/api/admin/logout" method="POST">
-              <button
-                type="submit"
-                className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1 transition-colors cursor-pointer"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>लॉगआउट</span>
-              </button>
-            </form>
+            <div className="hidden lg:flex items-center gap-2 text-xs font-mono text-stone-400 border-l border-stone-200 pl-3">
+              <ShieldCheck className="w-4 h-4 text-slate-500" />
+              <span>Dainik Manyavar CMS v2.0</span>
+            </div>
           </div>
         </header>
 
-        {/* Page Children Content */}
-        <main className="p-4 sm:p-6 flex-1 overflow-y-auto">{children}</main>
+        {/* Dynamic Page Content */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto" suppressHydrationWarning>
+          {children}
+        </main>
       </div>
     </div>
   );

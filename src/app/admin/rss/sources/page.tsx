@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Radio, RefreshCw, CheckCircle2, AlertCircle, Plus, Sliders, Globe, Trophy, Sparkles, TrendingUp, Coins, Play, Zap, Inbox } from 'lucide-react';
+import ImporterSubNav from '@/components/admin/ImporterSubNav';
 
 interface RssSource {
   id: string;
@@ -141,6 +142,9 @@ export default function RssSourcesAdminPage() {
 
   return (
     <div className="space-y-6 max-w-6xl">
+      {/* Sub Navigation Links */}
+      <ImporterSubNav />
+
       {/* Header Bar */}
       <div className="flex flex-wrap justify-between items-center bg-white p-5 rounded-2xl border border-stone-200 shadow-sm gap-4">
         <div>
@@ -161,10 +165,10 @@ export default function RssSourcesAdminPage() {
           <button
             onClick={handleSyncAll}
             disabled={syncingAll}
-            className="bg-green-600 hover:bg-green-700 text-white font-black text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-md transition-all cursor-pointer"
+            className="bg-[#16A34A] hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-md transition-all cursor-pointer"
           >
             <Zap className={`w-4 h-4 text-amber-300 ${syncingAll ? 'animate-bounce' : ''}`} />
-            <span>{syncingAll ? 'सभी 20+ सोर्सेज सिंक हो रहे हैं...' : '⚡ सभी सोर्सेज सिंक करें (Sync All Feeds)'}</span>
+            <span className="text-white font-bold">{syncingAll ? 'सभी 20+ सोर्सेज सिंक हो रहे हैं...' : 'सभी सोर्सेज सिंक करें (Sync All Feeds)'}</span>
           </button>
 
           <Link

@@ -36,7 +36,10 @@ export default async function VideoDetailPage({ params }: { params: Promise<{ sl
   const { slug } = await params;
 
   const currentVideo = await db.article.findFirst({
-    where: { OR: [{ slug }, { id: slug }], videoEnabled: true },
+    where: {
+      OR: [{ slug }, { id: slug }],
+      status: 'PUBLISHED',
+    },
     include: {
       category: true,
       tags: { include: { tag: true } },

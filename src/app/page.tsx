@@ -71,7 +71,7 @@ export default async function HomePage() {
   });
 
   // Fetch active Video News Bulletins for Homepage Video Section & Playlist
-  const dbVideoArticles = await db.article.findMany({
+  let dbVideoArticles = await db.article.findMany({
     where: { status: 'PUBLISHED', videoEnabled: true },
     orderBy: { publishedAt: 'desc' },
     take: 8,
@@ -88,6 +88,25 @@ export default async function HomePage() {
     },
   });
 
+  if (dbVideoArticles.length === 0) {
+    dbVideoArticles = await db.article.findMany({
+      where: { status: 'PUBLISHED' },
+      orderBy: { publishedAt: 'desc' },
+      take: 6,
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        featuredImage: true,
+        videoThumbnail: true,
+        videoDuration: true,
+        viewCount: true,
+        publishedAt: true,
+        category: { select: { name: true } },
+      },
+    });
+  }
+
   const formattedVideos = dbVideoArticles.map((v) => ({
     id: v.id,
     title: v.title,
@@ -99,12 +118,126 @@ export default async function HomePage() {
     date: new Date(v.publishedAt).toLocaleDateString('hi-IN'),
   }));
 
+  // Fetch real articles for Multi-Tag News Section
+  const dbMultiTagArticles = await db.article.findMany({
+    where: {
+      status: 'PUBLISHED',
+      tags: { some: {} },
+    },
+    include: {
+      tags: { include: { tag: true } },
+      category: true,
+    },
+    orderBy: { publishedAt: 'desc' },
+    take: 6,
+  });
+
+  const formattedMultiTagArticles = dbMultiTagArticles.map((art) => ({
+    id: art.id,
+    title: art.title,
+    slug: art.slug,
+    featuredImage: art.featuredImage,
+    publishedAt: art.publishedAt,
+    viewCount: art.viewCount,
+    tags: art.tags.map((t) => t.tag),
+  }));
+
+  // Fetch active breaking news ticker items
+  const breakingItems = await db.breakingNews.findMany({
+    where: { isArchived: false, active: true },
+    orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
+    include: {
+      article: {
+        select: { id: true, title: true, slug: true },
+      },
+    },
+    take: 10,
+  });
+
+  // Fetch dynamic district locations & published articles with locations
+  const dbLocations = await db.location.findMany({
+    orderBy: { name: 'asc' },
+  });
+  const sortedLocations = [...dbLocations].sort((a, b) => {
+    if (a.name === 'जौनपुर') return -1;
+    if (b.name === 'जौनपुर') return 1;
+    return a.name.localeCompare(b.name, 'hi');
+  });
+
+  const dbDistrictArticles = await db.article.findMany({
+    where: {
+      status: 'PUBLISHED',
+      locationId: { not: null },
+    },
+    include: {
+      location: true,
+      category: true,
+    },
+    orderBy: { publishedAt: 'desc' },
+    take: 50,
+  });
+
+  const formattedDistrictArticles = dbDistrictArticles.map((art) => ({
+    id: art.id,
+    title: art.title,
+    slug: art.slug,
+    featuredImage: art.featuredImage,
+    publishedAt: art.publishedAt,
+    viewCount: art.viewCount,
+    locationId: art.locationId,
+    location: art.location ? { id: art.location.id, name: art.location.name, slug: art.location.slug } : null,
+    category: art.category ? { name: art.category.name, slug: art.category.slug } : null,
+    district: art.location?.name || '',
+  }));
+
+  // Fetch site widget and section settings (controlled from Admin Panel)
+  const settingsRecords = await db.siteSetting.findMany({
+    where: {
+      key: {
+        in: [
+          'widget_cricket_enabled',
+          'widget_horoscope_enabled',
+          'widget_stock_enabled',
+          'widget_gold_silver_enabled',
+          'section_hero_enabled',
+          'section_trending_enabled',
+          'section_latest_enabled',
+          'section_district_enabled',
+          'section_multitag_enabled',
+          'section_video_enabled',
+          'section_tags_enabled',
+        ],
+      },
+    },
+  });
+  const settingsMap = Object.fromEntries(settingsRecords.map((s) => [s.key, s.value]));
+
+  const isCricketEnabled = settingsMap.widget_cricket_enabled !== 'false';
+  const isHoroscopeEnabled = settingsMap.widget_horoscope_enabled !== 'false';
+  const isStockEnabled = settingsMap.widget_stock_enabled !== 'false';
+  const isGoldSilverEnabled = settingsMap.widget_gold_silver_enabled !== 'false';
+
+  const isHeroEnabled = settingsMap.section_hero_enabled !== 'false';
+  const isTrendingEnabled = settingsMap.section_trending_enabled !== 'false';
+  const isLatestEnabled = settingsMap.section_latest_enabled !== 'false';
+  const isDistrictEnabled = settingsMap.section_district_enabled !== 'false';
+  const isMultiTagEnabled = settingsMap.section_multitag_enabled !== 'false';
+  const isVideoEnabled = settingsMap.section_video_enabled !== 'false';
+  const isTagsEnabled = settingsMap.section_tags_enabled !== 'false';
+
+  // Fetch active menu categories for navigation
+  const menuCategories = await db.category.findMany({
+    where: { isHeaderMenu: true },
+    orderBy: { order: 'asc' },
+    select: { id: true, name: true, slug: true, order: true, isHeaderMenu: true },
+  });
+
   return (
     <div className="min-h-screen flex flex-col bg-white font-sans">
       <TopBar />
       <Header />
-      <Navigation />
-      <BreakingTicker />
+      <Navigation categories={menuCategories} />
+      <BreakingTicker items={breakingItems} />
 
       {/* Main Content Area */}
       <main className="wrap py-4 flex-1 space-y-6">
@@ -118,46 +251,51 @@ export default async function HomePage() {
           {/* Left Column (Main News Stories & Media) */}
           <div className="lg:col-span-2 space-y-8">
             {/* News Slider */}
-            <HeroSection articles={formattedSlider} />
+            {isHeroEnabled && <HeroSection articles={formattedSlider} />}
 
             {/* Latest News Grid */}
-            <LatestNewsCards articles={latestArticles} />
+            {isLatestEnabled && <LatestNewsCards articles={latestArticles} />}
 
             {/* District News Section */}
-            <DistrictNewsSection />
+            {isDistrictEnabled && (
+              <DistrictNewsSection
+                initialLocations={sortedLocations}
+                initialArticles={formattedDistrictArticles}
+              />
+            )}
 
             {/* Multi-Tag News Section */}
-            <MultiTagNewsSection />
+            {isMultiTagEnabled && <MultiTagNewsSection articles={formattedMultiTagArticles} />}
 
             {/* Video News Bulletins */}
-            <VideoNewsSection videoNewsList={formattedVideos} />
+            {isVideoEnabled && <VideoNewsSection videos={formattedVideos} />}
           </div>
 
           {/* Right Column (Organized Special Feeds & Sidebar Ads) */}
           <aside className="space-y-6">
             {/* Trending Section */}
-            <TrendingSection articles={trendingArticles} />
+            {isTrendingEnabled && <TrendingSection articles={trendingArticles} />}
 
             {/* Special Feeds Widget 1: Cricket Live Updates */}
-            <CricketWidget />
+            {isCricketEnabled && <CricketWidget />}
 
             {/* Sidebar Ad #1 */}
             <AdBanner position="sidebar_box" sizeText="300 × 250 / Sidebar Ad #1" />
 
             {/* Special Feeds Widget 2: 12 Rashifal Horoscope */}
-            <HoroscopeWidget />
+            {isHoroscopeEnabled && <HoroscopeWidget />}
 
             {/* Special Feeds Widget 3: Stock Market Sensex/Nifty */}
-            <StockMarketWidget />
+            {isStockEnabled && <StockMarketWidget />}
 
             {/* Special Feeds Widget 4: Gold & Silver Commodity Rates */}
-            <GoldSilverWidget />
+            {isGoldSilverEnabled && <GoldSilverWidget />}
 
             {/* Sidebar Ad #2 */}
             <AdBanner position="sidebar_tall" sizeText="300 × 300 / Sidebar Ad #2" />
 
             {/* Popular Tags */}
-            <PopularTagsSection />
+            {isTagsEnabled && <PopularTagsSection />}
 
             {/* Sidebar Ad #3 */}
             <AdBanner position="sidebar_box2" sizeText="300 × 250 / Sidebar Ad #3" />

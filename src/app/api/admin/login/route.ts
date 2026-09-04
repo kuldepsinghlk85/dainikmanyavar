@@ -10,9 +10,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Email and password required' }, { status: 400 });
     }
 
-    const user = await db.user.findUnique({ where: { email } });
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await db.user.findFirst({
+      where: {
+        OR: [
+          { email: cleanEmail },
+          { email: cleanEmail.includes('@') ? cleanEmail : `${cleanEmail}@dainikmanyavar.in` },
+          { email: cleanEmail.replace('@dainikmanyavar.com', '@dainikmanyavar.in') },
+          { email: cleanEmail.replace('@dainikmanyavar.in', '@dainikmanyavar.com') },
+        ],
+      },
+    });
     if (!user || !user.active) {
-      return NextResponse.json({ success: false, error: 'Invalid credentials or inactive account' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'अमान्य क्रेडेंशियल या निष्क्रिय खाता' }, { status: 401 });
     }
 
     const isValid = await verifyPassword(password, user.password);

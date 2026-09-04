@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { CopyCheck, AlertTriangle } from 'lucide-react';
+import ImporterSubNav from '@/components/admin/ImporterSubNav';
 
 interface DuplicateItem {
   id: string;
@@ -25,6 +26,7 @@ export default function DuplicatesAdminPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
+      <ImporterSubNav />
       <div>
         <h1 className="text-2xl font-extrabold text-stone-900">डुप्लिकेट समाचार (Duplicates Ingested)</h1>
         <p className="text-xs text-stone-500">विभिन्न सोर्सेज से प्राप्त समान या एक जैसी खबरें ({duplicates.length})</p>

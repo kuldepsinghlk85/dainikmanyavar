@@ -61,20 +61,52 @@ export async function POST(request: Request) {
 
       return NextResponse.json({
         success: true,
-        message: `${archived.count} खबरें आर्काइव में डाल दी गईं।`,
+        message: `${archived.count} खबरें सफलतापूर्वक आर्काइव में डाल दी गईं।`,
       });
     }
 
-    // Restore to Live Published
-    if (action === 'RESTORE' && Array.isArray(ids)) {
-      const restored = await db.article.updateMany({
-        where: { id: { in: ids } },
-        data: { status: 'PUBLISHED' },
+    // Archive ALL active articles with 1-click
+    if (action === 'ARCHIVE_ALL') {
+      const archived = await db.article.updateMany({
+        where: { status: { not: 'ARCHIVED' } },
+        data: { status: 'ARCHIVED' },
       });
 
       return NextResponse.json({
         success: true,
-        message: `${restored.count} खबरें सफलतापूर्वक रिस्टोर (Live Published) कर दी गईं!`,
+        message: `सभी ${archived.count} खबरें सफलतापूर्वक आर्काइव में सुरक्षित कर दी गईं!`,
+      });
+    }
+
+    // Restore Selected to Live Published (Republish)
+    if (action === 'RESTORE' && Array.isArray(ids)) {
+      const restored = await db.article.updateMany({
+        where: { id: { in: ids } },
+        data: {
+          status: 'PUBLISHED',
+          publishedAt: new Date(), // रिपब्लिश होने पर वर्तमान समय सेट करें
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `${restored.count} खबरें सफलतापूर्वक रिस्टोर व रिपब्लिश (Live Published) कर दी गईं!`,
+      });
+    }
+
+    // Restore ALL archived articles back to Live Published
+    if (action === 'RESTORE_ALL') {
+      const restored = await db.article.updateMany({
+        where: { status: 'ARCHIVED' },
+        data: {
+          status: 'PUBLISHED',
+          publishedAt: new Date(),
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `सभी ${restored.count} आर्काइव्ड खबरें सफलतापूर्वक रिस्टोर व रिपब्लिश कर दी गईं!`,
       });
     }
 

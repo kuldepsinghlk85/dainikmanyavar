@@ -84,9 +84,11 @@ model Location {
   id        String       @id @default(uuid())
   name      String
   slug      String       @unique
+  image     String?
   type      LocationType @default(DISTRICT)
   parentId  String?
   createdAt DateTime     @default(now())
+  updatedAt DateTime     @default(now()) @updatedAt
   articles  Article[]
   sources   NewsSource[]
 }
@@ -238,9 +240,12 @@ model BreakingNews {
   customHeadline String?
   priority       Int       @default(0)
   active         Boolean   @default(true)
+  isArchived     Boolean   @default(false)
+  archivedAt     DateTime?
   startTime      DateTime? @default(now())
   endTime        DateTime?
   createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now()) @updatedAt
   article        Article?  @relation(fields: [articleId], references: [id], onDelete: SetNull)
 }
 
@@ -511,4 +516,67 @@ model ExternalSpecialFeedItem {
   suggestedTags   String?  @default("[]")
   status          String   @default("NEW") // NEW, REVIEW, APPROVED, REJECTED
   fetchedAt       DateTime @default(now())
+}
+
+// ==========================================================
+// DAINIK MANYAVAR – DIGITAL E-PAPER MODULE MODELS
+// ==========================================================
+
+model EpaperEdition {
+  id          String            @id @default(uuid())
+  title       String            @default("दैनिक मान्यवर")
+  editionDate DateTime          @default(now())
+  editionType String            @default("दैनिक") // दैनिक, विशेष, रविवार
+  pdfUrl      String?
+  coverImage  String?
+  description String?
+  totalPages  Int               @default(0)
+  status      String            @default("PUBLISHED") // DRAFT, PUBLISHED, ARCHIVED
+  viewCount   Int               @default(0)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  pages       EpaperPage[]
+  analytics   EpaperAnalytics[]
+  ads         EpaperAd[]
+}
+
+model EpaperPage {
+  id             String        @id @default(uuid())
+  editionId      String
+  pageNumber     Int
+  pageTitle      String?       @default("पेज 1")
+  pageImage      String
+  thumbnailImage String?
+  extractedText  String?
+  createdAt      DateTime      @default(now())
+  edition        EpaperEdition @relation(fields: [editionId], references: [id], onDelete: Cascade)
+}
+
+model EpaperAnalytics {
+  id          String        @id @default(uuid())
+  editionId   String
+  visitorId   String        @default("anonymous")
+  deviceType  String        @default("mobile") // mobile, desktop, tablet
+  pageNumber  Int           @default(1)
+  readingTime Int           @default(0) // duration in seconds
+  createdAt   DateTime      @default(now())
+  edition     EpaperEdition @relation(fields: [editionId], references: [id], onDelete: Cascade)
+}
+
+model EpaperAd {
+  id          String         @id @default(uuid())
+  editionId   String?
+  title       String         @default("ई-पेपर विज्ञापन")
+  position    String         @default("top_banner") // top_banner, page_specific, side_banner
+  pageNumber  Int?           @default(1)
+  imageUrl    String
+  targetUrl   String?
+  startDate   DateTime?
+  endDate     DateTime?
+  active      Boolean        @default(true)
+  impressions Int            @default(0)
+  clicks      Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  edition     EpaperEdition? @relation(fields: [editionId], references: [id], onDelete: SetNull)
 }

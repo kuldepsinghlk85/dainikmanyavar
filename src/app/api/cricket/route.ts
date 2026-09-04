@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { ensureDailyDataSynced } from '@/lib/autoUpdateService';
 
 export async function GET() {
   try {
+    await ensureDailyDataSynced();
     const matches = await db.cricketMatch.findMany({
       where: { status: 'PUBLISHED' },
       orderBy: { createdAt: 'desc' },

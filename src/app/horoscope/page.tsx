@@ -15,7 +15,10 @@ export const metadata = {
   description: 'मेष से लेकर मीन तक सभी 12 राशियों का आज का दैनिक राशिफल, लव लाइफ, करियर, स्वास्थ्य व वित्त फलादेश।',
 };
 
+import { ensureDailyDataSynced } from '@/lib/autoUpdateService';
+
 export default async function HoroscopePage() {
+  await ensureDailyDataSynced();
   const horoscopes = await db.horoscope.findMany({
     where: { status: 'PUBLISHED' },
     orderBy: { createdAt: 'asc' },

@@ -13,9 +13,10 @@ interface TrendingItem {
 
 interface TrendingSectionProps {
   items?: TrendingItem[];
+  articles?: TrendingItem[];
 }
 
-export default function TrendingSection({ items }: TrendingSectionProps) {
+export default function TrendingSection({ items, articles }: TrendingSectionProps) {
   const defaultItems = [
     { id: '1', title: 'यूपी में नई शिक्षा नीति लागू, स्कूलों में स्मार्ट बोर्ड', slug: 'up-schools-digital-education-smart-boards-2026', viewCount: 24100 },
     { id: '2', title: 'जौनपुर में पुलिस की बड़ी कार्रवाई, गिरोह गिरफ्तार', slug: 'jaunpur-police-action-gang-busted', viewCount: 18700 },
@@ -24,7 +25,7 @@ export default function TrendingSection({ items }: TrendingSectionProps) {
     { id: '5', title: 'भारतीय वायुसेना की नई ताकत से सरहद मजबूत', slug: 'indian-air-force-new-fighter-jets-induction', viewCount: 12800 },
   ];
 
-  const trendingList = items && items.length > 0 ? items : defaultItems;
+  const trendingList = (articles && articles.length > 0) ? articles : (items && items.length > 0) ? items : defaultItems;
 
   return (
     <aside className="border border-[#E8E8E8] rounded-xl p-4 bg-white shadow-soft">

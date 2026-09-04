@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Trash2, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Trash2, CheckCircle2, RefreshCw } from 'lucide-react';
 
 export default function AdminHoroscopePage() {
   const [horoscopes, setHoroscopes] = useState<any[]>([]);
   const [msg, setMsg] = useState('');
+  const [syncing, setSyncing] = useState(false);
+  const [homepageActive, setHomepageActive] = useState(true);
   const [form, setForm] = useState({
     zodiacSign: 'mesh',
     zodiacHindi: 'मेष (Aries)',
@@ -29,7 +31,47 @@ export default function AdminHoroscopePage() {
 
   useEffect(() => {
     fetchHoroscopes();
+    fetch('/api/admin/settings')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && d.data) {
+          setHomepageActive(d.data.widget_horoscope_enabled !== 'false');
+        }
+      })
+      .catch(() => {});
   }, []);
+
+  const handleToggleHomepage = async () => {
+    const nextState = !homepageActive;
+    setHomepageActive(nextState);
+    try {
+      await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ widget_horoscope_enabled: nextState ? 'true' : 'false' }),
+      });
+      setMsg(nextState ? '✅ राशिफल विगेट होमपेज पर सक्रिय (दिखाया गया)!' : '🔒 राशिफल विगेट होमपेज से छिपा दिया गया!');
+      setTimeout(() => setMsg(''), 4000);
+    } catch (e) {}
+  };
+
+  const handleAutoSyncNow = async () => {
+    setSyncing(true);
+    setMsg('');
+    try {
+      const res = await fetch('/api/auto-sync', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        setMsg('✅ आज का 12 राशियों का दैनिक राशिफल स्वतः अपडेट हो गया!');
+        fetchHoroscopes();
+        setTimeout(() => setMsg(''), 4000);
+      }
+    } catch (err) {
+      alert('सिंक में त्रुटि');
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,15 +115,45 @@ export default function AdminHoroscopePage() {
 
   return (
     <div className="space-y-6 max-w-6xl">
-      <div className="flex justify-between items-center bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
+      <div className="flex flex-wrap justify-between items-center bg-white p-5 rounded-2xl border border-stone-200 shadow-sm gap-3">
         <div>
           <h1 className="text-2xl font-black text-stone-900 flex items-center gap-2">
             <Sparkles className="w-6 h-6 text-[#F97316]" />
             <span>राशिफल प्रबंधन (Horoscope CMS)</span>
           </h1>
           <p className="text-xs text-stone-500 font-semibold mt-1">
-            12 राशियों के दैनिक फलादेश, करियर, लव लाइफ, स्वास्थ्य व लकी नंबर अद्यतन व हटाएँ
+            12 राशियों के दैनिक फलादेश, करियर, लव लाइफ, स्वास्थ्य व लकी नंबर (ऑटोमैटिक अपडेट समर्थित)
           </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Homepage Visibility Toggle */}
+          <button
+            type="button"
+            onClick={handleToggleHomepage}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-xs border cursor-pointer ${
+              homepageActive
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                : 'bg-red-50 text-red-800 border-red-300 hover:bg-red-100'
+            }`}
+            title="होमपेज पर इस विगेट को दिखाने या छिपाने के लिए क्लिक करें"
+          >
+            <span>{homepageActive ? '🟢 होमपेज पर सक्रिय (दिख रहा है)' : '🔴 होमपेज से छिपा हुआ'}</span>
+          </button>
+
+          <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>ऑटो-अपडेट सक्रिय</span>
+          </span>
+          <button
+            type="button"
+            onClick={handleAutoSyncNow}
+            disabled={syncing}
+            className="bg-[#F97316] hover:bg-[#EA580C] text-white text-xs font-bold px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
+            <span>{syncing ? 'अपडेट हो रहा है...' : 'अभी रीफ्रेश करें'}</span>
+          </button>
         </div>
       </div>
 

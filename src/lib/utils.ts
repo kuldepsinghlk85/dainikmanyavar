@@ -79,11 +79,13 @@ export function calculateReadingTime(text: string): number {
 
 // Slug generator for Hindi / English titles
 export function slugify(text: string): string {
+  if (!text) return '';
   return text
     .toString()
     .toLowerCase()
     .trim()
-    .replace(/[\s\W-]+/g, '-')
+    .replace(/[^\p{L}\p{M}\p{N}\s-]+/gu, '')
+    .replace(/[\s-]+/g, '-')
     .replace(/^-+|-+$/g, '');
 }
 

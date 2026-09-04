@@ -6,6 +6,7 @@ import Footer from '@/components/public/Footer';
 import AdBanner from '@/components/public/AdBanner';
 import { db } from '@/lib/db';
 import { Coins, ArrowUpRight, ArrowDownRight, MapPin, Building2 } from 'lucide-react';
+import { ensureDailyDataSynced } from '@/lib/autoUpdateService';
 
 export const metadata = {
   title: 'आज का सोना-चांदी भाव (Gold & Silver Rates) | शहर अनुसार दरें | दैनिक मान्यवर',
@@ -13,9 +14,18 @@ export const metadata = {
 };
 
 export default async function GoldSilverPage() {
+  await ensureDailyDataSynced();
   const prices = await db.commodityPrice.findMany({
     orderBy: { createdAt: 'desc' },
   });
+
+  const mainPrice = prices.find((p) => p.city === 'वाराणसी') || prices[0] || {
+    gold24K: 74800,
+    gold22K: 68600,
+    silver: 88900,
+    goldChange: 200,
+    silverChange: -150,
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -45,10 +55,10 @@ export default async function GoldSilverPage() {
           <div className="bg-amber-50 border border-amber-200 p-5 rounded-2xl flex justify-between items-center shadow-xs">
             <div>
               <span className="text-xs font-black text-amber-900 uppercase">✨ 24K शुद्ध सोना (प्रति 10 ग्राम)</span>
-              <p className="text-3xl font-mono font-black text-amber-950 mt-1">₹74,800</p>
+              <p className="text-3xl font-mono font-black text-amber-950 mt-1">₹{mainPrice.gold24K.toLocaleString('hi-IN')}</p>
               <span className="inline-flex items-center text-xs font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded mt-2">
                 <ArrowUpRight className="w-3.5 h-3.5" />
-                <span>+₹200 तेजी (आज की दर)</span>
+                <span>{mainPrice.goldChange >= 0 ? `+₹${mainPrice.goldChange} तेजी` : `-₹${Math.abs(mainPrice.goldChange)} गिरावट`} (आज की दर)</span>
               </span>
             </div>
             <div className="w-14 h-14 rounded-2xl bg-amber-500 text-white flex items-center justify-center text-2xl font-black shadow-md">
@@ -59,10 +69,10 @@ export default async function GoldSilverPage() {
           <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl flex justify-between items-center shadow-xs">
             <div>
               <span className="text-xs font-black text-slate-700 uppercase">🥈 शुद्ध चांदी (प्रति किलोग्राम)</span>
-              <p className="text-3xl font-mono font-black text-slate-900 mt-1">₹88,900</p>
-              <span className="inline-flex items-center text-xs font-bold text-red-700 bg-red-100 px-2 py-0.5 rounded mt-2">
+              <p className="text-3xl font-mono font-black text-slate-900 mt-1">₹{mainPrice.silver.toLocaleString('hi-IN')}</p>
+              <span className={`inline-flex items-center text-xs font-bold px-2 py-0.5 rounded mt-2 ${mainPrice.silverChange >= 0 ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'}`}>
                 <ArrowDownRight className="w-3.5 h-3.5" />
-                <span>-₹150 गिरावट (आज की दर)</span>
+                <span>{mainPrice.silverChange >= 0 ? `+₹${mainPrice.silverChange} तेजी` : `-₹${Math.abs(mainPrice.silverChange)} गिरावट`} (आज की दर)</span>
               </span>
             </div>
             <div className="w-14 h-14 rounded-2xl bg-slate-700 text-white flex items-center justify-center text-2xl font-black shadow-md">

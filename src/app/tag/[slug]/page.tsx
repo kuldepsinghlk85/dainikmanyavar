@@ -11,7 +11,17 @@ import { formatHindiTimeAgo, formatCount } from '@/lib/utils';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const tag = await db.tag.findUnique({ where: { slug } });
+  const decodedSlug = decodeURIComponent(slug);
+  const tag = await db.tag.findFirst({
+    where: {
+      OR: [
+        { slug: decodedSlug },
+        { slug: slug },
+        { name: decodedSlug },
+        { name: '#' + decodedSlug },
+      ],
+    },
+  });
   if (!tag) return {};
 
   return {
@@ -22,9 +32,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function TagPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const decodedSlug = decodeURIComponent(slug);
 
-  const tag = await db.tag.findUnique({
-    where: { slug },
+  const tag = await db.tag.findFirst({
+    where: {
+      OR: [
+        { slug: decodedSlug },
+        { slug: slug },
+        { name: decodedSlug },
+        { name: '#' + decodedSlug },
+      ],
+    },
     include: {
       articleTags: {
         include: {

@@ -62,9 +62,9 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     });
   }
 
-  const formattedArticles = articles.map((a) => ({
+  const formattedArticles = articles.map((a: any) => ({
     ...a,
-    tags: a.tags.map((t) => t.tag),
+    tags: a.tags.map((t: any) => t.tag),
   }));
 
   return (

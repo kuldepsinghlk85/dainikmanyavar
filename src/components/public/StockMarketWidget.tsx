@@ -2,16 +2,22 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { TrendingUp, ArrowUpRight, ArrowRight } from 'lucide-react';
+import { TrendingUp, ArrowUpRight, ArrowDownRight, ArrowRight } from 'lucide-react';
 
 export default function StockMarketWidget() {
   const [updates, setUpdates] = useState<any[]>([]);
+  const [live, setLive] = useState<any>({
+    sensex: { value: '85,240.50', change: '+480.20 (+0.57%)', isUp: true },
+  });
 
   useEffect(() => {
     fetch('/api/stock-market')
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && data.data) setUpdates(data.data);
+        if (data.success) {
+          if (data.data) setUpdates(data.data);
+          if (data.live) setLive(data.live);
+        }
       })
       .catch(() => {});
   }, []);
@@ -34,12 +40,20 @@ export default function StockMarketWidget() {
       <div className="flex justify-between items-center bg-slate-950 p-3 rounded-xl border border-slate-800">
         <div>
           <span className="text-[10px] font-bold text-slate-400 block">SENSEX</span>
-          <span className="text-base font-mono font-black text-white">85,240.50</span>
+          <span className="text-base font-mono font-black text-white">{live.sensex.value}</span>
         </div>
         <div className="text-right">
-          <span className="text-xs font-bold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800 flex items-center gap-0.5">
-            <ArrowUpRight className="w-3 h-3" />
-            <span>+480.20 (+0.57%)</span>
+          <span className={`text-xs font-bold px-2 py-0.5 rounded border flex items-center gap-0.5 ${
+            live.sensex.isUp
+              ? 'text-emerald-400 bg-emerald-950 border-emerald-800'
+              : 'text-red-400 bg-red-950 border-red-800'
+          }`}>
+            {live.sensex.isUp ? (
+              <ArrowUpRight className="w-3 h-3" />
+            ) : (
+              <ArrowDownRight className="w-3 h-3" />
+            )}
+            <span>{live.sensex.change}</span>
           </span>
         </div>
       </div>

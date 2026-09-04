@@ -34,6 +34,11 @@ export async function POST(request: Request) {
       },
     });
 
+    try {
+      const { revalidatePath } = await import('next/cache');
+      revalidatePath('/');
+    } catch (e) {}
+
     return NextResponse.json({ success: true, message: 'Settings saved successfully' });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

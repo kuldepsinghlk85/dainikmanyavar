@@ -8,7 +8,7 @@ export async function POST(
   try {
     const { sourceId } = await params;
     const result = await syncSingleRssSource(sourceId);
-    return NextResponse.json({ success: true, ...result });
+    return NextResponse.json(result);
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

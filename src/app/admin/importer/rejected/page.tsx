@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Ban, RotateCcw } from 'lucide-react';
+import ImporterSubNav from '@/components/admin/ImporterSubNav';
 
 interface RejectedItem {
   id: string;
@@ -39,6 +40,7 @@ export default function RejectedAdminPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
+      <ImporterSubNav />
       <div>
         <h1 className="text-2xl font-extrabold text-stone-900">रिजेक्टेड खबरें (Rejected Items)</h1>
         <p className="text-xs text-stone-500">अस्वीकृत की गई एक्सटर्नल खबरें जिन्हें प्रकाशित नहीं किया गया ({rejected.length})</p>
