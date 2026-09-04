@@ -14,6 +14,7 @@ import PopularTagsSection from '@/components/public/PopularTagsSection';
 import SocialConnect from '@/components/public/SocialConnect';
 import NewsletterSection from '@/components/public/NewsletterSection';
 import Footer from '@/components/public/Footer';
+import SanatanSpecialSection from '@/components/public/SanatanSpecialSection';
 
 // Special Content Widgets
 import CricketWidget from '@/components/public/CricketWidget';
@@ -246,6 +247,8 @@ export default async function HomePage() {
           <AdBanner position="header_wide" sizeText="970 × 90 / Top Responsive Leaderboard Banner" />
         </div>
 
+        {/* Featured Launch & Sanatan Heritage Special Showcase */}
+        <SanatanSpecialSection />
         {/* Master 2/3 Main Content + 1/3 Right Sidebar Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column (Main News Stories & Media) */}

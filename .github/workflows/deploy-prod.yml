@@ -1,0 +1,32 @@
+# Deploy to QA — manual trigger.
+# Builds from the qa branch then deploys.
+
+name: Deploy to Production
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  packages: read
+  actions: read
+
+jobs:
+  build:
+    name: 🔨 Build & Push Image (qa)
+    uses: ./.github/workflows/build.yml
+    with:
+      git_branch: testing
+      push_image: true
+    secrets: inherit
+
+  deploy:
+    name: 🚀 Deploy Danikmanyavar
+    needs: build
+    uses: ./.github/workflows/deploy-tenant.yml
+    with:
+      environment: production
+      image_tag: ${{ needs.build.outputs.image_tag }}
+      stack_name: danikmanyawar
+      workflow_run_id: ${{ github.run_id }}
+    secrets: inherit
