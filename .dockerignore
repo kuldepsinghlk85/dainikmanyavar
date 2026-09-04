@@ -1,0 +1,42 @@
+# deps + build output (rebuilt in image)
+node_modules
+.pnpm-store
+.next
+out
+build
+*.tsbuildinfo
+
+# vcs / ci / editor
+.git
+.gitignore
+.github
+.devops
+.claude
+.vscode
+.idea
+
+# local env — build args supply the real values
+.env
+.env.*
+
+# local SQLite (prod DB is bind-mounted)
+*.db
+*.db-journal
+
+# docs / agent context
+AGENTS.md
+CLAUDE.md
+README.md
+
+# root-level source media + reference files (real assets live in public/)
+/*.mp4
+/*.png
+/*.jpg
+/*.jpeg
+/*.docx
+/*.html
+/dainik-manyavar-15-news-rss-feeds.*
+
+# OS
+.DS_Store
+Thumbs.db

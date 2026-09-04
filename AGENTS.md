@@ -28,6 +28,19 @@ npm run db:studio
 - Docker entrypoint reruns all 11 `prisma/seed_*.js` scripts on every container start; they must stay idempotent (upsert-only).
 - SQLite: no concurrent writers. Prod DB is one bind-mounted file.
 
+## Before pushing — verify the production build
+
+`testing` auto-deploys, so a broken build ships. Run the build locally first, with the same env the Dockerfile builder stage sets (`.devops/Dockerfile`) — no Docker needed:
+
+```bash
+NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 \
+  NEXT_PUBLIC_SITE_URL=https://dainikmanyavar.com \
+  DATABASE_URL="file:./dainik-manyawar.db?connection_limit=1&connect_timeout=30" \
+  npm run build
+```
+
+That `DATABASE_URL` is relative to `prisma/`, so it creates and pushes to `prisma/dainik-manyawar.db` and leaves `dev.db` alone. Most build breaks are prerender errors on admin pages missing `force-dynamic`.
+
 ## Deploy
 Push to `testing` → `.github/workflows/deploy-prod.yml` builds and deploys to production. No staging gate — `testing` IS the release branch.
 Volumes: `/opt/dainik-manyavar/uploads`, `/opt/dainik-manyavar/db/dainik-manyawar.db`.
