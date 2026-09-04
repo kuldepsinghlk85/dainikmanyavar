@@ -1,0 +1,582 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMINISTRATOR
+  EDITOR
+  REPORTER
+  SEO_MANAGER
+  ANALYST
+}
+
+enum ArticleStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  SCHEDULED
+  PUBLISHED
+  UPDATED
+  ARCHIVED
+}
+
+enum LocationType {
+  COUNTRY
+  STATE
+  DISTRICT
+  CITY
+  LOCAL_AREA
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(EDITOR)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id           String    @id @default(uuid())
+  name         String
+  slug         String    @unique
+  order        Int       @default(0)
+  isHeaderMenu Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  articles     Article[]
+  sources      NewsSource[]
+}
+
+model Tag {
+  id             String       @id @default(uuid())
+  name           String
+  slug           String       @unique
+  description    String?
+  seoTitle       String?
+  seoDescription String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  articleTags    ArticleTag[]
+}
+
+model ArticleTag {
+  id        String   @id @default(uuid())
+  articleId String
+  tagId     String
+  createdAt DateTime @default(now())
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, tagId])
+}
+
+model Location {
+  id        String       @id @default(uuid())
+  name      String
+  slug      String       @unique
+  image     String?
+  type      LocationType @default(DISTRICT)
+  parentId  String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @default(now()) @updatedAt
+  articles  Article[]
+  sources   NewsSource[]
+}
+
+model Author {
+  id          String    @id @default(uuid())
+  name        String
+  slug        String    @unique
+  photo       String?
+  bio         String?
+  designation String?
+  city        String?
+  createdAt   DateTime  @default(now())
+  articles    Article[]
+}
+
+model Article {
+  id                String          @id @default(uuid())
+  uuid              String          @default(uuid())
+  title             String
+  subtitle          String?
+  slug              String          @unique
+  excerpt           String?
+  content           String
+  featuredImage     String?
+  gallery           String?
+  status            ArticleStatus   @default(PUBLISHED)
+  primaryCategoryId String
+  authorId          String?
+  locationId        String?
+  source            String?         @default("दैनिक मान्यवर ब्यूरो")
+  publishedAt       DateTime        @default(now())
+  scheduledAt       DateTime?
+  updatedAt         DateTime        @updatedAt
+  createdAt         DateTime        @default(now())
+  isBreaking        Boolean         @default(false)
+  isFeatured        Boolean         @default(false)
+  isMainStory       Boolean         @default(false)
+  forceTrending     Boolean         @default(false)
+  allowAudio        Boolean         @default(true)
+  audioStatus       String?         @default("ready")
+  videoEnabled      Boolean         @default(false)
+  videoUrl          String?
+  videoType         String?
+  videoDuration     String?
+  videoThumbnail    String?
+  viewCount         Int             @default(0)
+  likeCount         Int             @default(0)
+  shareCount        Int             @default(0)
+  listenCount       Int             @default(0)
+  seoTitle          String?
+  seoDescription    String?
+  canonicalUrl      String?
+  createdBy         String?
+  updatedBy         String?
+  correctionNote    String?
+  isCorrected       Boolean         @default(false)
+  correctedAt       DateTime?
+
+  // Importer tracking fields
+  importItemId         String?
+  sourceType           String?
+  originalSourceName   String?
+  originalSourceUrl    String?
+  sourcePublishedAt    DateTime?
+  isImported           Boolean         @default(false)
+
+  category          Category        @relation(fields: [primaryCategoryId], references: [id])
+  author            Author?         @relation(fields: [authorId], references: [id])
+  location          Location?       @relation(fields: [locationId], references: [id])
+  tags              ArticleTag[]
+  revisions         ArticleRevision[]
+  audios            ArticleAudio[]
+  shortLinks        ShortLink[]
+  breakingNews      BreakingNews[]
+}
+
+model ArticleRevision {
+  id             String   @id @default(uuid())
+  articleId      String
+  revisionNumber Int
+  snapshotJson   String
+  title          String
+  content        String
+  changedBy      String?
+  changeNote     String?
+  createdAt      DateTime @default(now())
+  article        Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+}
+
+model ArticleAudio {
+  id                String   @id @default(uuid())
+  articleId         String
+  articleRevisionId String?
+  provider          String   @default("web_speech")
+  voice             String?  @default("hi-IN")
+  language          String   @default("hi-IN")
+  audioUrl          String?
+  duration          Int?     @default(0)
+  status            String   @default("generated")
+  generatedAt       DateTime @default(now())
+  article           Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+}
+
+model AnalyticsEvent {
+  id          String   @id @default(uuid())
+  articleId   String?
+  visitorId   String
+  sessionId   String
+  eventName   String
+  eventValue  String?
+  deviceType  String?  @default("mobile")
+  browser     String?
+  referrer    String?
+  utmSource   String?
+  createdAt   DateTime @default(now())
+}
+
+model ArticleDailyStats {
+  id                String   @id @default(uuid())
+  articleId         String
+  date              DateTime
+  views             Int      @default(0)
+  uniqueVisitors    Int      @default(0)
+  likes             Int      @default(0)
+  shares            Int      @default(0)
+  whatsappShares    Int      @default(0)
+  audioStarts       Int      @default(0)
+  audioCompletions  Int      @default(0)
+  avgListenDuration Int      @default(0)
+
+  @@unique([articleId, date])
+}
+
+model ShortLink {
+  id         String    @id @default(uuid())
+  articleId  String
+  shortCode  String    @unique
+  clickCount Int       @default(0)
+  campaign   String?
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime?
+  article    Article   @relation(fields: [articleId], references: [id], onDelete: Cascade)
+}
+
+model BreakingNews {
+  id             String    @id @default(uuid())
+  articleId      String?
+  customHeadline String?
+  priority       Int       @default(0)
+  active         Boolean   @default(true)
+  isArchived     Boolean   @default(false)
+  archivedAt     DateTime?
+  startTime      DateTime? @default(now())
+  endTime        DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now()) @updatedAt
+  article        Article?  @relation(fields: [articleId], references: [id], onDelete: SetNull)
+}
+
+model HomepageSection {
+  id             String   @id @default(uuid())
+  sectionKey     String   @unique
+  title          String
+  order          Int      @default(0)
+  enabled        Boolean  @default(true)
+  layout         String   @default("grid")
+  storyCount     Int      @default(4)
+  categoryId     String?
+  districtId     String?
+  manualArticles String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model AdSlot {
+  id              String    @id @default(uuid())
+  name            String
+  position        String    @unique
+  desktopCreative String?
+  mobileCreative  String?
+  targetUrl       String?
+  startDate       DateTime?
+  endDate         DateTime?
+  active          Boolean   @default(true)
+  impressions     Int       @default(0)
+  clicks          Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model NewsletterSubscriber {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  status         String    @default("active")
+  subscribedAt   DateTime  @default(now())
+  unsubscribedAt DateTime?
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  userName    String?  @default("System Admin")
+  action      String
+  objectType  String
+  objectId    String?
+  detailsJson String?
+  timestamp   DateTime @default(now())
+}
+
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model MediaItem {
+  id           String   @id @default(uuid())
+  filename     String
+  originalName String?
+  mimeType     String?
+  size         Int      @default(0)
+  url          String
+  category     String?  @default("सामान्य")
+  caption      String?
+  altText      String?
+  createdAt    DateTime @default(now())
+}
+
+// ==========================================================
+// DAINIK MANYAVAR – EXTERNAL NEWS IMPORTER MODELS
+// ==========================================================
+
+model NewsSource {
+  id                String            @id @default(uuid())
+  name              String
+  publisherName     String
+  logoUrl           String?
+  sourceType        String            @default("RSS") // RSS, ATOM, JSON_API, REST_API, WEBHOOK, CSV, XML, LICENSED_CONNECTOR
+  category          String            @default("NEWS") // CRICKET, HOROSCOPE, STOCK_MARKET, GOLD_SILVER, NEWS
+  region            String            @default("NORTH_INDIA") // UP, VARANASI, BIHAR, DELHI, NORTH_INDIA
+  feedUrl           String?
+  websiteUrl        String?
+  apiEndpoint       String?
+  apiKeyEncrypted   String?
+  authType          String?           @default("NONE")
+  defaultCategoryId String?
+  defaultLocationId String?
+  language          String            @default("hi")
+  permissionMode    String            @default("METADATA_ONLY") // METADATA_ONLY, RSS_ALLOWED, SUMMARY_ALLOWED, FULL_CONTENT_LICENSED, CUSTOM_PERMISSION
+  autoSync          Boolean           @default(true)
+  syncInterval      Int               @default(15) // in minutes
+  fetchInterval     String            @default("15m") // 10m, 15m, 30m, 1h, MANUAL
+  lastFetchAt       DateTime?
+  isActive          Boolean           @default(true)
+  healthStatus      String            @default("Healthy") // Healthy, Warning, Failed
+  lastError         String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  defaultCategory   Category?         @relation(fields: [defaultCategoryId], references: [id])
+  defaultLocation   Location?         @relation(fields: [defaultLocationId], references: [id])
+  items             NewsImportItem[]
+  logs              NewsImportLog[]
+  categoryMaps      SourceCategoryMap[]
+}
+
+model NewsImportItem {
+  id                   String            @id @default(uuid())
+  sourceId             String
+  externalId           String?
+  sourceUrl            String
+  canonicalUrl         String?
+  originalTitle        String
+  originalExcerpt      String?
+  rawContent           String?
+  normalizedText       String?
+  imageUrl             String?
+  publisherName        String
+  originalAuthor       String?
+  sourcePublishedAt    DateTime?
+  importedAt           DateTime          @default(now())
+  suggestedCategoryId  String?
+  suggestedLocationId  String?
+  suggestedTagsJson    String?           @default("[]")
+  contentHash          String?
+  similarityHash       String?
+  language             String            @default("hi")
+  copyrightMode        String            @default("METADATA_ONLY")
+  status               String            @default("NEW") // NEW, DUPLICATE, REVIEW, EDITING, READY, APPROVED, PUBLISHED, REJECTED, ERROR
+  duplicateOfId        String?
+  similarityPercentage Float?            @default(0)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  source               NewsSource        @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+}
+
+model SourceCategoryMap {
+  id               String      @id @default(uuid())
+  sourceId         String
+  externalCategory String
+  dainikCategoryId String
+
+  source           NewsSource  @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+}
+
+model NewsImportLog {
+  id               String      @id @default(uuid())
+  sourceId         String
+  startedAt        DateTime    @default(now())
+  finishedAt       DateTime?
+  itemsFound       Int         @default(0)
+  itemsImported    Int         @default(0)
+  duplicatesFound  Int         @default(0)
+  failedItems      Int         @default(0)
+  status           String      @default("SUCCESS") // SUCCESS, PARTIAL, FAILED
+  errorMessage     String?
+
+  source           NewsSource  @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+}
+
+// ==========================================================
+// DAINIK MANYAVAR – SPECIAL CONTENT MODULES (CRICKET, HOROSCOPE, STOCK MARKET, GOLD-SILVER)
+// ==========================================================
+
+model CricketMatch {
+  id             String    @id @default(uuid())
+  externalId     String?
+  source         String?   @default("Cricket Feed")
+  matchTitle     String
+  tournament     String?   @default("अंतरराष्ट्रीय क्रिकेट")
+  teamA          String
+  teamB          String
+  teamAFlag      String?
+  teamBFlag      String?
+  scoreA         String?
+  scoreB         String?
+  matchStatus    String    @default("UPCOMING") // LIVE, UPCOMING, RESULT
+  resultText     String?
+  venue          String?
+  matchDate      DateTime? @default(now())
+  playingXI      String?
+  newsHeadline   String?
+  newsSummary    String?
+  featuredImage  String?
+  videoUrl       String?
+  viewCount      Int       @default(0)
+  allowAudio     Boolean   @default(true)
+  tagsJson       String?   @default("[\"#क्रिकेट\", \"#भारत\"]")
+  status         String    @default("PUBLISHED") // DRAFT, REVIEW, APPROVED, PUBLISHED
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Horoscope {
+  id             String    @id @default(uuid())
+  externalId     String?
+  source         String?   @default("Astrology Engine")
+  zodiacSign     String    // mesh, vrishabh, mithun, kark, simha, kanya, tula, vrischik, dhanu, makar, kumbh, meen
+  zodiacHindi    String    // मेष, वृषभ, मिथुन, कर्क, सिंह, कन्या, तुला, वृश्चिक, धनु, मकर, कुंभ, मीन
+  date           DateTime  @default(now())
+  title          String
+  prediction     String
+  love           String?
+  career         String?
+  health         String?
+  finance        String?
+  luckyNumber    String?   @default("7")
+  luckyColor     String?   @default("पीला (Yellow)")
+  remedies       String?
+  featuredImage  String?
+  allowAudio     Boolean   @default(true)
+  tagsJson       String?   @default("[\"#राशिफल\", \"#आज_का_राशिफल\"]")
+  status         String    @default("PUBLISHED") // DRAFT, APPROVED, PUBLISHED
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model StockMarketUpdate {
+  id             String    @id @default(uuid())
+  externalId     String?
+  source         String?   @default("Market Feed")
+  title          String
+  company        String?   @default("भारतीय शेयर बाजार")
+  symbol         String?
+  price          String?
+  changePrice    String?
+  changePercent  String?
+  movement       String?   @default("UP") // UP, DOWN, NEUTRAL
+  indexName      String?   @default("SENSEX") // SENSEX, NIFTY
+  indexValue     String?
+  indexChange    String?
+  content        String
+  featuredImage  String?
+  allowAudio     Boolean   @default(true)
+  tagsJson       String?   @default("[\"#शेयर_बाजार\", \"#Sensex\", \"#Nifty\"]")
+  status         String    @default("PUBLISHED") // DRAFT, APPROVED, PUBLISHED
+  publishedAt    DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model CommodityPrice {
+  id             String    @id @default(uuid())
+  city           String    // वाराणसी, जौनपुर, लखनऊ, दिल्ली, पटना
+  gold24K        Float     @default(74500)
+  gold22K        Float     @default(68300)
+  silver         Float     @default(88500)
+  goldChange     Float     @default(150)
+  silverChange   Float     @default(-200)
+  date           DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model ExternalSpecialFeedItem {
+  id              String   @id @default(uuid())
+  moduleType      String   // CRICKET, HOROSCOPE, STOCK_MARKET, GOLD_SILVER
+  sourceName      String
+  externalId      String?
+  rawJson         String?
+  title           String
+  summary         String?
+  suggestedTags   String?  @default("[]")
+  status          String   @default("NEW") // NEW, REVIEW, APPROVED, REJECTED
+  fetchedAt       DateTime @default(now())
+}
+
+// ==========================================================
+// DAINIK MANYAVAR – DIGITAL E-PAPER MODULE MODELS
+// ==========================================================
+
+model EpaperEdition {
+  id          String            @id @default(uuid())
+  title       String            @default("दैनिक मान्यवर")
+  editionDate DateTime          @default(now())
+  editionType String            @default("दैनिक") // दैनिक, विशेष, रविवार
+  pdfUrl      String?
+  coverImage  String?
+  description String?
+  totalPages  Int               @default(0)
+  status      String            @default("PUBLISHED") // DRAFT, PUBLISHED, ARCHIVED
+  viewCount   Int               @default(0)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  pages       EpaperPage[]
+  analytics   EpaperAnalytics[]
+  ads         EpaperAd[]
+}
+
+model EpaperPage {
+  id             String        @id @default(uuid())
+  editionId      String
+  pageNumber     Int
+  pageTitle      String?       @default("पेज 1")
+  pageImage      String
+  thumbnailImage String?
+  extractedText  String?
+  createdAt      DateTime      @default(now())
+  edition        EpaperEdition @relation(fields: [editionId], references: [id], onDelete: Cascade)
+}
+
+model EpaperAnalytics {
+  id          String        @id @default(uuid())
+  editionId   String
+  visitorId   String        @default("anonymous")
+  deviceType  String        @default("mobile") // mobile, desktop, tablet
+  pageNumber  Int           @default(1)
+  readingTime Int           @default(0) // duration in seconds
+  createdAt   DateTime      @default(now())
+  edition     EpaperEdition @relation(fields: [editionId], references: [id], onDelete: Cascade)
+}
+
+model EpaperAd {
+  id          String         @id @default(uuid())
+  editionId   String?
+  title       String         @default("ई-पेपर विज्ञापन")
+  position    String         @default("top_banner") // top_banner, page_specific, side_banner
+  pageNumber  Int?           @default(1)
+  imageUrl    String
+  targetUrl   String?
+  startDate   DateTime?
+  endDate     DateTime?
+  active      Boolean        @default(true)
+  impressions Int            @default(0)
+  clicks      Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  edition     EpaperEdition? @relation(fields: [editionId], references: [id], onDelete: SetNull)
+}

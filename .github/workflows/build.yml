@@ -1,0 +1,142 @@
+# Reusable workflow — Docker build & push.
+# Called by: build-and-push.yml, deploy-prod.yml
+#
+# Inputs:
+#   git_branch  — Branch to checkout. Leave empty to use the triggering event ref.
+#   push_image  — Whether to push to the registry (false for PR builds).
+#
+# Outputs:
+#   image_tag   — Short 7-char SHA used as the Docker image tag.
+
+name: Build & Push Docker Image (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      git_branch:
+        description: "Branch to checkout (empty = use triggering event ref)"
+        required: false
+        type: string
+        default: ''
+      push_image:
+        description: "Push image to registry after build"
+        required: false
+        type: boolean
+        default: true
+    outputs:
+      image_tag:
+        description: "Docker image short SHA tag"
+        value: ${{ jobs.build.outputs.image_tag }}
+    secrets:
+      DANIKMANYAWAR_BUILD_USERNAME:
+        required: true
+      DANIKMANYAWAR_BUILD_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+  packages: read
+
+env:
+  REGISTRY: registry.gitlab.com
+  IMAGE: registry.gitlab.com/danikmanyawar/danikmanyawar
+
+jobs:
+  build:
+    name: 🔨 Build & Push Image
+    runs-on: [self-hosted, encora]
+    timeout-minutes: 30
+    outputs:
+      image_tag: ${{ steps.meta.outputs.short_sha }}
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.git_branch }}
+          fetch-depth: 1
+
+      - name: 📋 Set build metadata
+        id: meta
+        run: |
+          SHORT_SHA=$(git rev-parse --short=7 HEAD)
+          echo "short_sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "build_date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+          echo "📦 Image tag: ${SHORT_SHA} | push: ${{ inputs.push_image }}"
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+          driver: docker-container
+          buildkitd-config-inline: |
+            [worker.oci]
+              max-parallelism = 4
+          driver-opts: |
+            image=moby/buildkit:latest
+            network=host
+          name: encora-builder
+          use: true
+
+      - name: 🔐 Login to GitLab Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DANIKMANYAWAR_BUILD_USERNAME }}
+          password: ${{ secrets.DANIKMANYAWAR_BUILD_TOKEN }}
+
+      - name: 🏗️ Build and Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./.devops/Dockerfile
+          push: ${{ inputs.push_image }}
+          platforms: linux/amd64
+          tags: |
+            ${{ env.IMAGE }}:${{ steps.meta.outputs.short_sha }}
+            ${{ env.IMAGE }}:latest
+          build-args: |
+            APP_VERSION=${{ steps.meta.outputs.short_sha }}
+          cache-from: |
+            type=local,src=/tmp/.buildx-cache
+            type=registry,ref=${{ env.IMAGE }}:buildcache
+          cache-to: |
+            type=local,dest=/tmp/.buildx-cache-new,mode=max
+            type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
+          provenance: true
+          sbom: true
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ steps.meta.outputs.build_date }}
+
+      - name: 🔄 Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          if [ -d "/tmp/.buildx-cache-new" ]; then
+            mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+          fi
+
+      - name: 📦 Upload stack file as artifact
+        if: inputs.push_image
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-stack
+          path: ./.devops/docker-stack.yml
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: ✅ Build test completed (PR only)
+        if: ${{ !inputs.push_image }}
+        run: |
+          echo "✅ Docker build test completed successfully"
+          echo "📦 Image tag: ${{ env.IMAGE }}:${{ steps.meta.outputs.short_sha }}"
+          echo "ℹ️  Image was not pushed to registry (PR/test build)"
+
+      - name: 🧹 Cleanup build artifacts
+        if: always()
+        run: |
+          docker image prune -f --filter "dangling=true" || true
+          docker builder prune -f --filter "until=168h" --keep-storage=10GB || true
+          docker image prune -af --filter "until=72h" || true
+          echo "✅ Cleanup completed"

@@ -1,0 +1,167 @@
+# Reusable workflow for deploying to any tenant server.
+# Called by: deploy-qa.yml, deploy-tenant-*.yml
+#
+# Each caller passes:
+#   - environment:         GitHub Environment name (for secrets/variables)
+#   - image_tag:           Docker image tag to deploy
+#   - stack_name:          Docker stack name (optional override)
+#   - deploy_path:         Remote deploy path (optional override)
+
+name: Deploy to Tenant (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "GitHub Environment name (e.g. qa, production-tenant-a)"
+        required: true
+        type: string
+      image_tag:
+        description: "Docker image tag to deploy"
+        required: true
+        type: string
+      stack_name:
+        description: "Docker stack name on remote server"
+        required: false
+        type: string
+        default: "danikmanyawar"
+      deploy_path:
+        description: "Remote deploy path"
+        required: false
+        type: string
+        default: "/srv/apps/danikmanyawar"
+      workflow_run_id:
+        description: "Workflow run ID for downloading artifacts"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  actions: read  # To download artifacts
+
+env:
+  REGISTRY: registry.gitlab.com
+  IMAGE: registry.gitlab.com/danikmanyawar/danikmanyawar
+
+jobs:
+  deploy:
+    name: 🚀 Deploy to ${{ inputs.environment }}
+    runs-on: [self-hosted, encora, encora-deploy]
+    timeout-minutes: 15
+    environment:
+      name: ${{ inputs.environment }}
+    concurrency:
+      group: deploy-${{ inputs.environment }}
+      cancel-in-progress: false  # Don't cancel in-progress deployments
+
+    steps:
+      - name: 📦 Download stack file
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: docker-stack
+          path: ./deploy
+          run-id: ${{ inputs.workflow_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔐 Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.REMOTE_SERVER_SSH_KEY }}
+
+      - name: 🔗 Persist SSH socket for self-hosted runner
+        run: echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> $GITHUB_ENV
+
+      - name: 🚀 Deploy to ${{ inputs.environment }}
+        env:
+          REMOTE_HOST: ${{ vars.REMOTE_HOST }}
+          REMOTE_USER: ${{ vars.REMOTE_USER }}
+          CI_REGISTRY_USER: ${{ secrets.DANIKMANYAWAR_DEPLOY_USERNAME }}
+          CI_REGISTRY_PASSWORD: ${{ secrets.DANIKMANYAWAR_DEPLOY_TOKEN }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          DEPLOY_PATH: ${{ inputs.deploy_path }}
+          STACK_NAME: ${{ inputs.stack_name }}
+        run: |
+          set -euo pipefail
+
+          echo "📤 Copying stack file to remote server..."
+          scp -o StrictHostKeyChecking=no \
+              -o ConnectTimeout=30 \
+              ./deploy/docker-stack.yml \
+              "${REMOTE_USER}@${REMOTE_HOST}:${DEPLOY_PATH}/"
+
+          echo "🚀 Deploying Docker stack..."
+          ssh -o StrictHostKeyChecking=no \
+              -o ConnectTimeout=30 \
+              "${REMOTE_USER}@${REMOTE_HOST}" << 'DEPLOY_SCRIPT'
+          set -euo pipefail
+
+          # Login to registry
+          echo "${{ secrets.DANIKMANYAWAR_DEPLOY_TOKEN }}" | \
+            docker login -u "${{ secrets.DANIKMANYAWAR_DEPLOY_USERNAME }}" \
+            --password-stdin ${{ env.REGISTRY }}
+
+          cd ${{ inputs.deploy_path }}
+
+          # Deploy with explicit image tag
+          APP_IMAGE="${{ env.IMAGE }}:${{ inputs.image_tag }}" \
+            docker stack deploy \
+              --with-registry-auth \
+              --prune \
+              --resolve-image always \
+              -c docker-stack.yml \
+              ${{ inputs.stack_name }}
+
+          # Cleanup unused images to save disk space
+          docker image prune -f --filter "until=168h" || true
+
+          echo "✅ Deployment completed successfully"
+          DEPLOY_SCRIPT
+
+      - name: ⏳ Wait for service stabilization
+        run: sleep 90
+
+      - name: 🏥 Health check
+        env:
+          REMOTE_HOST: ${{ vars.REMOTE_HOST }}
+          REMOTE_USER: ${{ vars.REMOTE_USER }}
+          STACK_NAME: ${{ inputs.stack_name }}
+        run: |
+          set -euo pipefail
+
+          echo "🏥 Running health checks..."
+
+          ssh -o StrictHostKeyChecking=no \
+              -o ConnectTimeout=30 \
+              "${REMOTE_USER}@${REMOTE_HOST}" \
+              "SERVICE_NAME='${STACK_NAME}_danikmanyawar' bash -s" << 'HEALTH_SCRIPT'
+          set -euo pipefail
+
+          echo "📊 Service status:"
+          docker service ls --filter "name=$SERVICE_NAME"
+
+          DESIRED=$(docker service inspect "$SERVICE_NAME" \
+            --format '{{.Spec.Mode.Replicated.Replicas}}' 2>/dev/null || echo "1")
+
+          RUNNING=$(docker service ps "$SERVICE_NAME" \
+            --filter desired-state=running \
+            --format '{{.ID}}' 2>/dev/null | wc -l || echo "0")
+
+          DESIRED=$(echo "$DESIRED" | xargs)
+          RUNNING=$(echo "$RUNNING" | xargs)
+
+          echo "📈 Replicas: $RUNNING / $DESIRED"
+
+          if [ "$RUNNING" -ge "$DESIRED" ]; then
+            echo "✅ All $RUNNING/$DESIRED replicas are healthy"
+          else
+            echo "❌ Error: Only $RUNNING/$DESIRED replicas running"
+            docker service ps "$SERVICE_NAME" --no-trunc
+            exit 1
+          fi
+          HEALTH_SCRIPT
+
+      - name: 🧹 Cleanup SSH
+        if: always()
+        run: |
+          rm -rf ~/.ssh/known_hosts 2>/dev/null || true
+          pkill ssh-agent 2>/dev/null || true

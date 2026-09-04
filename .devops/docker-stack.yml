@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  danikmanyawar:
+    image: ${APP_IMAGE}
+    ports:
+      - "3015:3015"
+    env_file:
+      - .env
+    volumes:
+      - /opt/dainik-manyavar/uploads:/app/public/uploads
+      - /opt/dainik-manyavar/db/dainik-manyawar.db:/app/prisma/dainik-manyawar.db
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3015/api/categories').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+        failure_action: rollback
+      rollback_config:
+        parallelism: 1
+        delay: 10s
+        order: stop-first

@@ -1,0 +1,51 @@
+name: Build & Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+      - qa
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
+  pull_request:
+    branches:
+      - main
+      - qa
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
+  workflow_dispatch:
+    inputs:
+      git_branch:
+        description: "Branch to build"
+        required: true
+        default: "main"
+      debug_mode:
+        description: "Run in debug mode"
+        required: false
+        default: "false"
+        type: boolean
+
+# Explicit permissions - least privilege principle
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  # ====================
+  # BUILD JOB
+  # Runs on every PR (push_image=false) and on every push to main/qa (push_image=true).
+  # Use deploy-qa.yml / deploy-prod.yml etc. for environment deployments.
+  # ====================
+  build:
+    name: 🔨 Build & Push Image
+    uses: ./.github/workflows/build.yml
+    with:
+      git_branch: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.git_branch || '' }}
+      push_image: ${{ github.event_name != 'pull_request' }}
+    secrets: inherit
