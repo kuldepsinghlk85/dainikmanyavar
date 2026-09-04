@@ -20,8 +20,8 @@ build
 .env.*
 
 # local SQLite (prod DB is bind-mounted)
-*.db
-*.db-journal
+**/*.db
+**/*.db-journal
 
 # docs / agent context
 AGENTS.md

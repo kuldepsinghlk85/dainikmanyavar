@@ -67,16 +67,20 @@ COPY --from=deps /app/node_modules ./node_modules
 # Prisma client generation downloads engines — keep it in its own layer so it
 # is reused whenever only application source changed.
 COPY prisma ./prisma
-RUN npx prisma generate
+# db push is required, not redundant: pages that query Prisma are prerendered
+# during `next build`, so an empty schema DB must exist first. It is created
+# inside this stage only — the runner copies prisma/ from the build context, so
+# this throwaway DB never reaches the image.
+RUN npx prisma generate && npx prisma db push --skip-generate
 
 # Config + source only. public/ is deliberately excluded: `next build` does not
 # read it, and copying 42MB of assets here would bust this layer on every
 # image/PDF change.
-COPY next.config.js tsconfig.json next-env.d.ts postcss.config.js tailwind.config.js ./
+# next-env.d.ts is deliberately absent: it is gitignored, so it does not exist
+# in a fresh CI checkout. `next build` regenerates it.
+COPY next.config.js tsconfig.json postcss.config.js tailwind.config.js ./
 COPY src ./src
 
-# `npm run build` also runs `prisma db push`, which is pointless here — the DB is
-# a bind-mounted volume and the entrypoint pushes the schema at startup.
 RUN --mount=type=cache,target=/app/.next/cache,sharing=locked \
     npx next build
 
