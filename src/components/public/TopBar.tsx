@@ -44,9 +44,9 @@ export default function TopBar() {
             हमारे बारे में
           </span>
           <span className="text-stone-300">|</span>
-          <span className="text-stone-400 cursor-not-allowed select-none" title="पृष्ठ शीघ्र उपलब्ध होगा">
+          <Link href="/contact" className="hover:text-[#EA580C] font-semibold text-stone-700">
             संपर्क करें
-          </span>
+          </Link>
         </div>
       </div>
     </div>

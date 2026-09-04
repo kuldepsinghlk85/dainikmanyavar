@@ -17,18 +17,28 @@ export default function Footer() {
             <p className="text-xs text-[#9A5A2E]">📍 उत्तर प्रदेश, भारत</p>
           </div>
 
-          {/* Quick Links */}
+          {/* Quick Links & Services */}
           <div>
-            <h4 className="font-bold text-[#3F2A1D] mb-3 text-base">त्वरित लिंक</h4>
+            <h4 className="font-bold text-[#3F2A1D] mb-3 text-base">संपर्क एवं सेवाएं</h4>
             <ul className="space-y-2 text-sm text-[#6B4A36]">
               <li>
-                <Link href="/" className="hover:text-[#F97316] transition-colors font-medium">
-                  होम
+                <Link href="/contact" className="hover:text-[#EA580C] transition-colors font-semibold flex items-center gap-1 text-stone-800">
+                  <span>📝 संपर्क करें (Contact Us)</span>
                 </Link>
               </li>
               <li>
-                <Link href="/category/latest" className="hover:text-[#F97316] transition-colors font-medium">
-                  ताजा खबर
+                <Link href="/contact?category=ADVERTISEMENT" className="hover:text-[#EA580C] transition-colors font-medium flex items-center gap-1">
+                  <span>📢 विज्ञापन के लिए संपर्क करें</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact?category=NEWS_TIP" className="hover:text-[#EA580C] transition-colors font-medium flex items-center gap-1">
+                  <span>📰 समाचार की सूचना दें</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact?category=CAREER" className="hover:text-[#EA580C] transition-colors font-medium flex items-center gap-1">
+                  <span>💼 पत्रकारिता / रिपोर्टर आवेदन</span>
                 </Link>
               </li>
               <li>
@@ -47,6 +57,15 @@ export default function Footer() {
                   className="hover:text-[#EA580C] transition-colors font-semibold flex items-center gap-1"
                 >
                   <span>📞 संपर्क: +91 93361 81297</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  href="mailto:editor.dainikmanyavar@gmail.com"
+                  className="hover:text-[#EA580C] transition-colors text-xs flex items-center gap-1 text-stone-600 truncate max-w-[200px]"
+                  title="editor.dainikmanyavar@gmail.com"
+                >
+                  <span>✉️ editor.dainikmanyavar@gmail.com</span>
                 </a>
               </li>
             </ul>
