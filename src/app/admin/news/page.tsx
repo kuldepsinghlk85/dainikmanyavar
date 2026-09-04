@@ -35,10 +35,13 @@ export default function AdminNewsPage() {
 
   const fetchArticles = async () => {
     try {
-      const res = await fetch(`/api/articles?status=${statusFilter}&limit=100`);
+      const res = await fetch(`/api/articles?status=${statusFilter}&limit=100&sortBy=id&order=desc`);
       const data = await res.json();
       if (data.success) {
-        setArticles(data.data || []);
+        const sorted = (data.data || []).slice().sort((a: Article, b: Article) => {
+          return b.id.localeCompare(a.id);
+        });
+        setArticles(sorted);
         setSelectedIds([]);
       }
       fetchArchivedCount();
@@ -219,10 +222,13 @@ export default function AdminNewsPage() {
       {/* Page Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
         <div>
-          <h1 className="text-2xl font-black text-stone-900 tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl font-black text-stone-900 tracking-tight flex flex-wrap items-center gap-2">
             <span>सभी समाचार (All News Manager)</span>
             <span className="bg-[#EA580C] text-white text-xs font-mono font-bold px-2.5 py-0.5 rounded-full">
               {articles.length} {statusFilter === 'ACTIVE' ? 'सक्रिय' : statusFilter === 'ARCHIVED' ? 'आर्काइव्ड' : 'कुल'}
+            </span>
+            <span className="bg-slate-100 text-slate-700 text-[11px] font-sans font-bold px-2.5 py-0.5 rounded-full border border-slate-200">
+              ⬇️ क्रम: ID (Newest First)
             </span>
           </h1>
           <p className="text-xs font-semibold text-stone-600 mt-1">
@@ -397,6 +403,7 @@ export default function AdminNewsPage() {
               <thead className="bg-stone-50 font-black text-stone-800 border-b border-stone-200">
                 <tr>
                   <th className="p-3 w-10">चयन</th>
+                  <th className="p-3 w-28"># ID (Newest First)</th>
                   <th className="p-3">समाचार शीर्षक</th>
                   <th className="p-3">श्रेणी</th>
                   <th className="p-3">व्यूज</th>
@@ -419,6 +426,12 @@ export default function AdminNewsPage() {
                             <Square className="w-4 h-4 text-stone-300 hover:text-stone-500" />
                           )}
                         </button>
+                      </td>
+
+                      <td className="p-3 font-mono text-[11px] text-stone-500 font-bold" title={art.id}>
+                        <span className="bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded border border-stone-200">
+                          #{art.id.slice(0, 8)}
+                        </span>
                       </td>
 
                       <td className="p-3 font-extrabold text-stone-900 max-w-sm truncate">

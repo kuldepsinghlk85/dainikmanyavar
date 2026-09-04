@@ -63,9 +63,16 @@ export async function GET(request: Request) {
     if (isFeatured) where.isFeatured = true;
     if (isBreaking) where.isBreaking = true;
 
+    const sortBy = searchParams.get('sortBy') || searchParams.get('sort');
+    const sortOrder = searchParams.get('order')?.toLowerCase() === 'asc' ? 'asc' : 'desc';
+
     let orderBy: any = { publishedAt: 'desc' };
 
-    if (isTrending) {
+    if (sortBy === 'id') {
+      orderBy = { id: sortOrder };
+    } else if (sortBy === 'createdAt') {
+      orderBy = { createdAt: sortOrder };
+    } else if (isTrending) {
       orderBy = [
         { forceTrending: 'desc' },
         { viewCount: 'desc' },
