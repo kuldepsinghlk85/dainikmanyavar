@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { slugify } from '@/lib/utils';
+import { getNextNewsId, ensureArticleNewsIds } from '@/lib/newsId';
 
 export async function GET(request: Request) {
   try {
@@ -63,26 +64,31 @@ export async function GET(request: Request) {
     if (isFeatured) where.isFeatured = true;
     if (isBreaking) where.isBreaking = true;
 
+    // Automatically backfill any missing newsIds
+    await ensureArticleNewsIds();
+
     const sortBy = searchParams.get('sortBy') || searchParams.get('sort');
     const sortOrder = searchParams.get('order')?.toLowerCase() === 'asc' ? 'asc' : 'desc';
 
     let orderBy: any = [
+      { newsId: 'desc' },
       { updatedAt: 'desc' },
       { publishedAt: 'desc' },
-      { createdAt: 'desc' },
     ];
 
-    if (sortBy === 'publishedAt') {
-      orderBy = [{ publishedAt: sortOrder }, { updatedAt: sortOrder }];
+    if (sortBy === 'newsId' || sortBy === 'id') {
+      orderBy = [{ newsId: sortOrder }];
+    } else if (sortBy === 'publishedAt') {
+      orderBy = [{ publishedAt: sortOrder }, { newsId: sortOrder }];
     } else if (sortBy === 'createdAt') {
-      orderBy = [{ createdAt: sortOrder }];
+      orderBy = [{ createdAt: sortOrder }, { newsId: sortOrder }];
     } else if (sortBy === 'updatedAt') {
-      orderBy = [{ updatedAt: sortOrder }, { publishedAt: sortOrder }];
+      orderBy = [{ updatedAt: sortOrder }, { newsId: sortOrder }];
     } else if (isTrending) {
       orderBy = [
         { forceTrending: 'desc' },
         { viewCount: 'desc' },
-        { publishedAt: 'desc' },
+        { newsId: 'desc' },
       ];
     }
 
@@ -158,9 +164,11 @@ export async function POST(request: Request) {
 
     const baseSlug = slugify(title);
     const uniqueSlug = `${baseSlug}-${Date.now().toString().slice(-4)}`;
+    const nextNewsId = await getNextNewsId();
 
     const article = await db.article.create({
       data: {
+        newsId: nextNewsId,
         title,
         subtitle,
         slug: uniqueSlug,

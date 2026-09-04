@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { slugify } from '@/lib/utils';
+import { getNextNewsId } from '@/lib/newsId';
 
 export async function POST(
   request: Request,
@@ -34,10 +35,12 @@ export async function POST(
     // 2. Generate Unique Base Slug
     const baseSlug = slugify(importItem.originalTitle) || `article-${Date.now()}`;
     const slug = `${baseSlug}-${Date.now().toString().slice(-4)}`;
+    const nextNewsId = await getNextNewsId();
 
     // 3. Create Standard Dainik Manyavar Article in DRAFT Status
     const article = await db.article.create({
       data: {
+        newsId: nextNewsId,
         title: importItem.originalTitle,
         slug,
         excerpt: importItem.originalExcerpt || importItem.originalTitle,

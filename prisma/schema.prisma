@@ -108,6 +108,7 @@ model Author {
 model Article {
   id                String          @id @default(uuid())
   uuid              String          @default(uuid())
+  newsId            Int             @default(0)
   title             String
   subtitle          String?
   slug              String          @unique
@@ -164,6 +165,8 @@ model Article {
   audios            ArticleAudio[]
   shortLinks        ShortLink[]
   breakingNews      BreakingNews[]
+
+  @@index([newsId])
 }
 
 model ArticleRevision {

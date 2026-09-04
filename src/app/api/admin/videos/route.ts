@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { slugify } from '@/lib/utils';
+import { getNextNewsId } from '@/lib/newsId';
 
 export async function GET() {
   try {
@@ -52,9 +53,11 @@ export async function POST(request: Request) {
     }
 
     const slug = `${slugify(title)}-video-${Date.now().toString().slice(-4)}`;
+    const nextNewsId = await getNextNewsId();
 
     const videoArticle = await db.article.create({
       data: {
+        newsId: nextNewsId,
         title,
         slug,
         excerpt: title,

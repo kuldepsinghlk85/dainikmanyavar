@@ -37,6 +37,7 @@ export default async function HomePage() {
       tags: { include: { tag: true } },
     },
     orderBy: [
+      { newsId: 'desc' },
       { updatedAt: 'desc' },
       { publishedAt: 'desc' },
     ],
@@ -70,6 +71,7 @@ export default async function HomePage() {
       tags: { include: { tag: true } },
     },
     orderBy: [
+      { newsId: 'desc' },
       { updatedAt: 'desc' },
       { publishedAt: 'desc' },
     ],
@@ -81,6 +83,7 @@ export default async function HomePage() {
   let dbVideoArticles = await db.article.findMany({
     where: { status: 'PUBLISHED', videoEnabled: true },
     orderBy: [
+      { newsId: 'desc' },
       { updatedAt: 'desc' },
       { publishedAt: 'desc' },
     ],
@@ -102,6 +105,7 @@ export default async function HomePage() {
     dbVideoArticles = await db.article.findMany({
       where: { status: 'PUBLISHED' },
       orderBy: [
+        { newsId: 'desc' },
         { updatedAt: 'desc' },
         { publishedAt: 'desc' },
       ],
@@ -142,6 +146,7 @@ export default async function HomePage() {
       category: true,
     },
     orderBy: [
+      { newsId: 'desc' },
       { updatedAt: 'desc' },
       { publishedAt: 'desc' },
     ],
@@ -190,6 +195,7 @@ export default async function HomePage() {
       category: true,
     },
     orderBy: [
+      { newsId: 'desc' },
       { updatedAt: 'desc' },
       { publishedAt: 'desc' },
     ],

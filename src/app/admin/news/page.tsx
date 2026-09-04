@@ -6,6 +6,7 @@ import { Newspaper, PlusCircle, Trash2, Edit, Eye, CheckSquare, Square, AlertOct
 
 interface Article {
   id: string;
+  newsId?: number;
   title: string;
   slug: string;
   status: string;
@@ -37,11 +38,14 @@ export default function AdminNewsPage() {
 
   const fetchArticles = async () => {
     try {
-      const res = await fetch(`/api/articles?status=${statusFilter}&limit=100&sortBy=updatedAt&order=desc`);
+      const res = await fetch(`/api/articles?status=${statusFilter}&limit=100&sortBy=newsId&order=desc`);
       const data = await res.json();
       if (data.success) {
-        // Guarantee newest updated/created article is strictly first
+        // Guarantee newest numbered ID is strictly first, followed by timestamps
         const sorted = (data.data || []).slice().sort((a: Article, b: Article) => {
+          if (a.newsId && b.newsId && a.newsId !== b.newsId) {
+            return b.newsId - a.newsId;
+          }
           const timeA = new Date(a.updatedAt || a.publishedAt || a.createdAt || 0).getTime();
           const timeB = new Date(b.updatedAt || b.publishedAt || b.createdAt || 0).getTime();
           return timeB - timeA;
@@ -433,9 +437,9 @@ export default function AdminNewsPage() {
                         </button>
                       </td>
 
-                      <td className="p-3 font-mono text-[11px] text-stone-500 font-bold" title={art.id}>
-                        <span className="bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded border border-stone-200">
-                          #{art.id.slice(0, 8)}
+                      <td className="p-3 font-mono text-[11px] text-stone-500 font-bold" title={`UUID: ${art.id}`}>
+                        <span className="bg-orange-50 text-[#C2410C] font-black px-2.5 py-1 rounded border border-orange-200">
+                          #{art.newsId ?? art.id.slice(0, 8)}
                         </span>
                       </td>
 

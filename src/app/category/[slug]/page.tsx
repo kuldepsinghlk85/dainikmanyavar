@@ -39,6 +39,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     articles = await db.article.findMany({
       where: { status: 'PUBLISHED' },
       orderBy: [
+        { newsId: 'desc' },
         { updatedAt: 'desc' },
         { publishedAt: 'desc' },
       ],
@@ -57,6 +58,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     articles = await db.article.findMany({
       where: { primaryCategoryId: category.id, status: 'PUBLISHED' },
       orderBy: [
+        { newsId: 'desc' },
         { updatedAt: 'desc' },
         { publishedAt: 'desc' },
       ],

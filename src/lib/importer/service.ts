@@ -2,6 +2,7 @@ import Parser from 'rss-parser';
 import crypto from 'crypto';
 import { db } from '@/lib/db';
 import { slugify } from '@/lib/utils';
+import { getNextNewsId } from '@/lib/newsId';
 
 interface NormalizedNewsItem {
   externalId: string;
@@ -328,8 +329,10 @@ export class NewsImportService {
 <p><em>(स्रोत: ${item.publisherName} — <a href="${item.sourceUrl}" target="_blank" rel="noopener">मूल लिंक खोलें</a>)</em></p>`;
 
     // Create Normal Article Record (Status: DRAFT)
+    const nextNewsId = await getNextNewsId();
     const newArticle = await db.article.create({
       data: {
+        newsId: nextNewsId,
         title: item.originalTitle,
         subtitle: `स्रोत: ${item.publisherName}`,
         slug: cleanSlug,
