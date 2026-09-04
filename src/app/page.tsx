@@ -247,7 +247,7 @@ export default async function HomePage() {
           <AdBanner position="header_wide" sizeText="970 × 90 / Top Responsive Leaderboard Banner" />
         </div>
 
-        {/* Featured Grand Relaunch & Sanatan Heritage Special Showcase */}
+        {/* Featured Launch & Sanatan Heritage Special Showcase */}
         <SanatanSpecialSection />
 
         {/* Master 2/3 Main Content + 1/3 Right Sidebar Layout */}

@@ -220,8 +220,8 @@ export default function SanatanSpecialSection() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'दैनिक मान्यवर - भव्य पुनः लॉन्च एवं सनातन विशेष',
-          text: 'श्रीकृष्ण जन्माष्टमी के पावन अवसर पर दैनिक मान्यवर का भव्य पुनः लॉन्च!',
+          title: 'दैनिक मान्यवर - लॉन्च एवं सनातन विशेष',
+          text: 'श्रीकृष्ण जन्माष्टमी के पावन अवसर पर दैनिक मान्यवर का लॉन्च!',
           url: window.location.origin,
         });
       } catch {}
@@ -243,14 +243,14 @@ export default function SanatanSpecialSection() {
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-400/30 text-amber-300 text-xs font-bold mb-2 shadow-sm">
             <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" style={{ animationDuration: '6s' }} />
-            <span>श्रीकृष्ण जन्माष्टमी एवं भव्य पुनः लॉन्च विशेष</span>
+            <span>श्रीकृष्ण जन्माष्टमी एवं लॉन्च विशेष</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-400 to-orange-400">
               दैनिक मान्यवर
             </span>
             <span className="text-stone-300 font-medium text-xl sm:text-2xl">|</span>
-            <span className="text-stone-100">भव्य पुनः लॉन्च एवं सनातन विशेष</span>
+            <span className="text-stone-100">लॉन्च एवं सनातन विशेष</span>
           </h2>
           <p className="text-stone-300 text-xs sm:text-sm mt-1.5 max-w-2xl font-normal">
             इस पावन अवसर पर आपके अपने समाचार पत्र का नया डिजिटल अवतार —{' '}
@@ -280,7 +280,7 @@ export default function SanatanSpecialSection() {
 
       {/* 3-Column Arrangement: Poster + Reel 1 + Reel 2 */}
       <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6">
-        {/* CARD 1: Official Janmashtami Grand Relaunch Poster */}
+        {/* CARD 1: Official Janmashtami Launch Poster */}
         <div
           onClick={() => setIsLightboxOpen(true)}
           className="group relative rounded-2xl overflow-hidden bg-stone-950 border border-amber-500/40 shadow-xl hover:shadow-2xl hover:border-amber-400 transition-all duration-300 flex flex-col justify-between cursor-pointer h-[520px]"
@@ -289,7 +289,7 @@ export default function SanatanSpecialSection() {
           <div className="relative w-full h-full">
             <Image
               src="/imgg.jpg"
-              alt="दैनिक मान्यवर - श्रीकृष्ण जन्माष्टमी भव्य पुनः लॉन्च पोस्टर"
+              alt="दैनिक मान्यवर - श्रीकृष्ण जन्माष्टमी लॉन्च पोस्टर"
               fill
               priority
               className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
@@ -302,7 +302,7 @@ export default function SanatanSpecialSection() {
           <div className="absolute top-0 left-0 right-0 z-10 p-3.5 flex items-center justify-between pointer-events-none">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md border border-amber-300/40">
               <Flame className="w-3.5 h-3.5 text-yellow-300" />
-              <span>भव्य पुनः लॉन्च</span>
+              <span>लॉन्च</span>
             </span>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-black/60 backdrop-blur-md text-amber-300 border border-amber-500/30">
               <Sparkles className="w-3 h-3 text-amber-400" />
@@ -322,7 +322,7 @@ export default function SanatanSpecialSection() {
           <div className="relative z-10 p-4 space-y-2 bg-gradient-to-t from-black via-black/80 to-transparent">
             <div>
               <h4 className="text-white font-bold text-base leading-snug drop-shadow">
-                दैनिक मान्यवर का भव्य पुनः लॉन्च
+                दैनिक मान्यवर का लॉन्च
               </h4>
               <p className="text-amber-200/90 text-xs mt-0.5 drop-shadow line-clamp-2">
                 नई सोच, नई ऊर्जा और नए संकल्प के साथ... सच की धारा, जन-जन की पुकार
@@ -392,13 +392,13 @@ export default function SanatanSpecialSection() {
                   विशेष पोस्टर
                 </span>
                 <h3 className="font-bold text-sm sm:text-base text-amber-300 truncate">
-                  दैनिक मान्यवर - भव्य पुनः लॉन्च (श्रीकृष्ण जन्माष्टमी)
+                  दैनिक मान्यवर - लॉन्च (श्रीकृष्ण जन्माष्टमी)
                 </h3>
               </div>
               <div className="flex items-center gap-2">
                 <a
                   href="/imgg.jpg"
-                  download="dainik-manyavar-relaunch-poster.jpg"
+                  download="dainik-manyavar-launch-poster.jpg"
                   className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-amber-300 transition-colors"
                   title="पोस्टर डाउनलोड करें"
                 >
@@ -418,7 +418,7 @@ export default function SanatanSpecialSection() {
             <div className="relative w-full flex-1 overflow-y-auto max-h-[calc(92vh-60px)] p-2 sm:p-4 flex justify-center bg-stone-950">
               <img
                 src="/imgg.jpg"
-                alt="दैनिक मान्यवर भव्य पुनः लॉन्च पोस्टर"
+                alt="दैनिक मान्यवर लॉन्च पोस्टर"
                 className="max-h-[80vh] w-auto object-contain rounded-lg shadow-2xl border border-amber-500/20"
               />
             </div>
