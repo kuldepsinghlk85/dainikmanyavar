@@ -36,7 +36,10 @@ export default async function HomePage() {
       location: true,
       tags: { include: { tag: true } },
     },
-    orderBy: { publishedAt: 'desc' },
+    orderBy: [
+      { updatedAt: 'desc' },
+      { publishedAt: 'desc' },
+    ],
     take: 5,
   });
 
@@ -66,7 +69,10 @@ export default async function HomePage() {
       category: true,
       tags: { include: { tag: true } },
     },
-    orderBy: { publishedAt: 'desc' },
+    orderBy: [
+      { updatedAt: 'desc' },
+      { publishedAt: 'desc' },
+    ],
     skip: 1,
     take: 4,
   });
@@ -74,7 +80,10 @@ export default async function HomePage() {
   // Fetch active Video News Bulletins for Homepage Video Section & Playlist
   let dbVideoArticles = await db.article.findMany({
     where: { status: 'PUBLISHED', videoEnabled: true },
-    orderBy: { publishedAt: 'desc' },
+    orderBy: [
+      { updatedAt: 'desc' },
+      { publishedAt: 'desc' },
+    ],
     take: 8,
     select: {
       id: true,
@@ -92,7 +101,10 @@ export default async function HomePage() {
   if (dbVideoArticles.length === 0) {
     dbVideoArticles = await db.article.findMany({
       where: { status: 'PUBLISHED' },
-      orderBy: { publishedAt: 'desc' },
+      orderBy: [
+        { updatedAt: 'desc' },
+        { publishedAt: 'desc' },
+      ],
       take: 6,
       select: {
         id: true,
@@ -129,7 +141,10 @@ export default async function HomePage() {
       tags: { include: { tag: true } },
       category: true,
     },
-    orderBy: { publishedAt: 'desc' },
+    orderBy: [
+      { updatedAt: 'desc' },
+      { publishedAt: 'desc' },
+    ],
     take: 6,
   });
 
@@ -174,7 +189,10 @@ export default async function HomePage() {
       location: true,
       category: true,
     },
-    orderBy: { publishedAt: 'desc' },
+    orderBy: [
+      { updatedAt: 'desc' },
+      { publishedAt: 'desc' },
+    ],
     take: 50,
   });
 

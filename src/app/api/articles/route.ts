@@ -66,12 +66,18 @@ export async function GET(request: Request) {
     const sortBy = searchParams.get('sortBy') || searchParams.get('sort');
     const sortOrder = searchParams.get('order')?.toLowerCase() === 'asc' ? 'asc' : 'desc';
 
-    let orderBy: any = { publishedAt: 'desc' };
+    let orderBy: any = [
+      { updatedAt: 'desc' },
+      { publishedAt: 'desc' },
+      { createdAt: 'desc' },
+    ];
 
-    if (sortBy === 'id') {
-      orderBy = { id: sortOrder };
+    if (sortBy === 'publishedAt') {
+      orderBy = [{ publishedAt: sortOrder }, { updatedAt: sortOrder }];
     } else if (sortBy === 'createdAt') {
-      orderBy = { createdAt: sortOrder };
+      orderBy = [{ createdAt: sortOrder }];
+    } else if (sortBy === 'updatedAt') {
+      orderBy = [{ updatedAt: sortOrder }, { publishedAt: sortOrder }];
     } else if (isTrending) {
       orderBy = [
         { forceTrending: 'desc' },
@@ -214,6 +220,13 @@ export async function POST(request: Request) {
         detailsJson: JSON.stringify({ title: article.title, status }),
       },
     });
+
+    try {
+      const { revalidatePath } = await import('next/cache');
+      revalidatePath('/');
+      revalidatePath('/category/latest');
+      revalidatePath('/admin/news');
+    } catch (_) {}
 
     return NextResponse.json({ success: true, data: article });
   } catch (error: any) {

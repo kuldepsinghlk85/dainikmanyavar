@@ -38,7 +38,10 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     categoryName = '🔥 ताज़ा ख़बरें (All Latest News)';
     articles = await db.article.findMany({
       where: { status: 'PUBLISHED' },
-      orderBy: { publishedAt: 'desc' },
+      orderBy: [
+        { updatedAt: 'desc' },
+        { publishedAt: 'desc' },
+      ],
       take: 60,
       include: {
         category: true,
@@ -53,7 +56,10 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     categoryName = category.name;
     articles = await db.article.findMany({
       where: { primaryCategoryId: category.id, status: 'PUBLISHED' },
-      orderBy: { publishedAt: 'desc' },
+      orderBy: [
+        { updatedAt: 'desc' },
+        { publishedAt: 'desc' },
+      ],
       take: 40,
       include: {
         category: true,

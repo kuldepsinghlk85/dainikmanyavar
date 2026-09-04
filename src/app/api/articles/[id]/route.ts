@@ -77,9 +77,18 @@ export async function PUT(
         allowAudio: allowAudio !== undefined ? allowAudio : existing.allowAudio,
         seoTitle: seoTitle || existing.seoTitle,
         seoDescription: seoDescription || existing.seoDescription,
-        publishedAt: publishedAt ? new Date(publishedAt) : existing.publishedAt,
+        publishedAt: publishedAt ? new Date(publishedAt) : new Date(),
+        updatedAt: new Date(),
       },
     });
+
+    try {
+      const { revalidatePath } = await import('next/cache');
+      revalidatePath('/');
+      revalidatePath('/category/latest');
+      revalidatePath(`/news/${updated.slug}`);
+      revalidatePath('/admin/news');
+    } catch (_) {}
 
     // Update Tags
     if (Array.isArray(tags)) {

@@ -11,6 +11,8 @@ interface Article {
   status: string;
   viewCount: number;
   publishedAt: string;
+  updatedAt?: string;
+  createdAt?: string;
   category?: { name: string };
   author?: { name: string };
 }
@@ -35,11 +37,14 @@ export default function AdminNewsPage() {
 
   const fetchArticles = async () => {
     try {
-      const res = await fetch(`/api/articles?status=${statusFilter}&limit=100&sortBy=id&order=desc`);
+      const res = await fetch(`/api/articles?status=${statusFilter}&limit=100&sortBy=updatedAt&order=desc`);
       const data = await res.json();
       if (data.success) {
+        // Guarantee newest updated/created article is strictly first
         const sorted = (data.data || []).slice().sort((a: Article, b: Article) => {
-          return b.id.localeCompare(a.id);
+          const timeA = new Date(a.updatedAt || a.publishedAt || a.createdAt || 0).getTime();
+          const timeB = new Date(b.updatedAt || b.publishedAt || b.createdAt || 0).getTime();
+          return timeB - timeA;
         });
         setArticles(sorted);
         setSelectedIds([]);
