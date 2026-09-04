@@ -16,7 +16,7 @@ jobs:
     name: 🔨 Build & Push Image (qa)
     uses: ./.github/workflows/build.yml
     with:
-      git_branch: creating-danik-pipeline
+      git_branch: testing
       push_image: true
     secrets: inherit
 
