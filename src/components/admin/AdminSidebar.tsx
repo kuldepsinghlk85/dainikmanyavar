@@ -35,6 +35,7 @@ import {
   Globe,
   Compass,
   FileText,
+  Smartphone,
 } from 'lucide-react';
 
 interface AdminSidebarProps {
@@ -58,6 +59,8 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
         { label: 'सभी समाचार (All News)', href: '/admin/news', icon: Newspaper },
         { label: 'नया समाचार जोड़ें', href: '/admin/news/new', icon: PlusCircle },
         { label: '🔥 ब्रेकिंग न्यूज़ टिकर (Breaking Ticker)', href: '/admin/breaking', icon: Flame },
+        { label: '🌟 मुख्य स्लाइडर व टॉप न्यूज़ (Hero Slider)', href: '/admin/slider', icon: Sliders },
+        { label: '📱 मोबाइल ऐप मेनू (Mobile Menu)', href: '/admin/mobile-menu', icon: Smartphone },
         { label: '📩 संपर्क संदेश (Inquiries)', href: '/admin/inquiries', icon: Mail },
         { label: '📥 न्यूज़ इम्पोर्ट इनबॉक्स', href: '/admin/importer/inbox', icon: Inbox },
         { label: '📥 विशेष फ़ीड इनबॉक्स', href: '/admin/external-content/inbox', icon: Radio },

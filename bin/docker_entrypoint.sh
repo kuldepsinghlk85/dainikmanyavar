@@ -38,6 +38,9 @@ if [ -n "$DATABASE_URL" ]; then
     echo "[Dainik Manyavar] Running special modules seed..."
     node prisma/seed_special_modules.js
 
+    echo "[Dainik Manyavar] Running UP mandals and districts seed..."
+    node prisma/seed_up_locations.js
+
     echo "[Dainik Manyavar] Running real pages update..."
     node prisma/update_db_with_real_pages.js
 

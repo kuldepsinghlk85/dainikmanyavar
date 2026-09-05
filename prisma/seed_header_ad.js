@@ -6,12 +6,8 @@ async function runSeed() {
 
   await db.adSlot.upsert({
     where: { position: 'header_wide' },
-    update: {
-      name: 'शीर्ष हेडर विज्ञापन (Header Ad Slot 468×60)',
-      desktopCreative: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=1000&q=80',
-      targetUrl: '/advertise',
-      active: true,
-    },
+    // Keep update empty so custom user-uploaded ad creative is never overwritten on seed
+    update: {},
     create: {
       name: 'शीर्ष हेडर विज्ञापन (Header Ad Slot 468×60)',
       position: 'header_wide',

@@ -40,8 +40,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
       where: { status: 'PUBLISHED' },
       orderBy: [
         { newsId: 'desc' },
-        { updatedAt: 'desc' },
         { publishedAt: 'desc' },
+        { createdAt: 'desc' },
       ],
       take: 60,
       include: {
@@ -59,8 +59,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
       where: { primaryCategoryId: category.id, status: 'PUBLISHED' },
       orderBy: [
         { newsId: 'desc' },
-        { updatedAt: 'desc' },
         { publishedAt: 'desc' },
+        { createdAt: 'desc' },
       ],
       take: 40,
       include: {

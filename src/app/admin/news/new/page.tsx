@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ImageUploader from '@/components/admin/ImageUploader';
+import HtmlContentEditor from '@/components/admin/HtmlContentEditor';
 import { ArrowLeft, Save, ExternalLink, Plus, MapPin, Upload, X, CheckCircle2 } from 'lucide-react';
 
 interface Category {
@@ -384,18 +385,14 @@ export default function AddNewsPage() {
           />
         </div>
 
-        {/* HTML Content */}
-        <div>
-          <label className="block text-xs font-bold text-stone-700 mb-1">पूरा समाचार विवरण (Full Content HTML/Text) *</label>
-          <textarea
-            rows={10}
-            required
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="<p>समाचार की विस्तृत जानकारी यहाँ दर्ज करें...</p>"
-            className="w-full p-3 border border-stone-300 rounded-lg text-sm font-sans focus:outline-none focus:border-[#F97316]"
-          />
-        </div>
+        {/* HTML & Visual Content Editor */}
+        <HtmlContentEditor
+          value={content}
+          onChange={(html) => setContent(html)}
+          required
+          label="पूरा समाचार विवरण (Full Content Body - HTML/Visual Editor) *"
+          placeholder="<p>समाचार की विस्तृत जानकारी यहाँ दर्ज करें या HTML डेटा पेस्ट करें...</p>"
+        />
 
         {/* Flags & Toggles */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-3 bg-stone-50 rounded-lg border border-stone-200">

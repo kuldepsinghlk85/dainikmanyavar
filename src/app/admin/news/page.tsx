@@ -41,13 +41,15 @@ export default function AdminNewsPage() {
       const res = await fetch(`/api/articles?status=${statusFilter}&limit=100&sortBy=newsId&order=desc`);
       const data = await res.json();
       if (data.success) {
-        // Guarantee newest numbered ID is strictly first, followed by timestamps
+        // Guarantee newest numbered ID is strictly first, followed by publication date
         const sorted = (data.data || []).slice().sort((a: Article, b: Article) => {
-          if (a.newsId && b.newsId && a.newsId !== b.newsId) {
-            return b.newsId - a.newsId;
+          const idA = a.newsId || 0;
+          const idB = b.newsId || 0;
+          if (idA !== idB) {
+            return idB - idA;
           }
-          const timeA = new Date(a.updatedAt || a.publishedAt || a.createdAt || 0).getTime();
-          const timeB = new Date(b.updatedAt || b.publishedAt || b.createdAt || 0).getTime();
+          const timeA = new Date(a.publishedAt || a.createdAt || a.updatedAt || 0).getTime();
+          const timeB = new Date(b.publishedAt || b.createdAt || b.updatedAt || 0).getTime();
           return timeB - timeA;
         });
         setArticles(sorted);

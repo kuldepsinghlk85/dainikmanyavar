@@ -29,6 +29,7 @@ enum ArticleStatus {
 enum LocationType {
   COUNTRY
   STATE
+  DIVISION
   DISTRICT
   CITY
   LOCAL_AREA

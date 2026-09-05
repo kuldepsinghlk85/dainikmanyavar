@@ -15,7 +15,7 @@ export default function AdBanner({ position = 'header_wide', label, sizeText, cl
   const [adSlot, setAdSlot] = useState<any>(null);
 
   useEffect(() => {
-    fetch(`/api/admin/ads?position=${position}`)
+    fetch(`/api/ads?position=${position}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.data) {

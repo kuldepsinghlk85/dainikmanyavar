@@ -46,6 +46,34 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+
+    // 1. Batch update support (saving all slots at once)
+    if (Array.isArray(body.slots)) {
+      const results = [];
+      for (const slot of body.slots) {
+        if (!slot.position) continue;
+        const res = await db.adSlot.upsert({
+          where: { position: slot.position },
+          update: {
+            name: slot.name || undefined,
+            desktopCreative: slot.desktopCreative !== undefined ? slot.desktopCreative : undefined,
+            targetUrl: slot.targetUrl !== undefined ? slot.targetUrl : undefined,
+            active: slot.active !== undefined ? slot.active : undefined,
+          },
+          create: {
+            name: slot.name || slot.position,
+            position: slot.position,
+            desktopCreative: slot.desktopCreative || null,
+            targetUrl: slot.targetUrl || '/advertise',
+            active: slot.active !== undefined ? slot.active : true,
+          },
+        });
+        results.push(res);
+      }
+      return NextResponse.json({ success: true, data: results, message: 'सभी विज्ञापन सफलतापूर्वक सुरक्षित हो गए!' });
+    }
+
+    // 2. Single slot update
     const { position, name, desktopCreative, targetUrl, active } = body;
 
     if (!position) {
@@ -69,7 +97,7 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ success: true, data: updated });
+    return NextResponse.json({ success: true, data: updated, message: `'${updated.name}' विज्ञापन सफलतापूर्वक सुरक्षित हो गया!` });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

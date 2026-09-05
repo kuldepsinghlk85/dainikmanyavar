@@ -309,6 +309,15 @@ export default function HomepageAdminPage() {
                 </div>
 
                 <div className="flex items-center gap-3">
+                  {sec.key === 'section_hero_enabled' && (
+                    <Link
+                      href="/admin/slider"
+                      className="text-[11px] font-extrabold text-[#EA580C] hover:text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200 px-3 py-1 rounded-full flex items-center gap-1 transition-colors"
+                    >
+                      <Sliders className="w-3 h-3" />
+                      <span>खबरों का क्रम व संख्या सेट करें ➔</span>
+                    </Link>
+                  )}
                   <button
                     type="button"
                     onClick={() => handleToggle(sec.key, (widgetSettings as any)[sec.key])}

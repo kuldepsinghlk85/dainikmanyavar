@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Save, Eye, CheckCircle2, Image as ImageIcon, Volume2, Tag as TagIcon, Sparkles, ExternalLink, Plus, MapPin, Upload, X, FolderArchive } from 'lucide-react';
 import ImageUploadWidget from '@/components/admin/ImageUploadWidget';
+import HtmlContentEditor from '@/components/admin/HtmlContentEditor';
 
 export default function EditArticleAdminPage() {
   const router = useRouter();
@@ -316,20 +317,14 @@ export default function EditArticleAdminPage() {
           />
         </div>
 
-        {/* Content Body */}
-        <div>
-          <label className="block text-xs font-extrabold text-stone-900 mb-1.5">
-            विस्तृत समाचार सामग्री (Content Body) *
-          </label>
-          <textarea
-            rows={10}
-            required
-            value={form.content}
-            onChange={(e) => setForm({ ...form, content: e.target.value })}
-            placeholder="यहाँ पूरा समाचार लिखें या पेस्ट करें..."
-            className="w-full p-3 border border-stone-300 rounded-xl text-xs font-mono text-stone-900 focus:outline-none focus:border-[#EA580C] leading-relaxed"
-          />
-        </div>
+        {/* Content Body with HTML & Visual Editor */}
+        <HtmlContentEditor
+          value={form.content}
+          onChange={(html) => setForm({ ...form, content: html })}
+          required
+          label="विस्तृत समाचार सामग्री (Content Body) *"
+          placeholder="यहाँ पूरा समाचार लिखें या HTML डेटा फ़ीड कोड पेस्ट करें..."
+        />
 
         {/* Image & Audio Settings */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-stone-100">

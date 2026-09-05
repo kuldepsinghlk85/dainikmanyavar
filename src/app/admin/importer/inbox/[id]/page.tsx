@@ -4,6 +4,7 @@ import React, { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import ImageUploader from '@/components/admin/ImageUploader';
+import HtmlContentEditor from '@/components/admin/HtmlContentEditor';
 import { ArrowLeft, Sparkles, ExternalLink, Save, Check } from 'lucide-react';
 
 interface Category { id: string; name: string; }
@@ -244,16 +245,14 @@ export default function ImportPreviewPage({ params }: { params: Promise<{ id: st
             onChange={(url) => setFeaturedImage(url)}
           />
 
-          <div>
-            <label className="block text-xs font-bold text-stone-700 mb-1">समाचार विवरण (Article Body HTML/Text)</label>
-            <textarea
-              rows={6}
-              required
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="w-full p-2.5 border border-stone-300 rounded-lg text-xs font-sans focus:outline-none focus:border-[#F97316]"
-            />
-          </div>
+          <HtmlContentEditor
+            value={content}
+            onChange={(html) => setContent(html)}
+            required
+            label="समाचार विवरण (Article Body HTML/Visual Editor)"
+            placeholder="समाचार विवरण यहाँ लिखें या HTML फ़ीड कोड पेस्ट करें..."
+            minHeight="220px"
+          />
 
           <button
             type="submit"

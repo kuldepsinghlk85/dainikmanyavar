@@ -1,5 +1,6 @@
 import React from 'react';
 import TopBar from '@/components/public/TopBar';
+import MobileRedirectBanner from '@/components/public/MobileRedirectBanner';
 import Header from '@/components/public/Header';
 import Navigation from '@/components/public/Navigation';
 import BreakingTicker from '@/components/public/BreakingTicker';
@@ -27,27 +28,87 @@ import { db } from '@/lib/db';
 export const revalidate = 60; // ISR cache revalidation every 60 seconds
 
 export default async function HomePage() {
-  // Fetch top 5 latest articles for News Slider
-  const sliderArticles = await db.article.findMany({
-    where: { status: 'PUBLISHED' },
-    include: {
-      category: true,
-      author: true,
-      location: true,
-      tags: { include: { tag: true } },
-    },
-    orderBy: [
-      { newsId: 'desc' },
-      { updatedAt: 'desc' },
-      { publishedAt: 'desc' },
-    ],
-    take: 5,
+  // Fetch configured slider settings & sequence from HomepageSection
+  const sliderSection = await db.homepageSection.findUnique({
+    where: { sectionKey: 'hero_slider' },
   });
 
-  const formattedSlider = sliderArticles.map((art) => ({
-    ...art,
-    tags: art.tags.map((t) => t.tag),
-  }));
+  const sliderStoryCount = sliderSection?.storyCount || 10;
+  let manualSliderList: Array<{ id: string; order: number; enabled: boolean }> = [];
+
+  if (sliderSection?.manualArticles) {
+    try {
+      manualSliderList = JSON.parse(sliderSection.manualArticles);
+    } catch (_) {}
+  }
+
+  const enabledManualIds = manualSliderList
+    .filter((m) => m.enabled !== false)
+    .sort((a, b) => a.order - b.order)
+    .map((m) => m.id);
+
+  let curatedSliderArticles: any[] = [];
+
+  if (enabledManualIds.length > 0) {
+    const dbArticles = await db.article.findMany({
+      where: {
+        id: { in: enabledManualIds },
+        status: 'PUBLISHED',
+      },
+      include: {
+        category: true,
+        author: true,
+        location: true,
+        tags: { include: { tag: true } },
+      },
+    });
+
+    const dbMap = new Map(dbArticles.map((a) => [a.id, a]));
+
+    for (const id of enabledManualIds) {
+      const art = dbMap.get(id);
+      if (art && curatedSliderArticles.length < sliderStoryCount) {
+        curatedSliderArticles.push({
+          ...art,
+          tags: art.tags.map((t: any) => t.tag),
+        });
+      }
+    }
+  }
+
+  // If fewer than configured sliderStoryCount, fill remaining with latest published
+  if (curatedSliderArticles.length < sliderStoryCount) {
+    const existingIds = new Set(curatedSliderArticles.map((a) => a.id));
+    const needed = sliderStoryCount - curatedSliderArticles.length;
+
+    const fallbackArticles = await db.article.findMany({
+      where: {
+        status: 'PUBLISHED',
+        id: { notIn: Array.from(existingIds) },
+      },
+      include: {
+        category: true,
+        author: true,
+        location: true,
+        tags: { include: { tag: true } },
+      },
+      orderBy: [
+        { newsId: 'desc' },
+        { publishedAt: 'desc' },
+        { createdAt: 'desc' },
+      ],
+      take: needed,
+    });
+
+    for (const f of fallbackArticles) {
+      curatedSliderArticles.push({
+        ...f,
+        tags: f.tags.map((t: any) => t.tag),
+      });
+    }
+  }
+
+  const formattedSlider = curatedSliderArticles;
 
   // Fetch trending articles
   const trendingArticles = await db.article.findMany({
@@ -72,8 +133,8 @@ export default async function HomePage() {
     },
     orderBy: [
       { newsId: 'desc' },
-      { updatedAt: 'desc' },
       { publishedAt: 'desc' },
+      { createdAt: 'desc' },
     ],
     skip: 1,
     take: 4,
@@ -84,8 +145,8 @@ export default async function HomePage() {
     where: { status: 'PUBLISHED', videoEnabled: true },
     orderBy: [
       { newsId: 'desc' },
-      { updatedAt: 'desc' },
       { publishedAt: 'desc' },
+      { createdAt: 'desc' },
     ],
     take: 8,
     select: {
@@ -147,8 +208,8 @@ export default async function HomePage() {
     },
     orderBy: [
       { newsId: 'desc' },
-      { updatedAt: 'desc' },
       { publishedAt: 'desc' },
+      { createdAt: 'desc' },
     ],
     take: 6,
   });
@@ -196,8 +257,8 @@ export default async function HomePage() {
     },
     orderBy: [
       { newsId: 'desc' },
-      { updatedAt: 'desc' },
       { publishedAt: 'desc' },
+      { createdAt: 'desc' },
     ],
     take: 50,
   });
@@ -259,6 +320,7 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white font-sans">
+      <MobileRedirectBanner />
       <TopBar />
       <Header />
       <Navigation categories={menuCategories} />
