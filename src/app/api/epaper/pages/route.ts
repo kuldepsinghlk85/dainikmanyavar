@@ -81,3 +81,53 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
+// DELETE /api/epaper/pages?id=...
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const pageId = searchParams.get('id');
+    if (!pageId) {
+      return NextResponse.json({ success: false, error: 'Page id is required' }, { status: 400 });
+    }
+
+    const page = await db.epaperPage.findUnique({ where: { id: pageId } });
+    if (!page) {
+      return NextResponse.json({ success: false, error: 'Page not found' }, { status: 404 });
+    }
+
+    const editionId = page.editionId;
+
+    await db.epaperPage.delete({ where: { id: pageId } });
+
+    // Renumber remaining pages sequentially
+    const remainingPages = await db.epaperPage.findMany({
+      where: { editionId },
+      orderBy: { pageNumber: 'asc' },
+    });
+
+    for (let i = 0; i < remainingPages.length; i++) {
+      const newNum = i + 1;
+      if (remainingPages[i].pageNumber !== newNum) {
+        await db.epaperPage.update({
+          where: { id: remainingPages[i].id },
+          data: { pageNumber: newNum },
+        });
+      }
+    }
+
+    // Update edition totalPages
+    await db.epaperEdition.update({
+      where: { id: editionId },
+      data: { totalPages: remainingPages.length },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'पृष्ठ सफलतापूर्वक हटा दिया गया!',
+      totalPages: remainingPages.length,
+    });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}

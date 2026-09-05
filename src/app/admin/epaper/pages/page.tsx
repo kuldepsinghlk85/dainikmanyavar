@@ -14,6 +14,7 @@ import {
   X,
   FileText,
   ExternalLink,
+  Trash2,
 } from 'lucide-react';
 
 interface PageItem {
@@ -169,6 +170,22 @@ export default function EpaperPageManagementAdminPage() {
     setTargetUploadPageId(null);
   };
 
+  const handleDeletePage = async (pageId: string, pageNum: number) => {
+    if (!confirm(`क्या आप पेज ${pageNum} को हटाना चाहते हैं? इसके बाद कुल पृष्ठों की संख्या स्वतः अपडेट हो जाएगी।`)) return;
+    try {
+      const res = await fetch(`/api/epaper/pages?id=${pageId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`✅ पेज ${pageNum} सफलतापूर्वक हटा दिया गया!`);
+        fetchEditions();
+      } else {
+        alert(data.error || 'पेज हटाने में त्रुटि हुई');
+      }
+    } catch (err: any) {
+      alert(err.message || 'सर्वर एरर');
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-6xl">
       {/* Hidden File Input for Page Image Upload */}
@@ -316,23 +333,32 @@ export default function EpaperPageManagementAdminPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-stone-100 text-xs font-bold">
+                <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-stone-100 text-[11px] font-bold">
                   <button
                     onClick={() => triggerUploadImage(page.id)}
-                    className="p-2 bg-stone-100 hover:bg-[#EA580C] text-stone-800 hover:text-white rounded-xl flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                    className="p-1.5 bg-stone-100 hover:bg-[#EA580C] text-stone-800 hover:text-white rounded-xl flex items-center justify-center gap-1 transition-colors cursor-pointer"
                     title="इस पेज की नई स्कैन इमेज अपलोड करें"
                   >
                     <Upload className="w-3.5 h-3.5" />
-                    <span>इमेज बदलें</span>
+                    <span>इमेज</span>
                   </button>
 
                   <button
                     onClick={() => handleOpenEdit(page)}
-                    className="p-2 bg-stone-100 hover:bg-stone-800 text-stone-800 hover:text-white rounded-xl flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                    className="p-1.5 bg-stone-100 hover:bg-stone-800 text-stone-800 hover:text-white rounded-xl flex items-center justify-center gap-1 transition-colors cursor-pointer"
                     title="पेज का शीर्षक व समाचार टेक्स्ट संपादित करें"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
                     <span>एडिट</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleDeletePage(page.id, page.pageNumber)}
+                    className="p-1.5 bg-red-50 hover:bg-red-600 text-red-600 hover:text-white rounded-xl flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                    title="इस पेज को हटाएं"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>हटाएं</span>
                   </button>
                 </div>
               </div>
