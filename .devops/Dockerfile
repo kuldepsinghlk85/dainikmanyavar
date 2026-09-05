@@ -54,6 +54,7 @@ RUN --mount=type=cache,target=/root/.npm,sharing=locked \
 FROM base AS builder
 
 ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 # NEXT_PUBLIC_* variables are inlined at build time
 ARG NEXT_PUBLIC_SITE_URL=https://dainikmanyavar.com
