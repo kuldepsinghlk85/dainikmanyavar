@@ -3,6 +3,7 @@
 import React, { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import ImageUploader from '@/components/admin/ImageUploader';
+import HtmlContentEditor from '@/components/admin/HtmlContentEditor';
 import { ArrowLeft, Save, Eye, Heart, Share2, Volume2, RotateCcw, History } from 'lucide-react';
 import { formatCount } from '@/lib/utils';
 
@@ -318,17 +319,14 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
           />
         </div>
 
-        {/* Content */}
-        <div>
-          <label className="block text-xs font-bold text-stone-700 mb-1">पूरा समाचार विवरण (Full Content HTML/Text)</label>
-          <textarea
-            rows={10}
-            required
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="w-full p-3 border border-stone-300 rounded-lg text-sm font-sans focus:outline-none focus:border-[#F97316]"
-          />
-        </div>
+        {/* Content with HTML & Visual Editor */}
+        <HtmlContentEditor
+          value={content}
+          onChange={(html) => setContent(html)}
+          required
+          label="पूरा समाचार विवरण (Full Content Body - HTML/Visual Editor) *"
+          placeholder="यहाँ पूरा समाचार लिखें या HTML डेटा फ़ीड कोड पेस्ट करें..."
+        />
 
         {/* Toggles */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-3 bg-stone-50 rounded-lg border border-stone-200">

@@ -72,8 +72,8 @@ export async function GET(request: Request) {
 
     let orderBy: any = [
       { newsId: 'desc' },
-      { updatedAt: 'desc' },
       { publishedAt: 'desc' },
+      { createdAt: 'desc' },
     ];
 
     if (sortBy === 'newsId' || sortBy === 'id') {

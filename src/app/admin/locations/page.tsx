@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -16,6 +16,9 @@ import {
   ExternalLink,
   CheckCircle2,
   AlertCircle,
+  Layers,
+  Building2,
+  RefreshCw,
 } from 'lucide-react';
 
 interface LocationItem {
@@ -23,6 +26,8 @@ interface LocationItem {
   name: string;
   slug: string;
   type: string;
+  parentId?: string | null;
+  parentName?: string | null;
   image?: string | null;
   articleCount?: number;
   createdAt: string;
@@ -32,8 +37,10 @@ export default function LocationsAdminPage() {
   const [locations, setLocations] = useState<LocationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [selectedType, setSelectedType] = useState<string>('ALL');
   const [msg, setMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [syncing, setSyncing] = useState(false);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -41,6 +48,7 @@ export default function LocationsAdminPage() {
   const [formData, setFormData] = useState({
     name: '',
     type: 'DISTRICT',
+    parentId: '',
     image: '',
   });
 
@@ -64,11 +72,32 @@ export default function LocationsAdminPage() {
     fetchLocations();
   }, [search]);
 
+  // Extract available Mandals (Divisions) for parent selection
+  const divisions = useMemo(() => {
+    return locations.filter((loc) => loc.type === 'DIVISION');
+  }, [locations]);
+
+  // Counts
+  const counts = useMemo(() => {
+    const total = locations.length;
+    const divisionCount = locations.filter((l) => l.type === 'DIVISION').length;
+    const districtCount = locations.filter((l) => l.type === 'DISTRICT').length;
+    const cityCount = locations.filter((l) => l.type === 'CITY').length;
+    return { total, divisionCount, districtCount, cityCount };
+  }, [locations]);
+
+  // Filtered list by type tab
+  const filteredLocations = useMemo(() => {
+    if (selectedType === 'ALL') return locations;
+    return locations.filter((l) => l.type === selectedType);
+  }, [locations, selectedType]);
+
   const handleOpenAddModal = () => {
     setEditingLocation(null);
     setFormData({
       name: '',
       type: 'DISTRICT',
+      parentId: '',
       image: '',
     });
     setIsModalOpen(true);
@@ -79,6 +108,7 @@ export default function LocationsAdminPage() {
     setFormData({
       name: loc.name,
       type: loc.type || 'DISTRICT',
+      parentId: loc.parentId || '',
       image: loc.image || '',
     });
     setIsModalOpen(true);
@@ -135,6 +165,7 @@ export default function LocationsAdminPage() {
             id: editingLocation.id,
             name: formData.name.trim(),
             type: formData.type,
+            parentId: formData.parentId || null,
             image: formData.image || null,
           }),
         });
@@ -154,6 +185,7 @@ export default function LocationsAdminPage() {
           body: JSON.stringify({
             name: formData.name.trim(),
             type: formData.type,
+            parentId: formData.parentId || null,
             image: formData.image || null,
           }),
         });
@@ -188,19 +220,23 @@ export default function LocationsAdminPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6 max-w-6xl pb-12">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
         <div>
           <h1 className="text-2xl font-black text-stone-900 tracking-tight flex items-center gap-2">
             <MapPin className="w-6 h-6 text-[#EA580C]" />
-            <span>स्थान एवं जिले (Locations Manager)</span>
+            <span>उत्तर प्रदेश: स्थान, मंडल एवं जिले (Locations Manager)</span>
             <span className="bg-orange-100 text-[#EA580C] text-xs font-mono font-bold px-2.5 py-0.5 rounded-full">
-              {locations.length} स्थान
+              {counts.total} कुल स्थान
             </span>
           </h1>
-          <p className="text-xs font-semibold text-stone-600 mt-1">
-            उत्तर प्रदेश व पूर्वांचल के जिलों और शहरों की सूची — चित्र अपलोड व स्वतः आर्काइवल सपोर्ट
+          <p className="text-xs font-semibold text-stone-600 mt-1 flex flex-wrap items-center gap-2">
+            <span>उत्तर प्रदेश के 18 मंडल एवं 75 जिले व्यवस्थित रूप से सूचीबद्ध</span>
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-stone-300" />
+            <span className="text-purple-700 font-bold">18 मंडल (Divisions)</span>
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-stone-300" />
+            <span className="text-orange-700 font-bold">75 जिले (Districts)</span>
           </p>
         </div>
 
@@ -208,7 +244,7 @@ export default function LocationsAdminPage() {
           {/* Add New Location Button */}
           <button
             onClick={handleOpenAddModal}
-            className="bg-[#EA580C] hover:bg-orange-700 text-white px-4 py-2.5 rounded-xl text-xs font-black flex items-center gap-2 shadow-md transition-all cursor-pointer"
+            className="bg-[#EA580C] hover:bg-orange-700 text-white px-4 py-2.5 rounded-xl text-xs font-black flex items-center gap-2 shadow-md transition-all cursor-pointer active:scale-95"
           >
             <PlusCircle className="w-4 h-4" />
             <span>➕ नया स्थान जोड़ें</span>
@@ -217,16 +253,16 @@ export default function LocationsAdminPage() {
           {/* Link to Photo Archiver */}
           <Link
             href="/admin/archive/media"
-            className="bg-stone-800 hover:bg-stone-900 text-amber-400 px-3.5 py-2.5 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-sm transition-all border border-stone-700"
+            className="bg-stone-800 hover:bg-stone-900 text-amber-400 px-3.5 py-2.5 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-sm transition-all border border-stone-700 active:scale-95"
           >
             <FolderArchive className="w-4 h-4 text-amber-400" />
-            <span>🖼️ फोटो आर्काइवर लाइब्रेरी</span>
+            <span>🖼️ फोटो आर्काइवर</span>
           </Link>
         </div>
       </div>
 
       {msg && (
-        <div className="bg-green-50 border border-green-200 text-green-800 p-3.5 rounded-xl text-xs font-bold flex justify-between items-center animate-fade-in">
+        <div className="bg-green-50 border border-green-200 text-green-800 p-3.5 rounded-xl text-xs font-bold flex justify-between items-center animate-fade-in shadow-xs">
           <span className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
             <span>{msg}</span>
@@ -238,7 +274,7 @@ export default function LocationsAdminPage() {
       )}
 
       {errorMsg && (
-        <div className="bg-red-50 border border-red-200 text-red-800 p-3.5 rounded-xl text-xs font-bold flex justify-between items-center animate-fade-in">
+        <div className="bg-red-50 border border-red-200 text-red-800 p-3.5 rounded-xl text-xs font-bold flex justify-between items-center animate-fade-in shadow-xs">
           <span className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
             <span>{errorMsg}</span>
@@ -249,26 +285,70 @@ export default function LocationsAdminPage() {
         </div>
       )}
 
-      {/* Search Bar */}
-      <div className="flex items-center justify-between gap-4">
+      {/* Filter Tabs & Search Bar */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+        {/* Type Filter Pills */}
+        <div className="flex items-center gap-1.5 bg-stone-100/80 p-1 rounded-xl border border-stone-200 text-xs font-black">
+          <button
+            onClick={() => setSelectedType('ALL')}
+            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+              selectedType === 'ALL'
+                ? 'bg-white text-stone-900 shadow-xs border border-stone-200 font-black'
+                : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            सभी ({counts.total})
+          </button>
+          <button
+            onClick={() => setSelectedType('DIVISION')}
+            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
+              selectedType === 'DIVISION'
+                ? 'bg-purple-700 text-white shadow-xs font-black'
+                : 'text-purple-800 hover:bg-purple-100/60'
+            }`}
+          >
+            <span>🏛️ मंडल ({counts.divisionCount})</span>
+          </button>
+          <button
+            onClick={() => setSelectedType('DISTRICT')}
+            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
+              selectedType === 'DISTRICT'
+                ? 'bg-[#EA580C] text-white shadow-xs font-black'
+                : 'text-orange-800 hover:bg-orange-100/60'
+            }`}
+          >
+            <span>📍 जिले ({counts.districtCount})</span>
+          </button>
+          {counts.cityCount > 0 && (
+            <button
+              onClick={() => setSelectedType('CITY')}
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                selectedType === 'CITY'
+                  ? 'bg-blue-600 text-white shadow-xs font-black'
+                  : 'text-blue-800 hover:bg-blue-100/60'
+              }`}
+            >
+              शहर ({counts.cityCount})
+            </button>
+          )}
+        </div>
+
+        {/* Search Bar */}
         <div className="relative w-full max-w-sm">
           <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-stone-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="स्थान या जिला खोजें..."
+            placeholder="मंडल, जिला या शहर खोजें..."
             className="w-full pl-8 pr-3 py-2 bg-white border border-stone-300 rounded-xl text-xs font-medium text-stone-800 focus:outline-none focus:border-[#EA580C]"
           />
         </div>
-        <span className="text-xs font-bold text-stone-500">
-          कुल {locations.length} स्थान सूचीबद्ध
-        </span>
       </div>
 
       {/* Locations Table */}
       <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden p-4 space-y-3">
-        {locations.length === 0 ? (
+        {filteredLocations.length === 0 ? (
           <div className="text-center py-12 space-y-3">
             <MapPin className="w-12 h-12 text-stone-300 mx-auto" />
             <p className="font-extrabold text-stone-700 text-sm">कोई स्थान नहीं मिला।</p>
@@ -284,19 +364,21 @@ export default function LocationsAdminPage() {
             <table className="w-full text-left text-xs text-stone-700">
               <thead className="bg-stone-50 font-black text-stone-800 border-b border-stone-200">
                 <tr>
-                  <th className="p-3 w-16">चित्र</th>
+                  <th className="p-3 w-20">चित्र</th>
                   <th className="p-3">स्थान नाम (Location)</th>
                   <th className="p-3">प्रकार (Type)</th>
+                  <th className="p-3">संबद्ध मंडल (Parent Division)</th>
                   <th className="p-3">Slug</th>
                   <th className="p-3">संबद्ध समाचार</th>
                   <th className="p-3 text-right">कार्रवाई</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
-                {locations.map((loc) => (
-                  <tr key={loc.id} className="hover:bg-stone-50 transition-colors">
+                {filteredLocations.map((loc) => (
+                  <tr key={loc.id} className="hover:bg-stone-50/80 transition-colors">
+                    {/* Image Column */}
                     <td className="p-3">
-                      <div className="relative w-12 h-10 rounded-lg overflow-hidden bg-stone-100 border border-stone-200 shrink-0 flex items-center justify-center">
+                      <div className="relative w-14 h-11 rounded-lg overflow-hidden bg-stone-100 border border-stone-200 shrink-0 flex items-center justify-center shadow-2xs">
                         {loc.image ? (
                           <Image
                             src={loc.image}
@@ -311,23 +393,67 @@ export default function LocationsAdminPage() {
                       </div>
                     </td>
 
-                    <td className="p-3 font-extrabold text-stone-900 flex items-center gap-2 mt-2">
-                      <MapPin className="w-4 h-4 text-[#EA580C] shrink-0" />
-                      <span>{loc.name}</span>
+                    {/* Name Column */}
+                    <td className="p-3 font-extrabold text-stone-900">
+                      <div className="flex items-center gap-2">
+                        {loc.type === 'DIVISION' ? (
+                          <Building2 className="w-4 h-4 text-purple-600 shrink-0" />
+                        ) : (
+                          <MapPin className="w-4 h-4 text-[#EA580C] shrink-0" />
+                        )}
+                        <span className="text-[13px]">{loc.name}</span>
+                      </div>
                     </td>
 
+                    {/* Type Badge Column */}
                     <td className="p-3">
-                      <span className="bg-orange-100 text-[#C2410C] px-2.5 py-0.5 rounded-full text-[10px] font-black">
-                        {loc.type}
+                      {loc.type === 'DIVISION' ? (
+                        <span className="bg-purple-100 text-purple-800 border border-purple-200 px-2.5 py-0.5 rounded-full text-[10px] font-black inline-flex items-center gap-1">
+                          <span>🏛️ मंडल (DIVISION)</span>
+                        </span>
+                      ) : loc.type === 'DISTRICT' ? (
+                        <span className="bg-orange-100 text-[#C2410C] border border-orange-200 px-2.5 py-0.5 rounded-full text-[10px] font-black inline-flex items-center gap-1">
+                          <span>📍 जिला (DISTRICT)</span>
+                        </span>
+                      ) : loc.type === 'CITY' ? (
+                        <span className="bg-blue-100 text-blue-800 border border-blue-200 px-2.5 py-0.5 rounded-full text-[10px] font-black">
+                          🏙️ शहर (CITY)
+                        </span>
+                      ) : (
+                        <span className="bg-stone-100 text-stone-700 px-2.5 py-0.5 rounded-full text-[10px] font-black">
+                          {loc.type}
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Parent Mandal Column */}
+                    <td className="p-3">
+                      {loc.parentName ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] text-purple-800 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-md font-bold">
+                          🏛️ {loc.parentName}
+                        </span>
+                      ) : loc.type === 'DIVISION' ? (
+                        <span className="text-[11px] text-stone-400 font-semibold italic">
+                          (प्रशासनिक मंडल मुख्यालय)
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-stone-300 font-mono">—</span>
+                      )}
+                    </td>
+
+                    {/* Slug */}
+                    <td className="p-3 font-mono text-stone-500 font-bold text-[11px]">{loc.slug}</td>
+
+                    {/* Article Count */}
+                    <td className="p-3 font-mono font-black text-stone-800">
+                      <span className={`px-2 py-0.5 rounded-md ${
+                        (loc.articleCount || 0) > 0 ? 'bg-emerald-50 text-emerald-800 font-black' : 'text-stone-400'
+                      }`}>
+                        {loc.articleCount || 0} खबरें
                       </span>
                     </td>
 
-                    <td className="p-3 font-mono text-stone-400 font-bold">{loc.slug}</td>
-
-                    <td className="p-3 font-mono font-black text-stone-800">
-                      {loc.articleCount || 0} खबरें
-                    </td>
-
+                    {/* Actions */}
                     <td className="p-3 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
@@ -362,11 +488,11 @@ export default function LocationsAdminPage() {
             <div className="flex justify-between items-center border-b border-stone-100 pb-3">
               <h2 className="text-lg font-black text-stone-900 flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-[#EA580C]" />
-                <span>{editingLocation ? 'स्थान संपादित करें' : 'नया स्थान / जिला जोड़ें'}</span>
+                <span>{editingLocation ? 'स्थान संपादित करें' : 'नया स्थान / मंडल / जिला जोड़ें'}</span>
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-stone-400 hover:text-stone-700 p-1 rounded-lg"
+                className="text-stone-400 hover:text-stone-700 p-1 rounded-lg cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -376,34 +502,56 @@ export default function LocationsAdminPage() {
               {/* Location Name */}
               <div className="space-y-1.5">
                 <label className="block text-xs font-black text-stone-800">
-                  स्थान / जिले का नाम (Name) <span className="text-red-500">*</span>
+                  स्थान / जिले / मंडल का नाम (Name) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="उदा. अयोध्या, गाजीपुर, मऊ, भदोही..."
+                  placeholder="उदा. अयोध्या, गाजीपुर, वाराणसी मंडल..."
                   className="w-full p-2.5 border border-stone-300 rounded-xl text-xs font-bold text-stone-900 focus:outline-none focus:border-[#EA580C]"
                 />
               </div>
 
               {/* Location Type */}
-              <div className="space-y-1.5">
-                <label className="block text-xs font-black text-stone-800">
-                  प्रकार (Location Type)
-                </label>
-                <select
-                  value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  className="w-full p-2.5 border border-stone-300 rounded-xl text-xs font-bold text-stone-800 focus:outline-none focus:border-[#EA580C]"
-                >
-                  <option value="DISTRICT">DISTRICT (जिला)</option>
-                  <option value="CITY">CITY (शहर)</option>
-                  <option value="STATE">STATE (राज्य)</option>
-                  <option value="COUNTRY">COUNTRY (देश)</option>
-                  <option value="LOCAL_AREA">LOCAL_AREA (स्थानीय क्षेत्र / तहसील)</option>
-                </select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-black text-stone-800">
+                    प्रकार (Location Type)
+                  </label>
+                  <select
+                    value={formData.type}
+                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                    className="w-full p-2.5 border border-stone-300 rounded-xl text-xs font-bold text-stone-800 focus:outline-none focus:border-[#EA580C]"
+                  >
+                    <option value="DISTRICT">DISTRICT (जिला)</option>
+                    <option value="DIVISION">DIVISION (मंडल)</option>
+                    <option value="CITY">CITY (शहर)</option>
+                    <option value="STATE">STATE (राज्य)</option>
+                    <option value="LOCAL_AREA">LOCAL_AREA (स्थानीय क्षेत्र / तहसील)</option>
+                  </select>
+                </div>
+
+                {/* Parent Mandal selection (only for DISTRICT or CITY) */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-black text-stone-800">
+                    संबद्ध मंडल (Parent Mandal)
+                  </label>
+                  <select
+                    value={formData.parentId}
+                    onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}
+                    disabled={formData.type === 'DIVISION'}
+                    className="w-full p-2.5 border border-stone-300 rounded-xl text-xs font-bold text-stone-800 focus:outline-none focus:border-[#EA580C] disabled:bg-stone-100 disabled:text-stone-400"
+                  >
+                    <option value="">-- कोई नहीं / स्वतंत्र --</option>
+                    {divisions.map((div) => (
+                      <option key={div.id} value={div.id}>
+                        {div.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               {/* Image Upload with Automatic Archival */}
@@ -462,7 +610,7 @@ export default function LocationsAdminPage() {
                         <button
                           type="button"
                           onClick={() => setFormData({ ...formData, image: '' })}
-                          className="text-xs text-red-600 hover:underline font-bold px-2"
+                          className="text-xs text-red-600 hover:underline font-bold px-2 cursor-pointer"
                         >
                           हटाएं
                         </button>

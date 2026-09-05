@@ -23,7 +23,7 @@ export default function Header({ festivalBanner }: HeaderProps) {
   const router = useRouter();
 
   useEffect(() => {
-    fetch('/api/admin/settings')
+    fetch('/api/settings')
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.data) {
@@ -59,7 +59,7 @@ export default function Header({ festivalBanner }: HeaderProps) {
   };
 
   return (
-    <header className="py-2.5 bg-white border-b border-stone-100">
+    <header className="py-3 sm:py-3.5 bg-white border-b border-stone-100">
       <div className="wrap flex flex-col lg:flex-row items-center justify-between gap-3">
         {/* Prominent Brand Logo */}
         <div className="flex items-center justify-center lg:justify-start">
@@ -67,11 +67,11 @@ export default function Header({ festivalBanner }: HeaderProps) {
             <Image
               src={siteLogo || '/logo.png'}
               alt="दैनिक मान्यवर"
-              width={460}
-              height={100}
+              width={500}
+              height={120}
               priority
               unoptimized
-              className="h-12 sm:h-14 md:h-15 w-auto object-contain"
+              className="h-16 sm:h-20 md:h-22 lg:h-24 w-auto object-contain"
             />
           </Link>
         </div>

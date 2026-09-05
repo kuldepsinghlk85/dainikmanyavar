@@ -30,11 +30,8 @@ async function seedAds() {
   for (const ad of sampleAds) {
     await db.adSlot.upsert({
       where: { position: ad.position },
-      update: {
-        desktopCreative: ad.desktopCreative,
-        targetUrl: ad.targetUrl,
-        active: true
-      },
+      // Keep update empty so custom user-uploaded ad creative is never overwritten on seed
+      update: {},
       create: {
         name: ad.name,
         position: ad.position,

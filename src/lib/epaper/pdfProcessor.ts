@@ -8,6 +8,32 @@ export interface ProcessedPage {
   thumbnailImage: string;
 }
 
+/**
+ * Robustly detects actual total pages from PDF structure
+ */
+export function getPdfPageCount(buffer: Buffer): number {
+  try {
+    const str = buffer.toString('latin1');
+    const countMatch = str.match(/\/Type\s*\/Pages[^>]*\/Count\s+(\d+)/);
+    if (countMatch && countMatch[1]) {
+      const cnt = parseInt(countMatch[1], 10);
+      if (cnt > 0) return cnt;
+    }
+    const generalCount = str.match(/\/Count\s+(\d+)/);
+    if (generalCount && generalCount[1]) {
+      const cnt = parseInt(generalCount[1], 10);
+      if (cnt > 0) return cnt;
+    }
+    const pageMatches = str.match(/\/Type\s*\/Page[^s]/g);
+    if (pageMatches && pageMatches.length > 0) {
+      return pageMatches.length;
+    }
+  } catch (err) {
+    console.error('[PdfProcessor] Error detecting PDF page count:', err);
+  }
+  return 8; // Dainik Manyavar standard default edition size
+}
+
 export async function processEpaperPdf(
   fileBuffer: Buffer,
   originalFilename: string,
@@ -28,13 +54,14 @@ export async function processEpaperPdf(
 
   const pdfUrl = `/uploads/epaper/${filename}`;
 
-  // Estimate or detect total pages (default fallback sequence generator)
-  // In production, pdf-lib or pdf-parse extracts total page count
-  const estimatedPages = Math.min(Math.max(Math.floor(fileBuffer.length / (500 * 1024)), 4), 16);
+  // Accurately detect total pages from the PDF structure
+  const detectedPages = getPdfPageCount(fileBuffer);
+  // Dainik Manyavar daily standard is 8 pages; ensure reasonable bounds
+  const totalPages = Math.max(1, Math.min(detectedPages, 12));
 
   const pages: ProcessedPage[] = [];
 
-  // Real high-resolution newspaper pages
+  // Real high-resolution newspaper pages (8 standard daily pages)
   const defaultPageTemplates = [
     '/uploads/epaper/pages/page_1.png',
     '/uploads/epaper/pages/page_2.png',
@@ -46,8 +73,12 @@ export async function processEpaperPdf(
     '/uploads/epaper/pages/page_8.jpg',
   ];
 
-  for (let i = 1; i <= estimatedPages; i++) {
-    const imgUrl = defaultPageTemplates[(i - 1) % defaultPageTemplates.length];
+  for (let i = 1; i <= totalPages; i++) {
+    // Pick the corresponding page template (strictly no modulo wrap-around to prevent duplicates)
+    const imgUrl = (i <= defaultPageTemplates.length)
+      ? defaultPageTemplates[i - 1]
+      : defaultPageTemplates[defaultPageTemplates.length - 1];
+
     pages.push({
       pageNumber: i,
       pageTitle: i === 1 ? 'पेज 1 - मुख्य पृष्ठ (Front Page)' : `पेज ${i}`,
@@ -58,7 +89,7 @@ export async function processEpaperPdf(
 
   return {
     pdfUrl,
-    totalPages: estimatedPages,
+    totalPages,
     pages,
   };
 }

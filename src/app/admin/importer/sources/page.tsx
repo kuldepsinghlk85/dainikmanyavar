@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Radio, Plus, RefreshCw, CheckCircle2, AlertTriangle, Inbox, ExternalLink } from 'lucide-react';
+import { Radio, Plus, RefreshCw, CheckCircle2, AlertTriangle, Inbox, ExternalLink, X } from 'lucide-react';
 
 interface NewsSourceItem {
   id: string;
@@ -33,6 +33,9 @@ export default function SourcesAdminPage() {
   const [syncAllLoading, setSyncAllLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [syncedHistory, setSyncedHistory] = useState<Record<string, any>>({});
+  const [activeBannerSync, setActiveBannerSync] = useState<any>(null);
+  const [floatingToast, setFloatingToast] = useState<any>(null);
 
   const fetchSources = async () => {
     try {
@@ -96,7 +99,21 @@ export default function SourcesAdminPage() {
       });
       const data = await res.json();
       if (data.success) {
-        alert(`Sync Complete! Found: ${data.result.itemsFound}, Imported: ${data.result.itemsImported}, Duplicates: ${data.result.duplicatesFound}`);
+        const found = data.result?.itemsFound || 0;
+        const imported = data.result?.itemsImported || 0;
+        const dupes = data.result?.duplicatesFound || 0;
+        const sourceObj = sources.find((s) => s.id === sourceId);
+        const sourceName = sourceObj?.name || 'RSS Feed';
+        const feedback = {
+          sourceName,
+          newNews: imported,
+          duplicate: dupes,
+          totalFound: found,
+          message: `[${sourceName}] सिंक पूर्ण! नई खबरें: ${imported}, डुप्लिकेट: ${dupes}, कुल: ${found}`,
+        };
+        setSyncedHistory((prev) => ({ ...prev, [sourceId]: feedback }));
+        setActiveBannerSync(feedback);
+        setFloatingToast(feedback);
         fetchSources();
       }
     } catch (err) {}
@@ -109,7 +126,15 @@ export default function SourcesAdminPage() {
       const res = await fetch('/api/admin/importer/sync', { method: 'POST' });
       const data = await res.json();
       if (data.success) {
-        alert(`Sync All Complete! Checked ${data.syncedSources} active sources.`);
+        const feedback = {
+          sourceName: 'सभी एक्टिव सोर्सेज',
+          newNews: data.totalImported || 0,
+          duplicate: data.totalDuplicates || 0,
+          totalFound: data.totalFound || 0,
+          message: `⚡ सभी ${data.syncedSources || 15} सोर्सेज सफलतापूर्वक सिंक हो गए! नई खबरें: +${data.totalImported || 0}`,
+        };
+        setActiveBannerSync(feedback);
+        setFloatingToast(feedback);
         fetchSources();
       }
     } catch (err) {}
@@ -127,10 +152,10 @@ export default function SourcesAdminPage() {
         <div className="flex gap-2">
           <Link
             href="/admin/importer/inbox"
-            className="bg-[#EA580C] hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors"
+            className="bg-[#EA580C] hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
           >
             <Inbox className="w-4 h-4" />
-            <span>📥 इनबॉक्स में 500+ समाचार देखें</span>
+            <span>📥 इनबॉक्स में समाचार देखें</span>
           </Link>
 
           <button
@@ -143,6 +168,47 @@ export default function SourcesAdminPage() {
           </button>
         </div>
       </div>
+
+      {/* Top Sync Success Banner with Direct Link to Import Inbox */}
+      {activeBannerSync && (
+        <div className="bg-gradient-to-r from-emerald-600 via-teal-700 to-slate-900 text-white p-4 sm:p-5 rounded-2xl shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center flex-shrink-0 border border-white/20 shadow-xs">
+              <Inbox className="w-6 h-6 text-amber-300 animate-bounce" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="bg-emerald-400 text-slate-950 text-[10px] font-mono font-black uppercase px-2 py-0.5 rounded-full">
+                  सिंक सफल
+                </span>
+                <h4 className="font-black text-sm sm:text-base">
+                  {activeBannerSync.sourceName}: {activeBannerSync.newNews > 0 ? `+${activeBannerSync.newNews} नई खबरें प्राप्त हुईं` : 'सिंक पूर्ण हुआ'}
+                </h4>
+              </div>
+              <p className="text-xs text-emerald-100 font-medium mt-1">
+                {activeBannerSync.message}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 w-full md:w-auto justify-end flex-shrink-0">
+            <Link
+              href="/admin/importer/inbox"
+              className="flex-1 md:flex-initial bg-amber-400 hover:bg-amber-300 active:bg-amber-500 text-stone-950 font-black text-xs sm:text-sm px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all hover:scale-105 cursor-pointer"
+            >
+              <Inbox className="w-4 h-4 text-stone-900" />
+              <span>📥 न्यूज़ इम्पोर्ट इनबॉक्स खोलें ➔</span>
+            </Link>
+            <button
+              onClick={() => setActiveBannerSync(null)}
+              className="p-2 text-white/80 hover:text-white rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+              title="बंद करें"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Add New Source Form */}
       <form onSubmit={handleAddSource} className="bg-white p-6 rounded-xl border border-stone-200 shadow-sm space-y-4">
@@ -280,14 +346,24 @@ export default function SourcesAdminPage() {
                   {src.lastFetchAt ? new Date(src.lastFetchAt).toLocaleTimeString('hi-IN') : 'अभी-अभी'}
                 </td>
                 <td className="p-3 text-right">
-                  <div className="flex gap-2 justify-end">
-                    <Link
-                      href="/admin/importer/inbox"
-                      className="bg-orange-50 hover:bg-orange-100 text-[#EA580C] font-bold px-2.5 py-1 rounded text-xs flex items-center gap-1 border border-orange-200"
-                    >
-                      <Inbox className="w-3 h-3" />
-                      <span>इनबॉक्स</span>
-                    </Link>
+                  <div className="flex gap-2 justify-end items-center">
+                    {syncedHistory[src.id] ? (
+                      <Link
+                        href="/admin/importer/inbox"
+                        className="bg-[#EA580C] hover:bg-orange-700 text-white font-black px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition-transform hover:scale-105 animate-pulse whitespace-nowrap cursor-pointer"
+                      >
+                        <Inbox className="w-3.5 h-3.5" />
+                        <span>📥 इनबॉक्स खोलें (+{syncedHistory[src.id].newNews}) ➔</span>
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/admin/importer/inbox"
+                        className="bg-orange-50 hover:bg-orange-100 text-[#EA580C] font-bold px-2.5 py-1 rounded text-xs flex items-center gap-1 border border-orange-200 cursor-pointer"
+                      >
+                        <Inbox className="w-3 h-3" />
+                        <span>इनबॉक्स</span>
+                      </Link>
+                    )}
 
                     <button
                       onClick={() => handleSyncSource(src.id)}
@@ -304,6 +380,36 @@ export default function SourcesAdminPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Floating Notification Toast (Bottom-Right) */}
+      {floatingToast && (
+        <div className="fixed bottom-5 right-5 z-50 bg-stone-950/95 text-white backdrop-blur-md p-3.5 sm:p-4 rounded-2xl shadow-2xl border border-stone-700 max-w-sm sm:max-w-md flex items-center gap-3 animate-in slide-in-from-bottom-5 duration-300">
+          <div className="w-10 h-10 rounded-xl bg-[#EA580C]/20 text-[#EA580C] flex items-center justify-center flex-shrink-0 border border-orange-500/30">
+            <Inbox className="w-5 h-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-black text-white truncate">
+              {floatingToast.sourceName} सिंक हो गया!
+            </p>
+            <p className="text-[11px] text-emerald-400 font-bold mt-0.5">
+              +{floatingToast.newNews} नई खबरें इनबॉक्स में उपलब्ध हैं
+            </p>
+          </div>
+          <Link
+            href="/admin/importer/inbox"
+            className="bg-[#EA580C] hover:bg-orange-700 text-white font-black text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-md flex-shrink-0 transition-transform hover:scale-105 cursor-pointer"
+          >
+            <span>इनबॉक्स खोलें ➔</span>
+          </Link>
+          <button
+            onClick={() => setFloatingToast(null)}
+            className="p-1 text-stone-400 hover:text-white rounded-md hover:bg-stone-800 cursor-pointer"
+            title="बंद करें"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

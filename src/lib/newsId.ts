@@ -6,13 +6,11 @@ import { db } from '@/lib/db';
 export async function getNextNewsId(): Promise<number> {
   await ensureArticleNewsIds();
 
-  const latest = await db.article.findFirst({
-    where: { newsId: { gt: 0 } },
-    orderBy: { newsId: 'desc' },
-    select: { newsId: true },
+  const maxResult = await db.article.aggregate({
+    _max: { newsId: true },
   });
 
-  return (latest?.newsId || 0) + 1;
+  return (maxResult._max.newsId || 0) + 1;
 }
 
 /**
