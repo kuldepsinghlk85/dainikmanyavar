@@ -32,8 +32,8 @@ if [ -n "$DATABASE_URL" ]; then
     echo "[Dainik Manyavar] Running sample ads seed..."
     node prisma/seed_sample_ads.js
 
-    echo "[Dainik Manyavar] Running e-paper seed..."
-    node prisma/seed_epaper.js
+    # E-Paper seed is disabled to permanently protect production user uploaded editions and pages
+    # node prisma/seed_epaper.js
 
     echo "[Dainik Manyavar] Running special modules seed..."
     node prisma/seed_special_modules.js

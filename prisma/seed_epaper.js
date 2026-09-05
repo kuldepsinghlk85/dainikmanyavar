@@ -2,13 +2,9 @@ const { PrismaClient } = require('@prisma/client');
 const db = new PrismaClient();
 
 async function seedEpaper() {
-  // Check if epaper editions already exist in the database.
-  // NEVER delete existing editions or pages — protect user uploaded content.
-  const existingEditionsCount = await db.epaperEdition.count();
-  if (existingEditionsCount > 0) {
-    console.log(`[i] Found ${existingEditionsCount} existing E-Paper edition(s). Preserving user content and skipping seed.`);
-    return;
-  }
+  // Production protection: Always preserve user content. NEVER overwrite or touch editions on deploy.
+  console.log(`[i] E-Paper seed disabled to protect user uploaded editions and pages.`);
+  return;
 
   console.log("Seeding Dainik Manyavar Official 8-Page Digital E-Paper Edition (04 September 2026)...");
 

@@ -1,13 +1,15 @@
-import React from 'react';
+﻿import React from 'react';
 import { db } from '@/lib/db';
 import MobileCategoryChips from '@/components/mobile/MobileCategoryChips';
-import MobileBreakingNews from '@/components/mobile/MobileBreakingNews';
+import MobileTrendingBar from '@/components/mobile/MobileTrendingBar';
+import MobileInteractiveBanner from '@/components/mobile/MobileInteractiveBanner';
+import MobileKeyEvents from '@/components/mobile/MobileKeyEvents';
+import MobileTwoColGrid from '@/components/mobile/MobileTwoColGrid';
 import MobileHeroCard from '@/components/mobile/MobileHeroCard';
 import MobileNewsList from '@/components/mobile/MobileNewsList';
-import MobileVideoFeed from '@/components/mobile/MobileVideoFeed';
+import MobileReelsFeed from '@/components/mobile/MobileReelsFeed';
 import MobileFooter from '@/components/mobile/MobileFooter';
-import Link from 'next/link';
-import { MapPin, Sparkles } from 'lucide-react';
+import { Building2, Globe, MapPin, Sparkles, Newspaper } from 'lucide-react';
 
 export const revalidate = 60; // 1-minute ISR
 
@@ -41,23 +43,7 @@ export default async function MobileHomePage() {
     },
   });
 
-  // 2. Fetch Breaking news ticker
-  const rawBreaking = await db.breakingNews.findMany({
-    where: { isArchived: false, active: true },
-    orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
-    include: {
-      article: { select: { title: true, slug: true } },
-    },
-    take: 8,
-  });
-
-  const breakingItems = rawBreaking.map((b) => ({
-    id: b.id,
-    title: b.customHeadline || b.article?.title || 'दैनिक मान्यवर विशेष अपडेट',
-    slug: b.article?.slug || '',
-  }));
-
-  // 3. Fetch latest news stream
+  // 2. Fetch latest news stream
   const latestArticles = await db.article.findMany({
     where: {
       status: 'PUBLISHED',
@@ -74,11 +60,11 @@ export default async function MobileHomePage() {
     },
   });
 
-  // 4. Fetch videos
+  // 3. Fetch videos for Reels / Shorts carousel
   const dbVideos = await db.article.findMany({
     where: { status: 'PUBLISHED', videoEnabled: true },
     orderBy: [{ newsId: 'desc' }, { publishedAt: 'desc' }],
-    take: 6,
+    take: 8,
     select: {
       id: true,
       title: true,
@@ -90,16 +76,16 @@ export default async function MobileHomePage() {
     },
   });
 
-  const formattedVideos = dbVideos.map((v) => ({
+  const formattedReels = dbVideos.map((v) => ({
     id: v.id,
     title: v.title,
     slug: v.slug,
-    thumbnail: v.videoThumbnail || v.featuredImage || 'https://images.unsplash.com/photo-1579532537598-459ecdaf39cc?auto=format&fit=crop&w=400&q=80',
-    duration: v.videoDuration || '02:30',
+    thumbnail: v.videoThumbnail || v.featuredImage || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&q=80',
+    duration: v.videoDuration || '1:00',
     category: v.category?.name || 'वीडियो',
   }));
 
-  // 5. Fetch Regional / District News (Jaunpur, Varanasi etc)
+  // 4. Fetch Regional / District News (Jaunpur, Varanasi etc)
   const jaunpurArticles = await db.article.findMany({
     where: {
       status: 'PUBLISHED',
@@ -118,13 +104,25 @@ export default async function MobileHomePage() {
       category: { slug: 'uttar-pradesh' },
     },
     orderBy: [{ newsId: 'desc' }, { publishedAt: 'desc' }],
-    take: 5,
+    take: 4,
     include: {
       category: { select: { name: true } },
     },
   });
 
-  // 6. Fetch categories for chips
+  const worldArticles = await db.article.findMany({
+    where: {
+      status: 'PUBLISHED',
+      category: { slug: { in: ['videsh', 'world', 'desh', 'international'] } },
+    },
+    orderBy: [{ newsId: 'desc' }, { publishedAt: 'desc' }],
+    take: 4,
+    include: {
+      category: { select: { name: true } },
+    },
+  });
+
+  // 5. Fetch categories for chips
   const categories = await db.category.findMany({
     where: { isHeaderMenu: true },
     orderBy: { order: 'asc' },
@@ -132,60 +130,102 @@ export default async function MobileHomePage() {
   });
 
   return (
-    <div className="space-y-1">
-      {/* Category Chips Bar */}
+    <div className="bg-stone-100 dark:bg-[#0D0D0D] min-h-screen transition-colors">
+      {/* 1. Category Chips Bar (Amar Ujala style with filter button) */}
       <MobileCategoryChips categories={categories} activeSlug="home" />
 
-      {/* Breaking News Single Line Ticker */}
-      <MobileBreakingNews items={breakingItems} />
+      {/* 2. Trending Topics Strip (Dainik Bhaskar style) */}
+      <MobileTrendingBar />
 
-      {/* Main Lead Story */}
-      {leadArticle && <MobileHeroCard article={leadArticle} />}
+      {/* 3. Interactive Engagement Banner: 'शब्दखोज' (Amar Ujala style) */}
+      <MobileInteractiveBanner />
 
-      {/* Quick Regional Bar */}
-      <div className="bg-amber-500 text-white px-3.5 py-2 flex items-center justify-between shadow-xs">
-        <div className="flex items-center gap-1.5 text-xs font-black">
-          <MapPin className="w-4 h-4" />
-          <span>जौनपुर व पूर्वांचल हलचल</span>
-        </div>
-        <Link href="/district/जौनपुर" className="text-[11px] font-bold text-amber-100 hover:text-white underline">
-          सभी खबरें &rarr;
-        </Link>
-      </div>
+      {/* 4. 'आज के अहम घटनाक्रम' (Amar Ujala style) */}
+      <MobileKeyEvents article={leadArticle} />
 
-      {/* Latest News Feed 1 (Top 4) */}
-      <MobileNewsList
-        articles={latestArticles.slice(0, 4)}
-        sectionTitle="ताज़ा सुर्खियां"
-        viewAllLink="/mobile/category/latest"
+      {/* 5. 2-Column Split: 'बड़ी खबरें' & 'देश-दुनिया' (Amar Ujala style) */}
+      <MobileTwoColGrid
+        topStories={latestArticles.slice(0, 2)}
+        worldStories={worldArticles.length >= 2 ? worldArticles.slice(0, 2) : latestArticles.slice(2, 4)}
       />
 
-      {/* Video Feed Section */}
-      {formattedVideos.length > 0 && <MobileVideoFeed videos={formattedVideos} />}
+      {/* 6. Main Lead Story Card with Bookmark & Share */}
+      {leadArticle && <MobileHeroCard article={leadArticle} />}
 
-      {/* Jaunpur Special Feed */}
-      {jaunpurArticles.length > 0 && (
-        <MobileNewsList
-          articles={jaunpurArticles}
-          sectionTitle="📍 जौनपुर आसपास"
-          viewAllLink="/district/जौनपुर"
-        />
-      )}
+      {/* Section Divider */}
+      <div className="h-2 bg-stone-100 dark:bg-[#0D0D0D] border-y border-stone-200/80 dark:border-stone-800/80" />
 
-      {/* Uttar Pradesh Feed */}
+      {/* 7. Vertical 9:16 Reels Carousel: 'बॉलीवुड REEL' (Dainik Bhaskar style) */}
+      <MobileReelsFeed
+        reels={formattedReels}
+        title="बॉलीवुड REEL"
+        viewAllLink="/video"
+      />
+
+      {/* Section Divider */}
+      <div className="h-2 bg-stone-100 dark:bg-[#0D0D0D] border-y border-stone-200/80 dark:border-stone-800/80" />
+
+      {/* 8. 'ताज़ा सुर्खियां' Feed */}
+      <MobileNewsList
+        articles={latestArticles.slice(4, 8)}
+        sectionTitle="ताज़ा सुर्खियां"
+        viewAllLink="/mobile/category/latest"
+        buttonText="सभी खबरें"
+        icon={<Sparkles className="w-3.5 h-3.5 text-[#E53935]" />}
+      />
+
+      {/* Section Divider */}
+      <div className="h-2 bg-stone-100 dark:bg-[#0D0D0D] border-y border-stone-200/80 dark:border-stone-800/80" />
+
+      {/* 9. Uttar Pradesh State Feed */}
       {stateArticles.length > 0 && (
-        <MobileNewsList
-          articles={stateArticles}
-          sectionTitle="🏛️ उत्तर प्रदेश"
-          viewAllLink="/mobile/category/uttar-pradesh"
-        />
+        <>
+          <MobileNewsList
+            articles={stateArticles}
+            sectionTitle="उत्तर प्रदेश"
+            viewAllLink="/mobile/category/uttar-pradesh"
+            buttonText="सभी खबरें"
+            icon={<Building2 className="w-3.5 h-3.5 text-[#E53935]" />}
+          />
+          <div className="h-2 bg-stone-100 dark:bg-[#0D0D0D] border-y border-stone-200/80 dark:border-stone-800/80" />
+        </>
       )}
 
-      {/* More Latest News */}
-      {latestArticles.length > 4 && (
+      {/* 10. Foreign / World Feed */}
+      {worldArticles.length > 0 ? (
+        <>
+          <MobileNewsList
+            articles={worldArticles}
+            sectionTitle="विदेश"
+            viewAllLink="/mobile/category/videsh"
+            buttonText="सभी खबरें"
+            icon={<Globe className="w-3.5 h-3.5 text-[#E53935]" />}
+          />
+          <div className="h-2 bg-stone-100 dark:bg-[#0D0D0D] border-y border-stone-200/80 dark:border-stone-800/80" />
+        </>
+      ) : null}
+
+      {/* 11. Jaunpur Local Feed */}
+      {jaunpurArticles.length > 0 && (
+        <>
+          <MobileNewsList
+            articles={jaunpurArticles}
+            sectionTitle="जौनपुर हलचल"
+            viewAllLink="/district/जौनपुर"
+            buttonText="सभी खबरें"
+            icon={<MapPin className="w-3.5 h-3.5 text-[#E53935]" />}
+          />
+          <div className="h-2 bg-stone-100 dark:bg-[#0D0D0D] border-y border-stone-200/80 dark:border-stone-800/80" />
+        </>
+      )}
+
+      {/* 12. More News */}
+      {latestArticles.length > 8 && (
         <MobileNewsList
-          articles={latestArticles.slice(4)}
+          articles={latestArticles.slice(8)}
           sectionTitle="अन्य प्रमुख समाचार"
+          buttonText="सभी खबरें"
+          icon={<Newspaper className="w-3.5 h-3.5 text-[#E53935]" />}
         />
       )}
 
