@@ -12,15 +12,25 @@ export default function AdminLayout({
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [activeUser, setActiveUser] = useState({
+    name: 'एडमिन यूजर',
+    role: 'SUPER_ADMIN',
+  });
 
   useEffect(() => {
     setMounted(true);
+    fetch('/api/admin/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.user) {
+          setActiveUser({
+            name: data.user.name || 'एडमिन यूजर',
+            role: data.user.role || 'SUPER_ADMIN',
+          });
+        }
+      })
+      .catch(() => {});
   }, []);
-
-  const activeUser = {
-    name: 'एडमिन यूजर',
-    role: 'SUPER_ADMIN',
-  };
 
   if (!mounted) {
     return (
@@ -82,8 +92,34 @@ export default function AdminLayout({
             </Link>
           </div>
 
-          {/* Right Header Status */}
           <div className="flex items-center gap-3">
+            {/* Role Badge */}
+            {activeUser.role === 'SUPER_ADMIN' || activeUser.role === 'ADMINISTRATOR' ? (
+              <div className="flex items-center gap-2">
+                <span className="bg-amber-50 text-amber-900 border border-amber-300 px-2.5 py-1 rounded-full text-[11px] font-black flex items-center gap-1 shadow-xs">
+                  <span>👑 सुपर एडमिन (Super Admin)</span>
+                </span>
+                <Link
+                  href="/admin/editor"
+                  className="hidden md:flex items-center gap-1 bg-stone-900 hover:bg-stone-800 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold shadow-xs transition-colors"
+                >
+                  <span>🎯 संपादक डेस्क ओवरसाइट</span>
+                </Link>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="bg-blue-50 text-blue-900 border border-blue-300 px-2.5 py-1 rounded-full text-[11px] font-black flex items-center gap-1 shadow-xs">
+                  <span>✍️ संपादक पैनल (News Editor)</span>
+                </span>
+                <Link
+                  href="/admin/editor"
+                  className="hidden md:flex items-center gap-1 bg-[#EA580C] hover:bg-orange-700 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold shadow-xs transition-colors"
+                >
+                  <span>🎯 संपादक कार्यक्षेत्र</span>
+                </Link>
+              </div>
+            )}
+
             <div className="flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1 rounded-full text-[11px] font-bold border border-green-200">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
               <span>सर्वर सक्रिय (Online)</span>

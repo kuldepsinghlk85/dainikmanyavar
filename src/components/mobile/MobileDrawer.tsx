@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { X, Home, Newspaper, Video, MapPin, Monitor, Phone, Info } from 'lucide-react';
+import { X, Home, Newspaper, Video, MapPin, Monitor, Phone, Info, User, Bookmark } from 'lucide-react';
 import { DrawerConfig, DEFAULT_MOBILE_MENU_CONFIG } from '@/lib/mobileMenuDefaults';
 
 interface MobileDrawerProps {
@@ -61,6 +61,26 @@ export default function MobileDrawer({
           >
             <X className="w-5 h-5" />
           </button>
+        </div>
+
+        {/* User Account / Registration Quick Banner */}
+        <div className="p-3 bg-orange-50/70 border-b border-orange-100 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-[#EA580C] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+              <User className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-xs font-black text-stone-900 leading-tight">पाठक खाता (User Profile)</p>
+              <p className="text-[10px] text-stone-500">रजिस्टर / सहेजे गए समाचार</p>
+            </div>
+          </div>
+          <Link
+            href="/user/dashboard"
+            onClick={onClose}
+            className="px-2.5 py-1 bg-[#EA580C] text-white text-[11px] font-bold rounded-lg shadow-xs hover:bg-orange-700"
+          >
+            खोलें
+          </Link>
         </div>
 
         {/* Quick Main Links */}

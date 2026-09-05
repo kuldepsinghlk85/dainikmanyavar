@@ -7,15 +7,15 @@ async function add5SeptEdition() {
   const date5Sept = new Date('2026-09-05T00:00:00.000Z');
 
   // Check if 5 Sept edition already exists
-  let edition = await db.epaperEdition.findFirst({
+  const existingEdition = await db.epaperEdition.findFirst({
     where: {
       title: { contains: '5 सितंबर' },
     },
   });
 
-  if (edition) {
-    await db.epaperPage.deleteMany({ where: { editionId: edition.id } });
-    await db.epaperEdition.delete({ where: { id: edition.id } });
+  if (existingEdition) {
+    console.log("[i] 5 September edition already exists in database. Skipping creation to preserve content.");
+    return;
   }
 
   edition = await db.epaperEdition.create({

@@ -11,6 +11,7 @@ import TrendingSection from '@/components/public/TrendingSection';
 import PopularTagsSection from '@/components/public/PopularTagsSection';
 import AdBanner from '@/components/public/AdBanner';
 import Footer from '@/components/public/Footer';
+import UserActivityTracker from '@/components/public/UserActivityTracker';
 import { db } from '@/lib/db';
 import { formatHindiDate, formatCount, calculateReadingTime } from '@/lib/utils';
 import { generateNewsArticleJsonLd, generateBreadcrumbJsonLd } from '@/lib/seo';
@@ -210,6 +211,13 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
               title={article.title}
               slug={article.slug}
               initialLikeCount={article.likeCount}
+            />
+
+            {/* User Activity & Bookmark Tracker */}
+            <UserActivityTracker
+              newsId={article.id}
+              newsTitle={article.title}
+              newsSlug={article.slug}
             />
 
             {/* Article Body Content */}

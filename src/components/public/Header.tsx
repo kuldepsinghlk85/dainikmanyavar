@@ -4,8 +4,9 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Search, Sparkles } from 'lucide-react';
+import { Search, Sparkles, User, LogIn } from 'lucide-react';
 import AdBanner from './AdBanner';
+import PortalAuthModal from './PortalAuthModal';
 
 interface HeaderProps {
   festivalBanner?: {
@@ -20,7 +21,21 @@ export default function Header({ festivalBanner }: HeaderProps) {
   const [query, setQuery] = useState('');
   const [siteBanner, setSiteBanner] = useState<any>(null);
   const [siteLogo, setSiteLogo] = useState<string>('/logo.png');
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    // Check portal user session
+    fetch('/api/auth/portal/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.user) {
+          setCurrentUser(data.user);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch('/api/settings')
@@ -134,9 +149,39 @@ export default function Header({ festivalBanner }: HeaderProps) {
             >
               <span>WhatsApp</span>
             </a>
+
+            {/* Portal User Login / Register Button */}
+            {currentUser ? (
+              <Link
+                href="/user/dashboard"
+                className="bg-orange-50 hover:bg-orange-100 text-[#EA580C] border border-orange-200 font-bold px-3 py-1.5 rounded-lg text-xs whitespace-nowrap text-center transition-colors flex items-center justify-center gap-1 shadow-xs"
+              >
+                <User className="w-3.5 h-3.5" />
+                <span className="max-w-[80px] truncate">{currentUser.fullName?.split(' ')[0] || 'खाता'}</span>
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowAuthModal(true)}
+                className="bg-[#EA580C] hover:bg-orange-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs whitespace-nowrap text-center transition-colors flex items-center justify-center gap-1 shadow-xs cursor-pointer"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>रजिस्टर / लॉगिन</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Auth Modal */}
+      <PortalAuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={(u) => {
+          setCurrentUser(u);
+          setShowAuthModal(false);
+        }}
+      />
     </header>
   );
 }

@@ -18,6 +18,12 @@ async function updateDbWithRealPages() {
   const editions = await db.epaperEdition.findMany();
 
   for (const ed of editions) {
+    const existingPagesCount = await db.epaperPage.count({ where: { editionId: ed.id } });
+    if (existingPagesCount > 0) {
+      console.log(`[i] Edition "${ed.title}" already has ${existingPagesCount} pages. Skipping to preserve content.`);
+      continue;
+    }
+
     // Update Edition Cover Image to Real Page 1
     await db.epaperEdition.update({
       where: { id: ed.id },
@@ -26,9 +32,6 @@ async function updateDbWithRealPages() {
         totalPages: 8,
       },
     });
-
-    // Delete existing pages and re-insert real 8 pages
-    await db.epaperPage.deleteMany({ where: { editionId: ed.id } });
 
     for (const p of pageImages) {
       await db.epaperPage.create({

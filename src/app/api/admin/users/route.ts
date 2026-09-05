@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { hashPassword } from '@/lib/auth';
+import { hashPassword, getAdminSession } from '@/lib/auth';
 
 export async function GET() {
   try {
+    const session = await getAdminSession();
+    if (!session || (session.role !== 'SUPER_ADMIN' && session.role !== 'ADMINISTRATOR')) {
+      return NextResponse.json({ success: false, error: 'अनधिकृत: केवल सुपर एडमिन ही स्टाफ सूची देख सकते हैं।' }, { status: 403 });
+    }
+
     const users = await db.user.findMany({
       select: {
         id: true,
@@ -18,12 +23,17 @@ export async function GET() {
     });
     return NextResponse.json({ success: true, data: users });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'उपयोगकर्ता सूची लोड करने में विफल' }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
+    const session = await getAdminSession();
+    if (!session || (session.role !== 'SUPER_ADMIN' && session.role !== 'ADMINISTRATOR')) {
+      return NextResponse.json({ success: false, error: 'अनधिकृत: केवल सुपर एडमिन ही नया स्टाफ जोड़ सकते हैं।' }, { status: 403 });
+    }
+
     const { name, email, password, role = 'EDITOR' } = await request.json();
 
     if (!name || !email || !password) {
@@ -56,12 +66,17 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, data: user });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'नया उपयोगकर्ता बनाने में विफल' }, { status: 500 });
   }
 }
 
 export async function PATCH(request: Request) {
   try {
+    const session = await getAdminSession();
+    if (!session || (session.role !== 'SUPER_ADMIN' && session.role !== 'ADMINISTRATOR')) {
+      return NextResponse.json({ success: false, error: 'अनधिकृत: केवल सुपर एडमिन ही स्टाफ विवरण या पासवर्ड बदल सकते हैं।' }, { status: 403 });
+    }
+
     const body = await request.json();
     const { id, name, email, newPassword, active } = body;
 

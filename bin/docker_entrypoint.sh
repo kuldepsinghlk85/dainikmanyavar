@@ -41,11 +41,16 @@ if [ -n "$DATABASE_URL" ]; then
     echo "[Dainik Manyavar] Running UP mandals and districts seed..."
     node prisma/seed_up_locations.js
 
-    echo "[Dainik Manyavar] Running real pages update..."
-    node prisma/update_db_with_real_pages.js
+    echo "[Dainik Manyavar] Running editor account seed..."
+    node prisma/seed_editor.js
 
-    echo "[Dainik Manyavar] Running real pages copy..."
-    node prisma/add_5sept_edition.js
+    # Ensure uploads volume has required subdirectories
+    mkdir -p /app/public/uploads/epaper/pages /app/public/uploads/epaper/ads /app/public/uploads/news 2>/dev/null || true
+
+    # Safely seed default template images without overwriting user data
+    if [ -d "/app/public_seed_uploads" ]; then
+        cp -rn /app/public_seed_uploads/* /app/public/uploads/ 2>/dev/null || true
+    fi
 
     echo "============================================================"
     echo "[Dainik Manyavar] All database seeds completed successfully."

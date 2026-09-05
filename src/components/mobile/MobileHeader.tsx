@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Menu, Search, X, Newspaper, Share2 } from 'lucide-react';
+import { Menu, Search, X, Newspaper, Share2, User } from 'lucide-react';
 import { HeaderButtonsConfig, DEFAULT_MOBILE_MENU_CONFIG } from '@/lib/mobileMenuDefaults';
 
 interface MobileHeaderProps {
@@ -121,6 +121,14 @@ export default function MobileHeader({
               <Share2 className="w-4 h-4 text-stone-700" />
             </button>
           )}
+
+          <Link
+            href="/user/dashboard"
+            className="p-2 text-stone-700 hover:text-[#EA580C] active:bg-stone-100 rounded-full transition-colors"
+            aria-label="पाठक प्रोफ़ाइल"
+          >
+            <User className="w-4.5 h-4.5 text-stone-700" />
+          </Link>
         </div>
       </div>
 

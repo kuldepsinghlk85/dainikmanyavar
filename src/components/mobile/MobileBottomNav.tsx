@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Newspaper, Video, Grid, Search } from 'lucide-react';
+import { Home, Newspaper, Video, Grid, Search, User } from 'lucide-react';
 import { BottomNavItem, DEFAULT_MOBILE_MENU_CONFIG } from '@/lib/mobileMenuDefaults';
 
 interface MobileBottomNavProps {
@@ -36,6 +36,8 @@ export default function MobileBottomNav({
         return <Grid className="w-5 h-5" />;
       case 'Search':
         return <Search className="w-5 h-5" />;
+      case 'User':
+        return <User className="w-5 h-5" />;
       default:
         return <Grid className="w-5 h-5" />;
     }

@@ -604,3 +604,98 @@ model ContactInquiry {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
+
+// ==========================================================
+// USER MANAGEMENT & NEWSLETTER AUTOMATION MODULE
+// ==========================================================
+
+model PortalUser {
+  id                   String    @id @default(uuid())
+  fullName             String
+  mobileNumber         String    @unique
+  email                String?
+  city                 String?
+  state                String?
+  profileImage         String?
+  password             String?
+  otp                  String?
+  otpExpiresAt         DateTime?
+  registrationDate     DateTime  @default(now())
+  lastLogin            DateTime?
+  status               String    @default("ACTIVE") // ACTIVE, BLOCKED, PENDING
+  newsletterSubscribed Boolean   @default(true)
+  whatsappPermission   Boolean   @default(true)
+  isImported           Boolean   @default(false)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  activityLogs         UserActivityLog[]
+  notificationLogs     NotificationLog[]
+  shares               ShareTracking[]
+  savedArticles        UserSavedArticle[]
+
+  @@index([status])
+  @@index([city])
+  @@index([mobileNumber])
+}
+
+model NotificationLog {
+  id               String      @id @default(uuid())
+  userId           String?
+  newsId           String?
+  notificationType String      @default("WHATSAPP") // WHATSAPP, PUSH, EMAIL, SMS
+  whatsappNumber   String
+  messageText      String?
+  shortUrl         String?
+  sentTime         DateTime    @default(now())
+  deliveryStatus   String      @default("SENT") // SENT, DELIVERED, FAILED
+  openedStatus     String      @default("UNOPENED") // OPENED, UNOPENED
+  openedTime       DateTime?
+  createdAt        DateTime    @default(now())
+  user             PortalUser? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([deliveryStatus])
+  @@index([openedStatus])
+  @@index([newsId])
+}
+
+model UserActivityLog {
+  id           String      @id @default(uuid())
+  userId       String?
+  newsId       String?
+  activityType String      // VIEW, SHARE, LIKE, AUDIO_PLAY, DOWNLOAD, READ_TIME, SAVED
+  readTime     Int?        // in seconds
+  device       String      @default("web") // web, mobile, desktop, android, ios
+  timestamp    DateTime    @default(now())
+  user         PortalUser? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([activityType])
+  @@index([userId])
+  @@index([newsId])
+}
+
+model ShareTracking {
+  id           String      @id @default(uuid())
+  userId       String?
+  newsId       String
+  trackingCode String      @unique
+  platform     String      @default("whatsapp")
+  clickCount   Int         @default(0)
+  createdAt    DateTime    @default(now())
+  user         PortalUser? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([trackingCode])
+  @@index([newsId])
+}
+
+model UserSavedArticle {
+  id        String     @id @default(uuid())
+  userId    String
+  articleId String
+  createdAt DateTime   @default(now())
+  user      PortalUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, articleId])
+  @@index([userId])
+  @@index([articleId])
+}

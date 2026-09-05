@@ -54,6 +54,10 @@ export default function TopBar() {
           <Link href="/contact" className="hover:text-[#EA580C] font-semibold text-stone-700">
             संपर्क करें
           </Link>
+          <span className="text-stone-300">|</span>
+          <Link href="/user/dashboard" className="text-[#EA580C] font-black hover:underline flex items-center gap-1">
+            <span>👤 पाठक खाता</span>
+          </Link>
         </div>
       </div>
     </div>

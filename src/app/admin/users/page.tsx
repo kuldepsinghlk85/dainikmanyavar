@@ -30,6 +30,9 @@ export default function UsersAdminPage() {
   const [newUserPass, setNewUserPass] = useState('');
   const [newRole, setNewRole] = useState('EDITOR');
 
+  const [currentUser, setCurrentUser] = useState<{ role?: string; isSuperAdmin?: boolean } | null>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
   const fetchUsers = async () => {
     try {
       const res = await fetch('/api/admin/users');
@@ -41,7 +44,18 @@ export default function UsersAdminPage() {
   };
 
   useEffect(() => {
-    fetchUsers();
+    fetch('/api/admin/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.user) {
+          setCurrentUser(data.user);
+          if (data.user.isSuperAdmin) {
+            fetchUsers();
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => setCheckingAuth(false));
   }, []);
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -124,6 +138,28 @@ export default function UsersAdminPage() {
       setLoading(false);
     }
   };
+
+  if (!checkingAuth && currentUser && !currentUser.isSuperAdmin) {
+    return (
+      <div className="max-w-2xl mx-auto py-12 px-4">
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-8 text-center shadow-sm">
+          <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+            <Shield className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl font-black text-stone-900 mb-2">केवल सुपर एडमिन के लिए आरक्षित (Restricted)</h2>
+          <p className="text-stone-700 text-sm max-w-md mx-auto mb-6 leading-relaxed">
+            पोर्टल के एडमिन और एडिटर स्टाफ एकाउंट्स, रोल्स और पासवर्ड का प्रबंधन केवल <strong>सुपर एडमिन (Super Admin)</strong> के अधिकार क्षेत्र में है।
+          </p>
+          <a
+            href="/admin/editor"
+            className="inline-flex items-center gap-2 bg-[#EA580C] hover:bg-[#C2410C] text-white px-6 py-3 rounded-xl font-bold text-sm shadow transition-all"
+          >
+            🎯 संपादक मुख्य डेस्क (Editor Desk) पर जाएँ →
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-5xl">

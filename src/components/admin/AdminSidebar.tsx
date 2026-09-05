@@ -36,6 +36,14 @@ import {
   Compass,
   FileText,
   Smartphone,
+  Users,
+  UploadCloud,
+  DownloadCloud,
+  Activity,
+  MessageSquare,
+  Target,
+  Shield,
+  Eye,
 } from 'lucide-react';
 
 interface AdminSidebarProps {
@@ -49,24 +57,47 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
   const currentQueryStr = searchParams.toString();
   const currentFullUrl = currentQueryStr ? `${pathname}?${currentQueryStr}` : pathname;
 
+  const isSuperAdmin = userRole === 'SUPER_ADMIN' || userRole === 'ADMINISTRATOR';
+  const isEditor = userRole === 'EDITOR';
+
   const sections = [
     {
       id: 'editor-workspace',
-      title: '✍️ संपादक वर्कस्पेस (Editor Workspace)',
+      title: isSuperAdmin
+        ? '✍️ संपादक वर्कस्पेस (Editor Oversight)'
+        : '✍️ संपादक कार्यक्षेत्र (Editor Workspace)',
       icon: Edit3,
       items: [
+        { label: '🎯 संपादक मुख्य डेस्क (Editor Desk)', href: '/admin/editor', icon: Target },
         { label: 'डैशबोर्ड (Dashboard)', href: '/admin', icon: LayoutDashboard },
         { label: 'सभी समाचार (All News)', href: '/admin/news', icon: Newspaper },
         { label: 'नया समाचार जोड़ें', href: '/admin/news/new', icon: PlusCircle },
         { label: '🔥 ब्रेकिंग न्यूज़ टिकर (Breaking Ticker)', href: '/admin/breaking', icon: Flame },
         { label: '🌟 मुख्य स्लाइडर व टॉप न्यूज़ (Hero Slider)', href: '/admin/slider', icon: Sliders },
         { label: '📱 मोबाइल ऐप मेनू (Mobile Menu)', href: '/admin/mobile-menu', icon: Smartphone },
-        { label: '📩 संपर्क संदेश (Inquiries)', href: '/admin/inquiries', icon: Mail },
         { label: '📥 न्यूज़ इम्पोर्ट इनबॉक्स', href: '/admin/importer/inbox', icon: Inbox },
         { label: '📥 विशेष फ़ीड इनबॉक्स', href: '/admin/external-content/inbox', icon: Radio },
+        { label: '📩 संपर्क संदेश (Inquiries)', href: '/admin/inquiries', icon: Mail },
         { label: '📦 आर्काइव्ड समाचार (Archive)', href: '/admin/archive/news', icon: Archive },
       ],
     },
+    ...(isSuperAdmin
+      ? [
+          {
+            id: 'user-management',
+            title: '👥 User Management (Super Admin)',
+            icon: Users,
+            items: [
+              { label: '1. All Users (सभी यूज़र्स)', href: '/admin/portal-users', icon: Users },
+              { label: '2. Newsletter Subscribers', href: '/admin/portal-users/subscribers', icon: Mail },
+              { label: '3. Imported Users (Excel)', href: '/admin/portal-users/imported', icon: UploadCloud },
+              { label: '4. User Activity Logs', href: '/admin/portal-users/activity', icon: Activity },
+              { label: '5. Export Users', href: '/admin/portal-users/export', icon: DownloadCloud },
+              { label: '📲 WhatsApp News Alerts', href: '/admin/portal-users/broadcast', icon: MessageSquare },
+            ],
+          },
+        ]
+      : []),
     {
       id: 'epaper-management',
       title: '📰 E-Paper Management',
@@ -76,13 +107,13 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
         { label: 'Published Editions', href: '/admin/epaper/published', icon: Newspaper },
         { label: 'Draft Editions', href: '/admin/epaper/drafts', icon: Edit3 },
         { label: 'Page Management', href: '/admin/epaper/pages', icon: FolderTree },
-        { label: 'Advertisement Management', href: '/admin/epaper/ads', icon: Megaphone },
+        ...(isSuperAdmin ? [{ label: 'Advertisement Management', href: '/admin/epaper/ads', icon: Megaphone }] : []),
         { label: 'E-Paper Analytics', href: '/admin/epaper/analytics', icon: BarChart3 },
       ],
     },
     {
       id: 'rss-library',
-      title: '📡 RSS Feed Library',
+      title: '📡 RSS Feed Library (Download & Ingest)',
       icon: Radio,
       items: [
         { label: 'All RSS Sources', href: '/admin/rss/sources', icon: Sliders },
@@ -109,8 +140,8 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
     },
     {
       id: 'admin-settings',
-      title: '🛠️ मीडिया, टैक्सोनॉमी एवं प्रशासन',
-      icon: Settings,
+      title: isSuperAdmin ? '🛠️ मीडिया, टैक्सोनॉमी एवं सुपर प्रशासन' : '🖼️ मीडिया एवं श्रेणियां',
+      icon: isSuperAdmin ? Settings : ImageIcon,
       items: [
         { label: '🖼️ मीडिया लाइब्रेरी (Media)', href: '/admin/media', icon: ImageIcon },
         { label: '🖼️ फोटो आर्काइवर (Image Link Copy)', href: '/admin/archive/media', icon: FolderArchive },
@@ -118,10 +149,15 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
         { label: '🏷️ मल्टी टैग्स (Multi-Tags)', href: '/admin/tags', icon: TagIcon },
         { label: '📍 स्थान (Locations)', href: '/admin/locations', icon: MapPin },
         { label: '🎥 वीडियो न्यूज़ (Videos)', href: '/admin/video', icon: Video },
-        { label: '🔥 ब्रेकिंग टिकर (Ticker)', href: '/admin/breaking', icon: Flame },
-        { label: '📢 विज्ञापन (Ads Manager)', href: '/admin/ads', icon: Megaphone },
-        { label: '📊 एनालिटिक्स (Analytics)', href: '/admin/analytics', icon: BarChart3 },
-        { label: '⚙️ साइट सेटिंग्स (Settings)', href: '/admin/settings', icon: Settings },
+        ...(isSuperAdmin
+          ? [
+              { label: '🔥 ब्रेकिंग टिकर (Ticker)', href: '/admin/breaking', icon: Flame },
+              { label: '📢 विज्ञापन (Ads Manager)', href: '/admin/ads', icon: Megaphone },
+              { label: '📊 एनालिटिक्स (Analytics)', href: '/admin/analytics', icon: BarChart3 },
+              { label: '👥 एडमिन स्टाफ (Staff Users)', href: '/admin/users', icon: Users },
+              { label: '⚙️ साइट सेटिंग्स (Settings)', href: '/admin/settings', icon: Settings },
+            ]
+          : []),
       ],
     },
   ];
@@ -129,6 +165,7 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
   // Keep all sections open by default so admin can access everything instantly
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     'editor-workspace': true,
+    'user-management': true,
     'epaper-management': true,
     'rss-library': true,
     'special-modules': true,
@@ -220,7 +257,15 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
           </div>
           <div className="min-w-0">
             <p className="font-bold text-[#EA580C] text-xs truncate">{userName}</p>
-            <p className="text-[10px] text-slate-400 font-mono truncate">{userRole}</p>
+            <p className="text-[10px] font-bold truncate">
+              {isSuperAdmin ? (
+                <span className="text-amber-400 font-mono">👑 सुपर एडमिन</span>
+              ) : isEditor ? (
+                <span className="text-blue-400 font-mono">✍️ समाचार संपादक</span>
+              ) : (
+                <span className="text-slate-400 font-mono">{userRole}</span>
+              )}
+            </p>
           </div>
         </div>
 

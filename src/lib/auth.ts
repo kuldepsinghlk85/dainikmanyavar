@@ -33,3 +33,36 @@ export async function getAdminSession() {
     return null;
   }
 }
+
+export async function getPortalUserSession() {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('portal_token')?.value;
+    if (!token) return null;
+
+    const [userId] = token.split(':');
+    if (!userId) return null;
+
+    const user = await db.portalUser.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        fullName: true,
+        mobileNumber: true,
+        email: true,
+        city: true,
+        state: true,
+        profileImage: true,
+        status: true,
+        newsletterSubscribed: true,
+        whatsappPermission: true,
+        registrationDate: true,
+      },
+    });
+
+    if (!user || user.status === 'BLOCKED') return null;
+    return user;
+  } catch (err) {
+    return null;
+  }
+}

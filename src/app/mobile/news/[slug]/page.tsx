@@ -8,6 +8,7 @@ import { ArrowLeft, Clock, Eye, Share2, MessageCircle, Volume2 } from 'lucide-re
 import MobileNewsList from '@/components/mobile/MobileNewsList';
 import MobileFooter from '@/components/mobile/MobileFooter';
 import AudioPlayer from '@/components/public/AudioPlayer';
+import UserActivityTracker from '@/components/public/UserActivityTracker';
 
 export const dynamic = 'force-dynamic';
 
@@ -155,6 +156,14 @@ export default async function MobileNewsDetailPage({
             <AudioPlayer articleId={article.id} title={article.title} content={article.content} />
           </div>
         )}
+
+        {/* User Activity & Bookmark Tracker */}
+        <UserActivityTracker
+          newsId={article.id}
+          newsTitle={article.title}
+          newsSlug={article.slug}
+          isMobile={true}
+        />
 
         {/* Article Body */}
         <div

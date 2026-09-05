@@ -120,6 +120,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modul
 # code-only deploy also re-uploads public/ (44MB) sitting behind it.
 # public/ and prisma/ come from the build context, never via the builder stage.
 COPY --chown=nextjs:nodejs public ./public
+COPY --chown=nextjs:nodejs public/uploads /app/public_seed_uploads
 COPY --chown=nextjs:nodejs prisma ./prisma
 COPY --chown=nextjs:nodejs next.config.js ./next.config.js
 COPY --chown=nextjs:nodejs --chmod=755 bin/docker_entrypoint.sh /app/bin/docker_entrypoint.sh
