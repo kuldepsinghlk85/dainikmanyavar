@@ -47,7 +47,6 @@ jobs:
   deploy:
     name: 🚀 Deploy to ${{ inputs.environment }}
     runs-on: ubuntu-latest
-    if: ${{ secrets.REMOTE_SERVER_SSH_KEY != '' }}
     timeout-minutes: 15
     environment:
       name: ${{ inputs.environment }}
