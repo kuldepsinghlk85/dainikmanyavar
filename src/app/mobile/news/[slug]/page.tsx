@@ -14,8 +14,20 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const article = await db.article.findUnique({
-    where: { slug },
+  let decodedSlug = slug;
+  try {
+    decodedSlug = decodeURIComponent(slug);
+  } catch (_) {}
+
+  const article = await db.article.findFirst({
+    where: {
+      OR: [
+        { slug: decodedSlug },
+        { slug },
+        { id: decodedSlug },
+        { id: slug },
+      ],
+    },
     select: { title: true, excerpt: true, featuredImage: true },
   });
   if (!article) return {};
@@ -36,9 +48,20 @@ export default async function MobileNewsDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  let decodedSlug = slug;
+  try {
+    decodedSlug = decodeURIComponent(slug);
+  } catch (_) {}
 
-  const article = await db.article.findUnique({
-    where: { slug },
+  const article = await db.article.findFirst({
+    where: {
+      OR: [
+        { slug: decodedSlug },
+        { slug },
+        { id: decodedSlug },
+        { id: slug },
+      ],
+    },
     include: {
       category: true,
       author: true,

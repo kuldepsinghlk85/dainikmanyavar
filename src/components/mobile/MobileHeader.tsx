@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -24,7 +24,7 @@ export default function MobileHeader({
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
-      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+      router.push(`/mobile/search?q=${encodeURIComponent(query.trim())}`);
       setShowSearch(false);
     }
   };

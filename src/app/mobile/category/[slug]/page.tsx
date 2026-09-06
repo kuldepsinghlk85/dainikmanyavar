@@ -15,11 +15,30 @@ export default async function MobileCategoryPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  let decodedSlug = slug;
+  try {
+    decodedSlug = decodeURIComponent(slug);
+  } catch (_) {}
 
   let categoryName = '';
   let articles: any[] = [];
 
-  if (slug === 'latest') {
+  if (decodedSlug === 'home' || decodedSlug === '') {
+    // Treat home as latest
+    categoryName = 'मुख्य समाचार (Top News)';
+    articles = await db.article.findMany({
+      where: { status: 'PUBLISHED' },
+      orderBy: [
+        { publishedAt: 'desc' },
+        { newsId: 'desc' },
+        { createdAt: 'desc' },
+      ],
+      take: 40,
+      include: {
+        category: { select: { name: true } },
+      },
+    });
+  } else if (decodedSlug.toLowerCase() === 'latest' || decodedSlug.toLowerCase() === 'news') {
     categoryName = 'ताज़ा ख़बरें (All Latest News)';
     articles = await db.article.findMany({
       where: { status: 'PUBLISHED' },
@@ -34,23 +53,77 @@ export default async function MobileCategoryPage({
       },
     });
   } else {
-    const category = await db.category.findUnique({ where: { slug } });
-    if (!category) {
-      notFound();
-    }
-    categoryName = category.name;
-    articles = await db.article.findMany({
-      where: { primaryCategoryId: category.id, status: 'PUBLISHED' },
-      orderBy: [
-        { publishedAt: 'desc' },
-        { newsId: 'desc' },
-        { createdAt: 'desc' },
-      ],
-      take: 40,
-      include: {
-        category: { select: { name: true } },
+    // 1. Try finding Category by slug, name, or id
+    const category = await db.category.findFirst({
+      where: {
+        OR: [
+          { slug: decodedSlug },
+          { slug },
+          { name: decodedSlug },
+          { id: decodedSlug },
+        ],
       },
     });
+
+    if (category) {
+      categoryName = category.name;
+      articles = await db.article.findMany({
+        where: { primaryCategoryId: category.id, status: 'PUBLISHED' },
+        orderBy: [
+          { publishedAt: 'desc' },
+          { newsId: 'desc' },
+          { createdAt: 'desc' },
+        ],
+        take: 40,
+        include: {
+          category: { select: { name: true } },
+        },
+      });
+    } else {
+      // 2. Try finding Location (District / Division) e.g. jaunpur, varanasi, etc.
+      const location = await db.location.findFirst({
+        where: {
+          OR: [
+            { slug: decodedSlug },
+            { slug },
+            { name: decodedSlug },
+          ],
+        },
+      });
+
+      if (location) {
+        categoryName = `${location.name} जिला समाचार`;
+        articles = await db.article.findMany({
+          where: { locationId: location.id, status: 'PUBLISHED' },
+          orderBy: [
+            { publishedAt: 'desc' },
+            { newsId: 'desc' },
+            { createdAt: 'desc' },
+          ],
+          take: 40,
+          include: {
+            category: { select: { name: true } },
+          },
+        });
+      } else {
+        // 3. Graceful keyword search instead of throwing 404
+        articles = await db.article.findMany({
+          where: {
+            status: 'PUBLISHED',
+            OR: [
+              { title: { contains: decodedSlug } },
+              { excerpt: { contains: decodedSlug } },
+            ],
+          },
+          orderBy: [{ publishedAt: 'desc' }],
+          take: 30,
+          include: {
+            category: { select: { name: true } },
+          },
+        });
+        categoryName = `${decodedSlug} समाचार`;
+      }
+    }
   }
 
   const allCategories = await db.category.findMany({

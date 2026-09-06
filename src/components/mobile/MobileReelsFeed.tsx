@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useRef } from 'react';
 import Link from 'next/link';
@@ -98,12 +98,14 @@ export default function MobileReelsFeed({
           ref={scrollRef}
           className="flex gap-2.5 overflow-x-auto px-3.5 no-scrollbar scroll-smooth"
         >
-          {items.map((reel, idx) => (
-            <Link
-              key={reel.id || idx}
-              href={`/mobile/news/${reel.slug}`}
-              className="w-32 sm:w-36 shrink-0 aspect-[9/15] relative rounded-xl overflow-hidden shadow-md bg-stone-950 group/card block border border-stone-200/50 dark:border-stone-800"
-            >
+          {items.map((reel, idx) => {
+            const href = reel.slug && !reel.id?.startsWith('reel-') ? `/mobile/news/${reel.slug}` : (viewAllLink || '/video');
+            return (
+              <Link
+                key={reel.id || idx}
+                href={href}
+                className="w-32 sm:w-36 shrink-0 aspect-[9/15] relative rounded-xl overflow-hidden shadow-md bg-stone-950 group/card block border border-stone-200/50 dark:border-stone-800"
+              >
               {/* Background Thumbnail */}
               <Image
                 src={reel.thumbnail || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&q=80'}
@@ -137,7 +139,8 @@ export default function MobileReelsFeed({
                 </p>
               </div>
             </Link>
-          ))}
+          );
+        })}
         </div>
 
         {/* Floating Right Scroll Arrow */}

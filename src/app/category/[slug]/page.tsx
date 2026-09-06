@@ -12,15 +12,34 @@ import { Flame, ArrowLeft, ExternalLink } from 'lucide-react';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  if (slug === 'latest') {
+  let decodedSlug = slug;
+  try {
+    decodedSlug = decodeURIComponent(slug);
+  } catch (_) {}
+
+  if (decodedSlug === 'latest' || decodedSlug === 'news') {
     return {
       title: 'ताज़ा ख़बरें (All Latest News) | दैनिक मान्यवर',
       description: 'दैनिक मान्यवर पर उत्तर प्रदेश, जौनपुर व देश की सभी नवीनतम ताज़ा ख़बरें पढ़ें।',
     };
   }
 
-  const category = await db.category.findUnique({ where: { slug } });
-  if (!category) return {};
+  const category = await db.category.findFirst({
+    where: {
+      OR: [
+        { slug: decodedSlug },
+        { slug },
+        { name: decodedSlug },
+        { id: decodedSlug },
+      ],
+    },
+  });
+  if (!category) {
+    return {
+      title: `${decodedSlug} समाचार | दैनिक मान्यवर`,
+      description: `${decodedSlug} से जुड़ी ताज़ा ख़बरें और अपडेट पढ़ें दैनिक मान्यवर पर।`,
+    };
+  }
 
   return {
     title: `${category.name} समाचार | दैनिक मान्यवर`,
@@ -30,11 +49,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  let decodedSlug = slug;
+  try {
+    decodedSlug = decodeURIComponent(slug);
+  } catch (_) {}
 
   let categoryName = '';
   let articles: any[] = [];
 
-  if (slug === 'latest') {
+  if (decodedSlug === 'latest' || decodedSlug === 'news') {
     categoryName = '🔥 ताज़ा ख़बरें (All Latest News)';
     articles = await db.article.findMany({
       where: { status: 'PUBLISHED' },
@@ -50,24 +73,83 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
       },
     });
   } else {
-    const category = await db.category.findUnique({ where: { slug } });
-    if (!category) {
-      notFound();
-    }
-    categoryName = category.name;
-    articles = await db.article.findMany({
-      where: { primaryCategoryId: category.id, status: 'PUBLISHED' },
-      orderBy: [
-        { newsId: 'desc' },
-        { publishedAt: 'desc' },
-        { createdAt: 'desc' },
-      ],
-      take: 40,
-      include: {
-        category: true,
-        tags: { include: { tag: true } },
+    // 1. Try finding Category
+    const category = await db.category.findFirst({
+      where: {
+        OR: [
+          { slug: decodedSlug },
+          { slug },
+          { name: decodedSlug },
+          { id: decodedSlug },
+        ],
       },
     });
+
+    if (category) {
+      categoryName = category.name;
+      articles = await db.article.findMany({
+        where: { primaryCategoryId: category.id, status: 'PUBLISHED' },
+        orderBy: [
+          { newsId: 'desc' },
+          { publishedAt: 'desc' },
+          { createdAt: 'desc' },
+        ],
+        take: 40,
+        include: {
+          category: true,
+          tags: { include: { tag: true } },
+        },
+      });
+    } else {
+      // 2. Try finding Location (District / Division)
+      const location = await db.location.findFirst({
+        where: {
+          OR: [
+            { slug: decodedSlug },
+            { slug },
+            { name: decodedSlug },
+          ],
+        },
+      });
+
+      if (location) {
+        categoryName = `${location.name} जिला समाचार`;
+        articles = await db.article.findMany({
+          where: { locationId: location.id, status: 'PUBLISHED' },
+          orderBy: [
+            { newsId: 'desc' },
+            { publishedAt: 'desc' },
+            { createdAt: 'desc' },
+          ],
+          take: 40,
+          include: {
+            category: true,
+            tags: { include: { tag: true } },
+          },
+        });
+      } else {
+        // 3. Graceful keyword search
+        articles = await db.article.findMany({
+          where: {
+            status: 'PUBLISHED',
+            OR: [
+              { title: { contains: decodedSlug } },
+              { excerpt: { contains: decodedSlug } },
+            ],
+          },
+          orderBy: [
+            { newsId: 'desc' },
+            { publishedAt: 'desc' },
+          ],
+          take: 40,
+          include: {
+            category: true,
+            tags: { include: { tag: true } },
+          },
+        });
+        categoryName = `${decodedSlug} समाचार`;
+      }
+    }
   }
 
   const formattedArticles = articles.map((a: any) => ({
