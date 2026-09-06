@@ -9,7 +9,8 @@
     "lint": "next lint",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "db:check-seeds": "node prisma/check_seed_idempotency.js"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

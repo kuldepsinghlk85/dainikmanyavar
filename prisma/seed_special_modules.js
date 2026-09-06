@@ -1,6 +1,20 @@
 const { PrismaClient } = require('@prisma/client');
 const db = new PrismaClient();
 
+// The Docker entrypoint reruns every seed on each container start. None of these
+// models carries a unique constraint to upsert against, so guard on the natural
+// key — otherwise each restart duplicates the whole sample set.
+async function seedOnce(model, key, rows, build = (row) => row) {
+  for (const row of rows) {
+    const existing = await model.findFirst({
+      where: { [key]: row[key] },
+      select: { id: true },
+    });
+    if (existing) continue;
+    await model.create({ data: build(row) });
+  }
+}
+
 async function seedSpecialModules() {
   console.log("Seeding Special Content Modules...");
 
@@ -20,16 +34,12 @@ async function seedSpecialModules() {
     { zodiacSign: 'meen', zodiacHindi: 'मीन (Pisces)', title: 'आज का राशिफल: मीन राशि', prediction: 'वाणी में मधुरता से सभी काम सधेंगे। आर्थिक पक्ष मजबूत होगा। परिवार में मांगलिक कार्य की रूपरेखा बनेगी।', love: 'अविवाहितों के लिए रिश्ता आ सकता है।', career: 'व्यापार में विस्तार होगा।', health: 'उत्साही महसूस करेंगे।', finance: 'बचत योजनाएं फलदायी होंगी।', luckyNumber: '12', luckyColor: 'केसरिया (Saffron)' }
   ];
 
-  for (const z of zodiacSigns) {
-    await db.horoscope.create({
-      data: {
-        ...z,
-        status: 'PUBLISHED',
-        featuredImage: 'https://images.unsplash.com/photo-1532968961962-8a0cb3a2d4f5?auto=format&fit=crop&w=600&q=80',
-        tagsJson: JSON.stringify(['#राशिफल', `#${z.zodiacHindi.split(' ')[0]}_राशि`, '#आज_का_राशिफल']),
-      }
-    });
-  }
+  await seedOnce(db.horoscope, 'zodiacSign', zodiacSigns, (z) => ({
+    ...z,
+    status: 'PUBLISHED',
+    featuredImage: 'https://images.unsplash.com/photo-1532968961962-8a0cb3a2d4f5?auto=format&fit=crop&w=600&q=80',
+    tagsJson: JSON.stringify(['#राशिफल', `#${z.zodiacHindi.split(' ')[0]}_राशि`, '#आज_का_राशिफल']),
+  }));
   console.log("[+] 12 Zodiac Horoscopes seeded.");
 
   // 2. Seed Cricket Matches & Reports
@@ -68,9 +78,7 @@ async function seedSpecialModules() {
     }
   ];
 
-  for (const c of cricketMatches) {
-    await db.cricketMatch.create({ data: c });
-  }
+  await seedOnce(db.cricketMatch, 'matchTitle', cricketMatches);
   console.log("[+] Cricket matches & live stories seeded.");
 
   // 3. Seed Stock Market Updates
@@ -109,9 +117,7 @@ async function seedSpecialModules() {
     }
   ];
 
-  for (const m of marketUpdates) {
-    await db.stockMarketUpdate.create({ data: m });
-  }
+  await seedOnce(db.stockMarketUpdate, 'title', marketUpdates);
   console.log("[+] Stock market updates seeded.");
 
   // 4. Seed Commodity Prices (Gold & Silver)
@@ -123,9 +129,7 @@ async function seedSpecialModules() {
     { city: 'पटना', gold24K: 74850, gold22K: 68650, silver: 89000, goldChange: 190, silverChange: -110 }
   ];
 
-  for (const c of cityRates) {
-    await db.commodityPrice.create({ data: c });
-  }
+  await seedOnce(db.commodityPrice, 'city', cityRates);
   console.log("[+] City-wise Gold/Silver commodity rates seeded.");
 
   console.log("All Special Modules successfully seeded into SQLite database!");
