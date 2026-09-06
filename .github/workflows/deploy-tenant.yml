@@ -168,6 +168,8 @@ jobs:
           else
             echo "❌ Error: Only $RUNNING/$DESIRED replicas running"
             docker service ps "$SERVICE_NAME" --no-trunc
+            echo "📋 Service Logs:"
+            docker service logs --tail 100 "$SERVICE_NAME" || true
             exit 1
           fi
           HEALTH_SCRIPT

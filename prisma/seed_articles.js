@@ -104,6 +104,11 @@ async function seedArticles() {
 
   let count = 0;
   for (const artData of sampleArticles) {
+    const existingArt = await db.article.findFirst({ where: { title: artData.title } });
+    if (existingArt) {
+      continue;
+    }
+
     const slugBase = simpleSlugify(artData.title) || `article-${Date.now()}`;
     const slug = `${slugBase}-${Date.now().toString().slice(-4)}`;
     const catId = catMap[artData.categorySlug] || catMap['uttar-pradesh'];
@@ -123,31 +128,52 @@ async function seedArticles() {
       },
     });
 
-    // Create Tags
+    // Create Tags safely
     for (const tagText of artData.tags) {
       const tagSlug = simpleSlugify(tagText) || `tag-${Date.now()}`;
-      let tagObj = await db.tag.findFirst({ where: { name: tagText } });
-      if (!tagObj) {
-        tagObj = await db.tag.create({ data: { name: tagText, slug: tagSlug } });
-      }
-
-      await db.articleTag.create({
-        data: {
-          articleId: created.id,
-          tagId: tagObj.id,
+      let tagObj = await db.tag.findFirst({
+        where: {
+          OR: [{ name: tagText }, { slug: tagSlug }],
         },
       });
+      if (!tagObj) {
+        try {
+          tagObj = await db.tag.create({ data: { name: tagText, slug: tagSlug } });
+        } catch {
+          tagObj = await db.tag.findFirst({
+            where: {
+              OR: [{ name: tagText }, { slug: tagSlug }],
+            },
+          });
+        }
+      }
+
+      if (tagObj) {
+        await db.articleTag.upsert({
+          where: {
+            articleId_tagId: {
+              articleId: created.id,
+              tagId: tagObj.id,
+            },
+          },
+          create: {
+            articleId: created.id,
+            tagId: tagObj.id,
+          },
+          update: {},
+        }).catch(() => null);
+      }
     }
 
     count++;
   }
 
-  console.log(`[+] Seeded ${count} published Dainik Manyavar news articles into database!`);
+  console.log(`[+] Seeded ${count} new published Dainik Manyavar news articles into database!`);
 }
 
 seedArticles()
   .then(() => process.exit(0))
   .catch((err) => {
-    console.error(err);
-    process.exit(1);
+    console.error("[seed_articles] Warning:", err);
+    process.exit(0);
   });
