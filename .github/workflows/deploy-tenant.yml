@@ -110,18 +110,18 @@ jobs:
             sed -i "s|^APP_IMAGE=.*|APP_IMAGE=${APP_IMAGE}|" .env
           fi
 
-          # Deploy stack and force service update to guarantee immediate rollout
+          # Deploy stack with exact image in docker-stack.yml
           docker stack deploy \
             --with-registry-auth \
             --prune \
             --resolve-image always \
             -c docker-stack.yml \
-            ${{ inputs.stack_name }}
-
-          docker service update \
-            --image "${APP_IMAGE}" \
-            --with-registry-auth \
-            "${{ inputs.stack_name }}_danikmanyawar"
+            ${{ inputs.stack_name }} || {
+              echo "❌ docker stack deploy failed. Printing service status and logs:"
+              docker service ps "${{ inputs.stack_name }}_danikmanyawar" --no-trunc
+              docker service logs --tail 50 "${{ inputs.stack_name }}_danikmanyawar"
+              exit 1
+            }
 
           # Cleanup unused images to save disk space
           docker image prune -f --filter "until=168h" || true

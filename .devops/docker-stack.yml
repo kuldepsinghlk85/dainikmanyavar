@@ -25,10 +25,10 @@ services:
         window: 120s
       update_config:
         parallelism: 1
-        delay: 10s
-        order: start-first
+        delay: 5s
+        order: stop-first
         failure_action: rollback
       rollback_config:
         parallelism: 1
-        delay: 10s
+        delay: 5s
         order: stop-first
