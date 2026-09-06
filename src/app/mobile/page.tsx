@@ -11,6 +11,7 @@ import MobileReelsFeed from '@/components/mobile/MobileReelsFeed';
 import MobileFooter from '@/components/mobile/MobileFooter';
 import { Building2, Globe, MapPin, Sparkles, Newspaper } from 'lucide-react';
 
+// Dainik Manyavar Mobile Edition - Amar Ujala Style Layout (ISR 60s)
 export const revalidate = 60; // 1-minute ISR
 
 export default async function MobileHomePage() {
