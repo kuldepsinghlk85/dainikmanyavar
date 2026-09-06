@@ -44,6 +44,7 @@ npm run dev        # dev server on port 3015 (NOT 3000)
 npm run build      # prisma generate && prisma db push && next build
 npm start          # prod server on 3015
 npm run db:seed    # prisma/seed.ts (admin@dainikmanyavar.in)
+npm run db:check-seeds  # reruns all boot seeds twice, asserts row counts don't move
 npm run db:studio
 ```
 
@@ -61,7 +62,9 @@ npm run db:studio
 - **Always import `{ db }` from `@/lib/db`.** Never `new PrismaClient()` — dev HMR exhausts SQLite connections.
 - `npm run build` runs `prisma db push` — it writes to the DB, not just compiles.
 - `public/uploads` is served by `src/app/uploads/[...path]/route.ts`, not Next static. Uploads volume mounts at runtime, so files aren't in the build.
-- Docker entrypoint reruns all 11 `prisma/seed_*.js` scripts on every container start; they must stay idempotent (upsert-only).
+- **App Router `params` are raw percent-encoded segments, not decoded.** Any dynamic route with Hindi slugs must `decodeURIComponent(slug)` before querying, or it works in dev and 404s in production. `/news/[slug]` and `/mobile/news/[slug]` also fall back to the trailing `-<newsId>` suffix.
+- Docker entrypoint reruns all `prisma/seed_*.js` on every container start; they must stay idempotent — guard on a **unique** column, or upsert. Verify with `npm run db:check-seeds`. A P2002 here crash-loops the container, Swarm rolls back, and prod silently keeps serving the old image.
+- `prisma/deduplicate_tags.js` runs last and rewrites tag `name` (it lowercases non-Hindi tags: `#MSP` → `#msp`). Key tag lookups on `slug`, the unique column — never on `name`.
 - SQLite: no concurrent writers. Prod DB is one bind-mounted file.
 
 ## Security — rules for any change
@@ -194,9 +197,24 @@ phones.
   that flipped to `ƒ (Dynamic)` is a regression.
 - Watch First Load JS; investigate a shared-bundle jump above ~200KB.
 
-## Before pushing — verify the production build
+## Before pushing — run every local gate
 
-`testing` auto-deploys, so a broken build ships. Run the build locally first, with the same env the Dockerfile builder stage sets (`.devops/Dockerfile`) — no Docker needed:
+`testing` auto-deploys with no staging gate, so anything broken ships to production.
+**A green build does not mean the container will boot.** `next build` never runs the
+entrypoint seeds, so the whole class of startup failures is invisible to it — that is
+exactly how a seed `P2002` crash-looped prod while every build passed. Run all four
+gates below; each catches a failure class the others cannot see.
+
+**1. Dependencies match CI.** CI runs `npm ci` from the lockfile, so a package that is
+only in your local `node_modules` still breaks the build there (and a stale local tree
+reports phantom "Module not found" errors here):
+
+```bash
+npm ci --prefer-offline --no-audit --no-fund
+```
+
+**2. Production build** — same env the Dockerfile builder stage sets (`.devops/Dockerfile`),
+no Docker needed:
 
 ```bash
 NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 \
@@ -205,11 +223,49 @@ NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 \
   npm run build
 ```
 
-That `DATABASE_URL` is relative to `prisma/`, so it creates and pushes to `prisma/dainik-manyawar.db` and leaves `dev.db` alone. Most build breaks are prerender errors on admin pages missing `force-dynamic`.
+That `DATABASE_URL` is relative to `prisma/`, so it creates and pushes to
+`prisma/dainik-manyawar.db` and leaves `dev.db` alone — delete it afterwards. Most build
+breaks are prerender errors on admin pages missing `force-dynamic`. Also read the route
+table it prints: a public route that flipped to `ƒ (Dynamic)`, or a shared-bundle jump
+above ~200KB, is a regression.
+
+**3. Seed idempotency** — required whenever you touch anything under `prisma/`. The
+entrypoint reruns every seed on each container start, so a seed that is not idempotent
+crash-loops the container, Swarm rolls back, and prod silently keeps serving the old
+image while the deploy still reports success:
+
+```bash
+npm run db:check-seeds
+```
+
+**4. Smoke-test the routes you changed.** `npm run build && npm start`, then hit them —
+including a **percent-encoded Hindi slug**, which is the case that works in dev and 404s
+in production:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' "http://localhost:3015/mobile/news/<hindi-slug>"
+```
+
+If you changed `bin/docker_entrypoint.sh` or a seed's crash behaviour, the only faithful
+test is the real image — `docker build -f .devops/Dockerfile .` and run it against a
+throwaway DB copy.
 
 ## Deploy
 Push to `testing` → `.github/workflows/deploy-prod.yml` builds and deploys to production. No staging gate — `testing` IS the release branch.
 Volumes: `/opt/dainik-manyavar/uploads`, `/opt/dainik-manyavar/db/dainik-manyawar.db`.
+
+A green workflow does **not** mean production updated — `update_config.failure_action: rollback`
+in `.devops/docker-stack.yml` silently reverts a failing rollout. Verify the tag that is actually
+running; do not trust the run's status.
+
+Server: `ssh clKsVps01`. Triage:
+```bash
+docker service ps danikmanyawar_danikmanyawar --no-trunc          # task states + exit errors
+docker service logs danikmanyawar_danikmanyawar --tail 100        # entrypoint/seed output
+docker service update --force danikmanyawar_danikmanyawar         # reschedule, same spec
+```
+There is no version endpoint: to tell which commit is live, probe a field a known commit added
+(e.g. `active` on `/api/locations`, added in `1bab8d0`).
 
 ## Env
 `DATABASE_URL`, `NEXT_PUBLIC_SITE_URL`, `PORT=3015`. Optional SMTP (`SMTP_HOST/PORT/USER/PASS`) for contact + newsletter mail. See `.env.example`.
