@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Archive, RotateCcw, Search, CheckSquare, Square, AlertCircle, Clock, ArrowLeft, Trash2 } from 'lucide-react';
+import DeleteConfirmModal from '@/components/admin/DeleteConfirmModal';
 
 interface ArchivedArticle {
   id: string;
@@ -24,6 +25,17 @@ export default function NewsArchiveAdminPage() {
   const [daysOlder, setDaysOlder] = useState(30);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    ids: string[];
+    itemCount: number;
+    question?: string;
+    errorMessage?: string;
+  }>({
+    isOpen: false,
+    ids: [],
+    itemCount: 0,
+  });
 
   const fetchArchivedNews = async () => {
     try {
@@ -133,24 +145,63 @@ export default function NewsArchiveAdminPage() {
     setLoading(false);
   };
 
-  // Delete Selected Permanently
-  const handleDeleteSelected = async () => {
+  // Delete Selected Permanently with Password & Modal
+  const handleDeleteSelected = () => {
     if (selectedIds.length === 0) return;
-    if (!confirm(`क्या आप चुनी गई ${selectedIds.length} खबरों को हमेशा के लिए हटाना चाहते हैं?`)) return;
+    setDeleteModal({
+      isOpen: true,
+      ids: selectedIds,
+      itemCount: selectedIds.length,
+      question: `क्या आप चुनी गई ${selectedIds.length} खबरों को डेटाबेस से हमेशा के लिए हटाना चाहते हैं?`,
+      errorMessage: '',
+    });
+  };
 
+  const handleSingleDelete = (id: string) => {
+    setDeleteModal({
+      isOpen: true,
+      ids: [id],
+      itemCount: 1,
+      question: 'क्या आप इस खबर को डेटाबेस से हमेशा के लिए हटाना चाहते हैं?',
+      errorMessage: '',
+    });
+  };
+
+  const handleConfirmPermanentDelete = async (password: string) => {
     setLoading(true);
+    setDeleteModal((prev) => ({ ...prev, errorMessage: '' }));
+
     try {
       const res = await fetch('/api/articles', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'DELETE_SELECTED', ids: selectedIds }),
+        body: JSON.stringify({
+          action: 'PERMANENT_DELETE',
+          ids: deleteModal.ids,
+          password,
+        }),
       });
+
       const data = await res.json();
-      if (data.success) {
-        setMsg('खबरें सफलतापूर्वक हटाई गईं!');
-        fetchArchivedNews();
+      if (!res.ok || !data.success) {
+        setDeleteModal((prev) => ({
+          ...prev,
+          errorMessage: data.error || 'पासवर्ड गलत है या डिलीट करने में समस्या आई।',
+        }));
+        setLoading(false);
+        return;
       }
-    } catch (err) {}
+
+      setDeleteModal((prev) => ({ ...prev, isOpen: false }));
+      setMsg(data.message || 'खबरें सफलतापूर्वक डेटाबेस से हटा दी गईं।');
+      setSelectedIds([]);
+      fetchArchivedNews();
+    } catch (err: any) {
+      setDeleteModal((prev) => ({
+        ...prev,
+        errorMessage: err.message || 'सर्वर से संपर्क नहीं हो सका।',
+      }));
+    }
     setLoading(false);
   };
 
@@ -347,20 +398,44 @@ export default function NewsArchiveAdminPage() {
                   </div>
                 </div>
 
-                <button
-                  onClick={() => handleSingleRestore(art.id)}
-                  disabled={loading}
-                  className="bg-[#16A34A] hover:bg-green-700 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
-                  title="इस खबर को वापस मुख्य साइट पर रिपब्लिश करें"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span>रिस्टोर व रिपब्लिश करें</span>
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => handleSingleRestore(art.id)}
+                    disabled={loading}
+                    className="bg-[#16A34A] hover:bg-green-700 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+                    title="इस खबर को वापस मुख्य साइट पर रिपब्लिश करें"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>रिस्टोर व रिपब्लिश करें</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleSingleDelete(art.id)}
+                    disabled={loading}
+                    className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition-colors cursor-pointer border border-red-200"
+                    title="डेटाबेस से स्थायी रूप से हटाएं"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             );
           })
         )}
       </div>
+
+      {/* Permanent Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={handleConfirmPermanentDelete}
+        title="🔐 सुरक्षा सत्यापन: स्थायी विलोपन"
+        question={deleteModal.question}
+        itemCount={deleteModal.itemCount}
+        isPermanent={true}
+        loading={loading}
+        errorMessage={deleteModal.errorMessage}
+      />
     </div>
   );
 }

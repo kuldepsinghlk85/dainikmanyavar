@@ -10,14 +10,16 @@ export default function MobileFooter() {
     <footer className="bg-stone-900 text-stone-300 pt-6 pb-20 px-4 mt-4 border-t-4 border-[#EA580C] text-xs space-y-4">
       {/* Brand & Slogan */}
       <div className="space-y-1.5">
-        <Image
-          src="/logo.png"
-          alt="दैनिक मान्यवर"
-          width={200}
-          height={45}
-          unoptimized
-          className="h-9 w-auto brightness-0 invert object-contain"
-        />
+        <Link href="/mobile" className="inline-block">
+          <Image
+            src="/mobile-logo-dark.png?v=2"
+            alt="दैनिक मान्यवर"
+            width={180}
+            height={45}
+            unoptimized
+            className="h-9 w-auto object-contain"
+          />
+        </Link>
         <p className="text-[11px] text-stone-400 font-bold">
           निष्पक्ष एवं निर्भीक राष्ट्रीय हिंदी दैनिक समाचार पत्र
         </p>

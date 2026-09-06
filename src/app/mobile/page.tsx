@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { db } from '@/lib/db';
 import MobileCategoryChips from '@/components/mobile/MobileCategoryChips';
 import MobileTrendingBar from '@/components/mobile/MobileTrendingBar';
@@ -60,9 +60,13 @@ export default async function MobileHomePage() {
     },
   });
 
-  // 3. Fetch videos for Reels / Shorts carousel
+  // 3. Fetch videos for Reels / Shorts carousel (only authentic video articles)
   const dbVideos = await db.article.findMany({
-    where: { status: 'PUBLISHED', videoEnabled: true },
+    where: {
+      status: 'PUBLISHED',
+      videoEnabled: true,
+      videoUrl: { not: null },
+    },
     orderBy: [{ newsId: 'desc' }, { publishedAt: 'desc' }],
     take: 8,
     select: {
@@ -155,15 +159,17 @@ export default async function MobileHomePage() {
       {/* Section Divider */}
       <div className="h-2 bg-stone-100 dark:bg-[#0D0D0D] border-y border-stone-200/80 dark:border-stone-800/80" />
 
-      {/* 7. Vertical 9:16 Reels Carousel: 'बॉलीवुड REEL' (Dainik Bhaskar style) */}
-      <MobileReelsFeed
-        reels={formattedReels}
-        title="बॉलीवुड REEL"
-        viewAllLink="/video"
-      />
-
-      {/* Section Divider */}
-      <div className="h-2 bg-stone-100 dark:bg-[#0D0D0D] border-y border-stone-200/80 dark:border-stone-800/80" />
+      {/* 7. Vertical 9:16 Reels Carousel (only when authentic video reels exist) */}
+      {formattedReels.length > 0 && (
+        <>
+          <MobileReelsFeed
+            reels={formattedReels}
+            title="वीडियो REEL"
+            viewAllLink="/video"
+          />
+          <div className="h-2 bg-stone-100 dark:bg-[#0D0D0D] border-y border-stone-200/80 dark:border-stone-800/80" />
+        </>
+      )}
 
       {/* 8. 'ताज़ा सुर्खियां' Feed */}
       <MobileNewsList

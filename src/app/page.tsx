@@ -140,9 +140,13 @@ export default async function HomePage() {
     take: 4,
   });
 
-  // Fetch active Video News Bulletins for Homepage Video Section & Playlist
-  let dbVideoArticles = await db.article.findMany({
-    where: { status: 'PUBLISHED', videoEnabled: true },
+  // Fetch active Video News Bulletins for Homepage Video Section & Playlist (only real video articles)
+  const dbVideoArticles = await db.article.findMany({
+    where: {
+      status: 'PUBLISHED',
+      videoEnabled: true,
+      videoUrl: { not: null },
+    },
     orderBy: [
       { newsId: 'desc' },
       { publishedAt: 'desc' },
@@ -161,29 +165,6 @@ export default async function HomePage() {
       category: { select: { name: true } },
     },
   });
-
-  if (dbVideoArticles.length === 0) {
-    dbVideoArticles = await db.article.findMany({
-      where: { status: 'PUBLISHED' },
-      orderBy: [
-        { newsId: 'desc' },
-        { updatedAt: 'desc' },
-        { publishedAt: 'desc' },
-      ],
-      take: 6,
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        featuredImage: true,
-        videoThumbnail: true,
-        videoDuration: true,
-        viewCount: true,
-        publishedAt: true,
-        category: { select: { name: true } },
-      },
-    });
-  }
 
   const formattedVideos = dbVideoArticles.map((v) => ({
     id: v.id,
@@ -224,13 +205,20 @@ export default async function HomePage() {
     tags: art.tags.map((t) => t.tag),
   }));
 
-  // Fetch active breaking news ticker items
+  // Fetch active breaking news ticker items (only where linked article is published, or text-only breaking news)
   const breakingItems = await db.breakingNews.findMany({
-    where: { isArchived: false, active: true },
+    where: {
+      isArchived: false,
+      active: true,
+      OR: [
+        { articleId: null },
+        { article: { status: 'PUBLISHED' } },
+      ],
+    },
     orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
     include: {
       article: {
-        select: { id: true, title: true, slug: true },
+        select: { id: true, title: true, slug: true, status: true },
       },
     },
     take: 10,
@@ -380,8 +368,8 @@ export default async function HomePage() {
             {/* Multi-Tag News Section */}
             {isMultiTagEnabled && <MultiTagNewsSection articles={formattedMultiTagArticles} />}
 
-            {/* Video News Bulletins */}
-            {isVideoEnabled && <VideoNewsSection videos={formattedVideos} />}
+            {/* Video News Bulletins (only when active video bulletins exist) */}
+            {isVideoEnabled && formattedVideos.length > 0 && <VideoNewsSection videos={formattedVideos} />}
           </div>
 
           {/* Right Column (Organized Special Feeds & Sidebar Ads) */}

@@ -31,16 +31,21 @@ const sampleImages = [
 async function runSeed() {
   console.log("Seeding sample images to Media Archive...");
   for (const img of sampleImages) {
-    await db.mediaItem.create({
-      data: {
-        filename: img.filename,
-        url: img.url,
-        category: img.category,
-        caption: img.caption,
-        size: 245000,
-        mimeType: "image/jpeg"
-      }
+    const existing = await db.mediaItem.findFirst({
+      where: { filename: img.filename },
     });
+    if (!existing) {
+      await db.mediaItem.create({
+        data: {
+          filename: img.filename,
+          url: img.url,
+          category: img.category,
+          caption: img.caption,
+          size: 245000,
+          mimeType: "image/jpeg",
+        },
+      });
+    }
   }
   console.log("Sample Media Archive seeded successfully!");
 }

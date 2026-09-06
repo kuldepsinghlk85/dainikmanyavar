@@ -15,11 +15,12 @@ export const metadata = {
 };
 
 export default async function VideoListPage() {
-  // Fetch video-enabled articles or latest published articles with video coverage
-  const videoArticles = await db.article.findMany({
+  // Fetch only authentic video-enabled articles that actually have a video URL
+  const allVideos = await db.article.findMany({
     where: {
       status: 'PUBLISHED',
       videoEnabled: true,
+      videoUrl: { not: null },
     },
     orderBy: { publishedAt: 'desc' },
     take: 30,
@@ -28,18 +29,6 @@ export default async function VideoListPage() {
       tags: { include: { tag: true } },
     },
   });
-
-  const fallbackArticles = videoArticles.length < 4 ? await db.article.findMany({
-    where: { status: 'PUBLISHED' },
-    orderBy: { publishedAt: 'desc' },
-    take: 12,
-    include: {
-      category: true,
-      tags: { include: { tag: true } },
-    },
-  }) : [];
-
-  const allVideos = videoArticles.length > 0 ? videoArticles : fallbackArticles;
 
   return (
     <div className="min-h-screen flex flex-col bg-stone-50">
@@ -84,58 +73,72 @@ export default async function VideoListPage() {
         </div>
 
         {/* Video Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {allVideos.map((art) => (
+        {allVideos.length === 0 ? (
+          <div className="bg-white rounded-2xl p-12 text-center space-y-3 border border-stone-200">
+            <Film className="w-12 h-12 text-stone-300 mx-auto" />
+            <h3 className="text-base font-bold text-stone-700">वर्तमान में कोई वीडियो समाचार उपलब्ध नहीं है।</h3>
+            <p className="text-xs text-stone-500">ताज़ा ख़बरों के लिए मुख्य पृष्ठ पर जाएं।</p>
             <Link
-              key={art.id}
-              href={`/video/${art.slug}`}
-              className="border border-stone-200 rounded-2xl overflow-hidden bg-white hover:shadow-lg transition-all flex flex-col justify-between group"
+              href="/"
+              className="inline-block mt-2 px-4 py-2 bg-[#EA580C] text-white text-xs font-bold rounded-xl"
             >
-              <div>
-                <div className="relative w-full h-[210px] bg-black overflow-hidden">
-                  <Image
-                    src={art.videoThumbnail || art.featuredImage || 'https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?auto=format&fit=crop&w=900&q=80'}
-                    alt={art.title}
-                    fill
-                    unoptimized
-                    className="object-cover opacity-85 group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 grid place-items-center">
-                    <div className="w-12 h-12 bg-red-600 text-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
-                      <Play className="w-6 h-6 fill-white ml-0.5" />
+              मुख्य पृष्ठ पर जाएं
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {allVideos.map((art) => (
+              <Link
+                key={art.id}
+                href={`/video/${art.slug}`}
+                className="border border-stone-200 rounded-2xl overflow-hidden bg-white hover:shadow-lg transition-all flex flex-col justify-between group"
+              >
+                <div>
+                  <div className="relative w-full h-[210px] bg-black overflow-hidden">
+                    <Image
+                      src={art.videoThumbnail || art.featuredImage || 'https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?auto=format&fit=crop&w=900&q=80'}
+                      alt={art.title}
+                      fill
+                      unoptimized
+                      className="object-cover opacity-85 group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 grid place-items-center">
+                      <div className="w-12 h-12 bg-red-600 text-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-115 transition-transform">
+                        <Play className="w-6 h-6 fill-white ml-0.5" />
+                      </div>
+                    </div>
+                    <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5 z-10">
+                      {art.category && (
+                        <span className="text-[10px] font-black bg-[#EA580C] text-white px-2.5 py-0.5 rounded shadow-sm">
+                          {art.category.name}
+                        </span>
+                      )}
+                    </div>
+                    <div className="absolute bottom-2 right-2 bg-black/85 text-white text-[10px] px-2 py-0.5 rounded font-mono">
+                      {art.videoDuration || '03:45'}
                     </div>
                   </div>
-                  <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5 z-10">
-                    {art.category && (
-                      <span className="text-[10px] font-black bg-[#EA580C] text-white px-2.5 py-0.5 rounded shadow-sm">
-                        {art.category.name}
-                      </span>
+
+                  <div className="p-4 space-y-2">
+                    <h3 className="text-base font-extrabold text-stone-900 leading-snug line-clamp-2 group-hover:text-[#F97316] transition-colors">
+                      {art.title}
+                    </h3>
+                    {art.excerpt && (
+                      <p className="text-stone-600 text-xs line-clamp-2 leading-relaxed">
+                        {art.excerpt}
+                      </p>
                     )}
                   </div>
-                  <div className="absolute bottom-2 right-2 bg-black/85 text-white text-[10px] px-2 py-0.5 rounded font-mono">
-                    {art.videoDuration || '03:45'}
-                  </div>
                 </div>
 
-                <div className="p-4 space-y-2">
-                  <h3 className="text-base font-extrabold text-stone-900 leading-snug line-clamp-2 group-hover:text-[#F97316] transition-colors">
-                    {art.title}
-                  </h3>
-                  {art.excerpt && (
-                    <p className="text-stone-600 text-xs line-clamp-2 leading-relaxed">
-                      {art.excerpt}
-                    </p>
-                  )}
+                <div className="px-4 pb-3 text-xs text-stone-400 flex justify-between border-t border-stone-100 pt-2 font-mono">
+                  <span>{formatHindiTimeAgo(art.publishedAt)}</span>
+                  <span>👁 {formatCount(art.viewCount)}</span>
                 </div>
-              </div>
-
-              <div className="px-4 pb-3 text-xs text-stone-400 flex justify-between border-t border-stone-100 pt-2 font-mono">
-                <span>{formatHindiTimeAgo(art.publishedAt)}</span>
-                <span>👁 {formatCount(art.viewCount)}</span>
-              </div>
-            </Link>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </main>
 
       <Footer />

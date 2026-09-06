@@ -18,12 +18,38 @@ import { generateNewsArticleJsonLd, generateBreadcrumbJsonLd } from '@/lib/seo';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const decodedSlug = decodeURIComponent(slug);
+  let decodedSlug = slug;
+  try {
+    decodedSlug = decodeURIComponent(slug);
+  } catch (_) {}
 
-  const article = await db.article.findFirst({
-    where: { OR: [{ slug: decodedSlug }, { slug }, { id: slug }] },
+  let article = await db.article.findFirst({
+    where: {
+      OR: [
+        { slug: decodedSlug },
+        { slug },
+        { id: decodedSlug },
+        { id: slug },
+      ],
+    },
     select: { title: true, excerpt: true, featuredImage: true },
   });
+
+  if (!article) {
+    const numMatch = decodedSlug.match(/(\d+)$/);
+    if (numMatch) {
+      const newsIdNum = parseInt(numMatch[1], 10);
+      article = await db.article.findFirst({
+        where: {
+          OR: [
+            { newsId: newsIdNum },
+            { slug: { endsWith: `-${numMatch[1]}` } },
+          ],
+        },
+        select: { title: true, excerpt: true, featuredImage: true },
+      });
+    }
+  }
 
   if (!article) return {};
 
@@ -40,10 +66,20 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ArticleDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const decodedSlug = decodeURIComponent(slug);
+  let decodedSlug = slug;
+  try {
+    decodedSlug = decodeURIComponent(slug);
+  } catch (_) {}
 
-  const article = await db.article.findFirst({
-    where: { OR: [{ slug: decodedSlug }, { slug }, { id: slug }] },
+  let article = await db.article.findFirst({
+    where: {
+      OR: [
+        { slug: decodedSlug },
+        { slug },
+        { id: decodedSlug },
+        { id: slug },
+      ],
+    },
     include: {
       category: true,
       author: true,
@@ -52,7 +88,29 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
     },
   });
 
-  if (!article || article.status !== 'PUBLISHED') {
+  if (!article) {
+    const numMatch = decodedSlug.match(/(\d+)$/);
+    if (numMatch) {
+      const newsIdNum = parseInt(numMatch[1], 10);
+      article = await db.article.findFirst({
+        where: {
+          OR: [
+            { newsId: newsIdNum },
+            { slug: { endsWith: `-${numMatch[1]}` } },
+          ],
+        },
+        include: {
+          category: true,
+          author: true,
+          location: true,
+          tags: { include: { tag: true } },
+        },
+      });
+    }
+  }
+
+  // Allow both PUBLISHED and ARCHIVED articles to be viewed (prevents 404 on archived or older news)
+  if (!article || (article.status !== 'PUBLISHED' && article.status !== 'ARCHIVED')) {
     notFound();
   }
 

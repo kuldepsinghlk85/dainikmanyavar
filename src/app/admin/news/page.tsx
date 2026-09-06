@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Newspaper, PlusCircle, Trash2, Edit, Eye, CheckSquare, Square, AlertOctagon, Archive, RotateCcw } from 'lucide-react';
+import DeleteConfirmModal from '@/components/admin/DeleteConfirmModal';
 
 interface Article {
   id: string;
@@ -25,6 +26,17 @@ export default function AdminNewsPage() {
   const [archivedCount, setArchivedCount] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    action: 'CLEAR_ALL' | 'DELETE_SELECTED';
+    ids?: string[];
+    itemCount?: number;
+    question?: string;
+    errorMessage?: string;
+  }>({
+    isOpen: false,
+    action: 'CLEAR_ALL',
+  });
 
   const fetchArchivedCount = async () => {
     try {
@@ -174,56 +186,77 @@ export default function AdminNewsPage() {
     setLoading(false);
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
     if (selectedIds.length === 0) return;
-    if (!confirm(`क्या आप चुनी गई ${selectedIds.length} खबरों को हमेशा के लिए डिलीट करना चाहते हैं?`)) return;
-
-    setLoading(true);
-    try {
-      const res = await fetch('/api/articles', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'DELETE_SELECTED', ids: selectedIds }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setMsg(data.message || 'चुनी गई खबरें सफलतापूर्वक डिलीट हो गईं!');
-        fetchArticles();
-      }
-    } catch (err) {}
-    setLoading(false);
+    setDeleteModal({
+      isOpen: true,
+      action: 'DELETE_SELECTED',
+      ids: selectedIds,
+      itemCount: selectedIds.length,
+      question: `क्या आप वास्तव में चुनी गई ${selectedIds.length} खबरों को हटाना चाहते हैं?`,
+      errorMessage: '',
+    });
   };
 
-  const handleClearAllArticles = async () => {
-    if (!confirm(`⚠️ चेतावनी: क्या आप पोर्टल की सभी ${articles.length} खबरों को डिलीट करना चाहते हैं? यह क्रिया वापस नहीं होगी।`)) return;
-
-    setLoading(true);
-    try {
-      const res = await fetch('/api/articles', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'CLEAR_ALL' }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setMsg('सभी खबरें सफलतापूर्वक डिलीट हो गईं!');
-        fetchArticles();
-      }
-    } catch (err) {}
-    setLoading(false);
+  const handleClearAllArticles = () => {
+    if (articles.length === 0) return;
+    setDeleteModal({
+      isOpen: true,
+      action: 'CLEAR_ALL',
+      itemCount: articles.length,
+      question: `क्या आप वास्तव में पोर्टल की सभी ${articles.length} खबरों को हटाना चाहते हैं?`,
+      errorMessage: '',
+    });
   };
 
-  const handleSingleDelete = async (id: string) => {
-    if (!confirm('क्या आप इस खबर को डिलीट करना चाहते हैं?')) return;
+  const handleSingleDelete = (id: string) => {
+    setDeleteModal({
+      isOpen: true,
+      action: 'DELETE_SELECTED',
+      ids: [id],
+      itemCount: 1,
+      question: 'क्या आप वास्तव में इस खबर को हटाना चाहते हैं?',
+      errorMessage: '',
+    });
+  };
+
+  const handleConfirmDelete = async (password: string) => {
+    setLoading(true);
+    setDeleteModal((prev) => ({ ...prev, errorMessage: '' }));
+
     try {
       const res = await fetch('/api/articles', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'DELETE_SELECTED', ids: [id] }),
+        body: JSON.stringify({
+          action: deleteModal.action,
+          ids: deleteModal.ids,
+          password,
+        }),
       });
+
       const data = await res.json();
-      if (data.success) fetchArticles();
-    } catch (err) {}
+      if (!res.ok || !data.success) {
+        setDeleteModal((prev) => ({
+          ...prev,
+          errorMessage: data.error || 'पासवर्ड गलत है या डिलीट करने में समस्या आई।',
+        }));
+        setLoading(false);
+        return;
+      }
+
+      setDeleteModal((prev) => ({ ...prev, isOpen: false }));
+      setMsg(data.message || 'समाचार सुरक्षित रूप से आर्काइव रिकॉर्ड में एकत्र कर दिए गए हैं!');
+      setSelectedIds([]);
+      fetchArticles();
+      fetchArchivedCount();
+    } catch (err: any) {
+      setDeleteModal((prev) => ({
+        ...prev,
+        errorMessage: err.message || 'सर्वर से संपर्क नहीं हो सका।',
+      }));
+    }
+    setLoading(false);
   };
 
   const isAllSelected = articles.length > 0 && selectedIds.length === articles.length;
@@ -538,6 +571,19 @@ export default function AdminNewsPage() {
           </div>
         )}
       </div>
+
+      {/* Security Confirmation Delete Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={handleConfirmDelete}
+        title={deleteModal.action === 'CLEAR_ALL' ? '🔐 सुरक्षा सत्यापन: सभी समाचार हटाएं' : '🔐 सुरक्षा सत्यापन: समाचार हटाएं'}
+        question={deleteModal.question}
+        itemCount={deleteModal.itemCount}
+        isPermanent={false}
+        loading={loading}
+        errorMessage={deleteModal.errorMessage}
+      />
     </div>
   );
 }

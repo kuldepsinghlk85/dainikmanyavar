@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     decodedSlug = decodeURIComponent(slug);
   } catch (_) {}
 
-  const article = await db.article.findFirst({
+  let article = await db.article.findFirst({
     where: {
       OR: [
         { slug: decodedSlug },
@@ -30,6 +30,21 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     },
     select: { title: true, excerpt: true, featuredImage: true },
   });
+  if (!article) {
+    const numMatch = decodedSlug.match(/(\d+)$/);
+    if (numMatch) {
+      const newsIdNum = parseInt(numMatch[1], 10);
+      article = await db.article.findFirst({
+        where: {
+          OR: [
+            { newsId: newsIdNum },
+            { slug: { endsWith: `-${numMatch[1]}` } },
+          ],
+        },
+        select: { title: true, excerpt: true, featuredImage: true },
+      });
+    }
+  }
   if (!article) return {};
   return {
     title: `${article.title} | दैनिक मान्यवर मोबाइल`,
@@ -53,7 +68,7 @@ export default async function MobileNewsDetailPage({
     decodedSlug = decodeURIComponent(slug);
   } catch (_) {}
 
-  const article = await db.article.findFirst({
+  let article = await db.article.findFirst({
     where: {
       OR: [
         { slug: decodedSlug },
@@ -70,7 +85,28 @@ export default async function MobileNewsDetailPage({
     },
   });
 
-  if (!article || article.status !== 'PUBLISHED') {
+  if (!article) {
+    const numMatch = decodedSlug.match(/(\d+)$/);
+    if (numMatch) {
+      const newsIdNum = parseInt(numMatch[1], 10);
+      article = await db.article.findFirst({
+        where: {
+          OR: [
+            { newsId: newsIdNum },
+            { slug: { endsWith: `-${numMatch[1]}` } },
+          ],
+        },
+        include: {
+          category: true,
+          author: true,
+          location: true,
+          tags: { include: { tag: true } },
+        },
+      });
+    }
+  }
+
+  if (!article || (article.status !== 'PUBLISHED' && article.status !== 'ARCHIVED')) {
     notFound();
   }
 

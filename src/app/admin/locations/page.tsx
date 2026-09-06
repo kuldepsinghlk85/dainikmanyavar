@@ -330,13 +330,13 @@ export default function LocationsAdminPage() {
             <span>➕ नया स्थान जोड़ें</span>
           </button>
 
-          {/* Link to Photo Archiver */}
+          {/* Link to Media Library */}
           <Link
-            href="/admin/archive/media"
+            href="/admin/media"
             className="bg-stone-800 hover:bg-stone-900 text-amber-400 px-3.5 py-2.5 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-sm transition-all border border-stone-700 active:scale-95"
           >
             <FolderArchive className="w-4 h-4 text-amber-400" />
-            <span>🖼️ फोटो आर्काइवर</span>
+            <span>🖼️ मीडिया लाइब्रेरी</span>
           </Link>
         </div>
       </div>

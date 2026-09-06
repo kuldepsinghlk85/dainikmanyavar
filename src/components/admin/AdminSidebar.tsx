@@ -143,8 +143,7 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
       title: isSuperAdmin ? '🛠️ मीडिया, टैक्सोनॉमी एवं सुपर प्रशासन' : '🖼️ मीडिया एवं श्रेणियां',
       icon: isSuperAdmin ? Settings : ImageIcon,
       items: [
-        { label: '🖼️ मीडिया लाइब्रेरी (Media)', href: '/admin/media', icon: ImageIcon },
-        { label: '🖼️ फोटो आर्काइवर (Image Link Copy)', href: '/admin/archive/media', icon: FolderArchive },
+        { label: '🖼️ मीडिया लाइब्रेरी (Media Gallery)', href: '/admin/media', icon: ImageIcon },
         { label: '📂 श्रेणियां (Categories)', href: '/admin/categories', icon: FolderTree },
         { label: '🏷️ मल्टी टैग्स (Multi-Tags)', href: '/admin/tags', icon: TagIcon },
         { label: '📍 स्थान (Locations)', href: '/admin/locations', icon: MapPin },

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -63,6 +63,13 @@ export default function MobileHeroCard({ article }: { article: ArticleData }) {
     }
   };
 
+  const fallback = 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=800&q=80';
+  const [imgSrc, setImgSrc] = useState(article.featuredImage || fallback);
+
+  useEffect(() => {
+    setImgSrc(article.featuredImage || fallback);
+  }, [article.featuredImage]);
+
   const formattedDate = formatHindiTimeAgo(article.publishedAt);
 
   return (
@@ -79,19 +86,21 @@ export default function MobileHeroCard({ article }: { article: ArticleData }) {
         <div className="relative w-full aspect-[16/10] bg-stone-950 overflow-hidden">
           {/* Layer 1: Ambient Background Color Blur */}
           <Image
-            src={article.featuredImage || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=800&q=80'}
+            src={imgSrc}
             alt=""
             fill
             unoptimized
+            onError={() => setImgSrc(fallback)}
             className="object-cover blur-lg scale-115 opacity-40 select-none pointer-events-none"
           />
           {/* Layer 2: Contained Main Image */}
           <Image
-            src={article.featuredImage || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=800&q=80'}
+            src={imgSrc}
             alt={article.title}
             fill
             unoptimized
             priority
+            onError={() => setImgSrc(fallback)}
             className="object-contain p-1 z-10 transition-transform duration-300 group-hover:scale-105"
           />
         </div>

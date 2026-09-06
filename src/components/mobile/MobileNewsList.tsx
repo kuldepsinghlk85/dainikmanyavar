@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -16,6 +16,7 @@ interface ArticleItem {
   category?: { name: string; slug?: string } | null;
   videoDuration?: string | null;
   videoEnabled?: boolean;
+  videoUrl?: string | null;
 }
 
 interface MobileNewsListProps {
@@ -148,7 +149,7 @@ export default function MobileNewsList({
                     />
 
                     {/* Video Play Overlay */}
-                    {art.videoEnabled && (
+                    {art.videoEnabled && art.videoUrl && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                         <div className="w-6 h-6 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-xs">
                           <Play className="w-3 h-3 fill-white ml-0.5" />

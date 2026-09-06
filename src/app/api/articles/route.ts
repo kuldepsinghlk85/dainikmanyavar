@@ -245,22 +245,95 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const { ids, action } = await request.json();
+    const { ids, action, password } = await request.json();
 
+    const REQUIRED_PASSWORD = process.env.DELETE_PASSWORD || 'delete123';
+
+    if (!password || password !== REQUIRED_PASSWORD) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'अमान्य सुरक्षा पासवर्ड! समाचार डिलीट करने हेतु पासवर्ड (delete123) आवश्यक है।',
+        },
+        { status: 403 }
+      );
+    }
+
+    // 1. DELETE ALL / CLEAR_ALL: Do not destroy data! Safely gather all active news into ARCHIVED record!
+    if (action === 'CLEAR_ALL') {
+      const archived = await db.article.updateMany({
+        where: { status: { not: 'ARCHIVED' } },
+        data: { status: 'ARCHIVED' },
+      });
+
+      try {
+        const { revalidatePath } = await import('next/cache');
+        revalidatePath('/');
+        revalidatePath('/category/latest');
+        revalidatePath('/admin/news');
+        revalidatePath('/admin/archive/news');
+      } catch (_) {}
+
+      return NextResponse.json({
+        success: true,
+        message: `सभी ${archived.count} समाचार सुरक्षित रूप से 'आर्काइव रिकॉर्ड' में एकत्र कर दिए गए हैं। इन्हें आर्काइव लाइब्रेरी से कभी भी 1-क्लिक में रीस्टोर किया जा सकता है।`,
+        count: archived.count,
+      });
+    }
+
+    // 2. DELETE SELECTED (Bulk or Single from News Manager): Move to ARCHIVED record!
     if (action === 'DELETE_SELECTED' && Array.isArray(ids)) {
+      const archived = await db.article.updateMany({
+        where: { id: { in: ids } },
+        data: { status: 'ARCHIVED' },
+      });
+
+      try {
+        const { revalidatePath } = await import('next/cache');
+        revalidatePath('/');
+        revalidatePath('/category/latest');
+        revalidatePath('/admin/news');
+        revalidatePath('/admin/archive/news');
+      } catch (_) {}
+
+      return NextResponse.json({
+        success: true,
+        message: `${archived.count} समाचार 'आर्काइव रिकॉर्ड' में सुरक्षित एकत्र कर दिए गए हैं। इन्हें कभी भी पुनः रीस्टोर किया जा सकता है।`,
+        count: archived.count,
+      });
+    }
+
+    // 3. PERMANENT DELETE (Only from Archive Library with explicit admin confirmation & password)
+    if (action === 'PERMANENT_DELETE' && Array.isArray(ids)) {
+      await db.articleTag.deleteMany({ where: { articleId: { in: ids } } });
+      await db.userSavedArticle.deleteMany({ where: { articleId: { in: ids } } });
+      await db.articleAudio.deleteMany({ where: { articleId: { in: ids } } });
+      await db.shortLink.deleteMany({ where: { articleId: { in: ids } } });
+      await db.articleRevision.deleteMany({ where: { articleId: { in: ids } } });
+      await db.breakingNews.deleteMany({ where: { articleId: { in: ids } } });
+
       const deleted = await db.article.deleteMany({
         where: { id: { in: ids } },
       });
-      return NextResponse.json({ success: true, message: `${deleted.count} समाचार सफलता से हटा दिए गए।` });
-    }
 
-    if (action === 'CLEAR_ALL') {
-      const deleted = await db.article.deleteMany({});
-      return NextResponse.json({ success: true, message: `${deleted.count} सभी समाचार सफलता से हटा दिए गए।` });
+      try {
+        const { revalidatePath } = await import('next/cache');
+        revalidatePath('/');
+        revalidatePath('/category/latest');
+        revalidatePath('/admin/news');
+        revalidatePath('/admin/archive/news');
+      } catch (_) {}
+
+      return NextResponse.json({
+        success: true,
+        message: `${deleted.count} समाचार डेटाबेस से स्थायी रूप से हटा दिए गए।`,
+        count: deleted.count,
+      });
     }
 
     return NextResponse.json({ success: false, error: 'Invalid parameters' }, { status: 400 });
   } catch (error: any) {
+    console.error('Error in DELETE /api/articles:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
