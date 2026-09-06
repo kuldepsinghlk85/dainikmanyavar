@@ -102,14 +102,26 @@ jobs:
 
           cd ${{ inputs.deploy_path }}
 
-          # Deploy with explicit image tag
-          APP_IMAGE="${{ env.IMAGE }}:${{ inputs.image_tag }}" \
-            docker stack deploy \
-              --with-registry-auth \
-              --prune \
-              --resolve-image always \
-              -c docker-stack.yml \
-              ${{ inputs.stack_name }}
+          APP_IMAGE="${{ env.IMAGE }}:${{ inputs.image_tag }}"
+
+          # Replace variable in docker-stack.yml so Swarm uses exact image
+          sed -i "s|\${APP_IMAGE}|${APP_IMAGE}|g" docker-stack.yml
+          if [ -f .env ] && grep -q "APP_IMAGE=" .env; then
+            sed -i "s|^APP_IMAGE=.*|APP_IMAGE=${APP_IMAGE}|" .env
+          fi
+
+          # Deploy stack and force service update to guarantee immediate rollout
+          docker stack deploy \
+            --with-registry-auth \
+            --prune \
+            --resolve-image always \
+            -c docker-stack.yml \
+            ${{ inputs.stack_name }}
+
+          docker service update \
+            --image "${APP_IMAGE}" \
+            --with-registry-auth \
+            "${{ inputs.stack_name }}_danikmanyawar"
 
           # Cleanup unused images to save disk space
           docker image prune -f --filter "until=168h" || true
