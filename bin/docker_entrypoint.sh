@@ -41,6 +41,9 @@ if [ -n "$DATABASE_URL" ]; then
     echo "[Dainik Manyavar] Running UP mandals and districts seed..."
     node prisma/seed_up_locations.js
 
+    echo "[Dainik Manyavar] Running tag deduplication & normalization..."
+    node prisma/deduplicate_tags.js
+
     echo "[Dainik Manyavar] Running editor account seed..."
     node prisma/seed_editor.js
 

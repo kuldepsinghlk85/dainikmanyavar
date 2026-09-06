@@ -76,7 +76,10 @@ export default function AddNewsPage() {
     fetch('/api/locations')
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && data.data) setLocations(data.data);
+        if (data.success && data.data) {
+          // Show only districts and cities in the news location dropdown (exclude division groupings to prevent duplicate city names)
+          setLocations(data.data.filter((l: any) => l.type !== 'DIVISION'));
+        }
       })
       .catch(() => {});
   }, []);
@@ -89,6 +92,20 @@ export default function AddNewsPage() {
 
   const handleCreateNewTag = async () => {
     if (!newTagName.trim()) return;
+    const cleanInput = newTagName.replace(/^#+/, '').trim().toLowerCase();
+
+    // Client-side protection: check if tag already exists in availableTags
+    const existing = availableTags.find(
+      (t) => t.name.replace(/^#+/, '').trim().toLowerCase() === cleanInput
+    );
+    if (existing) {
+      if (!selectedTagIds.includes(existing.id)) {
+        setSelectedTagIds((prev) => [...prev, existing.id]);
+      }
+      setNewTagName('');
+      return;
+    }
+
     try {
       const res = await fetch('/api/admin/tags', {
         method: 'POST',
@@ -97,8 +114,11 @@ export default function AddNewsPage() {
       });
       const data = await res.json();
       if (data.success && data.data) {
-        setAvailableTags((prev) => [...prev, data.data]);
-        setSelectedTagIds((prev) => [...prev, data.data.id]);
+        setAvailableTags((prev) => {
+          if (prev.some((t) => t.id === data.data.id)) return prev;
+          return [...prev, data.data];
+        });
+        setSelectedTagIds((prev) => Array.from(new Set([...prev, data.data.id])));
         setNewTagName('');
       }
     } catch (err) {}
@@ -127,6 +147,18 @@ export default function AddNewsPage() {
   const handleQuickCreateLocation = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newLocName.trim()) return;
+
+    const trimmed = newLocName.trim().toLowerCase();
+    const existing = locations.find((l) => l.name.trim().toLowerCase() === trimmed);
+    if (existing) {
+      setLocationId(existing.id);
+      setShowAddLocationModal(false);
+      setNewLocName('');
+      setNewLocImage('');
+      alert(`स्थान '${existing.name}' पहले से सूची में मौजूद है और चुन लिया गया है।`);
+      return;
+    }
+
     setLocSubmitting(true);
     try {
       const res = await fetch('/api/locations', {
@@ -141,12 +173,22 @@ export default function AddNewsPage() {
       const data = await res.json();
       if (data.success && data.data) {
         const createdLoc = data.data;
-        setLocations((prev) => [...prev, createdLoc]);
+        setLocations((prev) => {
+          if (prev.some((l) => l.id === createdLoc.id)) return prev;
+          return [...prev, createdLoc];
+        });
         setLocationId(createdLoc.id);
         setShowAddLocationModal(false);
         setNewLocName('');
         setNewLocImage('');
       } else {
+        if (data.data && data.data.id) {
+          // If server returned existing location on 409 conflict
+          setLocationId(data.data.id);
+          setShowAddLocationModal(false);
+          setNewLocName('');
+          setNewLocImage('');
+        }
         alert(data.error || 'स्थान जोड़ने में समस्या आई');
       }
     } catch (err: any) {
@@ -288,10 +330,10 @@ export default function AddNewsPage() {
               onChange={(e) => setLocationId(e.target.value)}
               className="w-full p-2.5 border border-stone-300 rounded-lg text-sm bg-white focus:outline-none focus:border-[#F97316]"
             >
-              <option value="">-- स्थान चुनें (Optional) --</option>
+              <option value="">-- स्थान / जिला चुनें (Optional) --</option>
               {locations.map((loc) => (
                 <option key={loc.id} value={loc.id}>
-                  📍 {loc.name} {loc.type ? `(${loc.type})` : ''}
+                  📍 {loc.name}
                 </option>
               ))}
             </select>

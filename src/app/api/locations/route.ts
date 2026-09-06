@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { slugify } from '@/lib/utils';
+import { getAdminSession } from '@/lib/auth';
 
 export async function GET(request: Request) {
   try {
@@ -47,6 +48,11 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const session = await getAdminSession();
+    if (!session) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { name, type, image, parentId } = body;
 
@@ -56,6 +62,31 @@ export async function POST(request: Request) {
 
     const trimmedName = name.trim();
     let baseSlug = slugify(trimmedName) || 'loc';
+
+    // Protect from duplicacy: check if location name or slug already exists
+    const existingLocation = await db.location.findFirst({
+      where: {
+        OR: [
+          { name: trimmedName },
+          { slug: baseSlug },
+        ],
+      },
+      include: {
+        _count: { select: { articles: true } },
+      },
+    });
+
+    if (existingLocation) {
+      return NextResponse.json({
+        success: false,
+        error: `स्थान "${trimmedName}" पहले से मौजूद है।`,
+        data: {
+          ...existingLocation,
+          articleCount: existingLocation._count.articles,
+        },
+      }, { status: 409 });
+    }
+
     let slug = baseSlug;
     let counter = 1;
 
@@ -66,6 +97,7 @@ export async function POST(request: Request) {
     }
 
     const validTypes = ['COUNTRY', 'STATE', 'DIVISION', 'DISTRICT', 'CITY', 'LOCAL_AREA'];
+
     const locationType = validTypes.includes(type) ? type : 'DISTRICT';
 
     const location = await db.location.create({

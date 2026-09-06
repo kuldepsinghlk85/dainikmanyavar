@@ -64,7 +64,10 @@ export default function EditArticleAdminPage() {
     fetch('/api/locations')
       .then((r) => r.json())
       .then((d) => {
-        if (d.success && d.data) setLocations(d.data);
+        if (d.success && d.data) {
+          // Show only districts and cities in the news location dropdown (exclude division groupings to prevent duplicate city names)
+          setLocations(d.data.filter((l: any) => l.type !== 'DIVISION'));
+        }
       })
       .catch(() => {});
 
@@ -134,6 +137,18 @@ export default function EditArticleAdminPage() {
 
   const handleCreateNewTag = async () => {
     if (!newTagName.trim()) return;
+    const cleanInput = newTagName.replace(/^#+/, '').trim().toLowerCase();
+
+    // Check if tag already exists in allTags
+    const existing = allTags.find(
+      (t) => t.name.replace(/^#+/, '').trim().toLowerCase() === cleanInput
+    );
+    if (existing) {
+      handleToggleTag(existing.name);
+      setNewTagName('');
+      return;
+    }
+
     setTagLoading(true);
     try {
       const res = await fetch('/api/admin/tags', {
@@ -177,6 +192,18 @@ export default function EditArticleAdminPage() {
   const handleQuickCreateLocation = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newLocName.trim()) return;
+
+    const trimmed = newLocName.trim().toLowerCase();
+    const existing = locations.find((l) => l.name.trim().toLowerCase() === trimmed);
+    if (existing) {
+      setForm((prev) => ({ ...prev, locationId: existing.id }));
+      setShowAddLocationModal(false);
+      setNewLocName('');
+      setNewLocImage('');
+      setMsg(`स्थान '${existing.name}' पहले से सूची में मौजूद है और चुन लिया गया है।`);
+      return;
+    }
+
     setLocSubmitting(true);
     try {
       const res = await fetch('/api/locations', {
@@ -191,13 +218,22 @@ export default function EditArticleAdminPage() {
       const data = await res.json();
       if (data.success && data.data) {
         const createdLoc = data.data;
-        setLocations((prev) => [...prev, createdLoc]);
+        setLocations((prev) => {
+          if (prev.some((l) => l.id === createdLoc.id)) return prev;
+          return [...prev, createdLoc];
+        });
         setForm((prev) => ({ ...prev, locationId: createdLoc.id }));
         setShowAddLocationModal(false);
         setNewLocName('');
         setNewLocImage('');
         setMsg(`स्थान '${createdLoc.name}' सफलतापूर्वक जुड़ गया और चुना गया! इसका चित्र आर्काइव में सुरक्षित हो गया।`);
       } else {
+        if (data.data && data.data.id) {
+          setForm((prev) => ({ ...prev, locationId: data.data.id }));
+          setShowAddLocationModal(false);
+          setNewLocName('');
+          setNewLocImage('');
+        }
         alert(data.error || 'स्थान जोड़ने में समस्या आई');
       }
     } catch (err: any) {
@@ -385,10 +421,10 @@ export default function EditArticleAdminPage() {
                 onChange={(e) => setForm({ ...form, locationId: e.target.value })}
                 className="w-full p-2.5 border border-stone-300 rounded-xl text-xs font-bold text-stone-900 bg-white"
               >
-                <option value="">-- स्थान चुनें --</option>
+                <option value="">-- स्थान / जिला चुनें (Optional) --</option>
                 {locations.map((loc) => (
                   <option key={loc.id} value={loc.id}>
-                    📍 {loc.name} {loc.type ? `(${loc.type})` : ''}
+                    📍 {loc.name}
                   </option>
                 ))}
               </select>

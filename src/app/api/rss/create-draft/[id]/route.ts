@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { slugify } from '@/lib/utils';
 import { getNextNewsId } from '@/lib/newsId';
+import { getOrCreateTag } from '@/lib/tagUtils';
 
 export async function POST(
   request: Request,
@@ -58,19 +59,27 @@ export async function POST(
       try {
         const tags: string[] = JSON.parse(importItem.suggestedTagsJson);
         for (const tagText of tags) {
-          if (!tagText.trim()) continue;
-          let tagObj = await db.tag.findFirst({ where: { name: tagText.trim() } });
-          if (!tagObj) {
-            const tagSlug = slugify(tagText.trim()) || `tag-${Date.now()}`;
-            tagObj = await db.tag.create({ data: { name: tagText.trim(), slug: tagSlug } });
-          }
+          if (!tagText || !tagText.trim()) continue;
+          const tagObj = await getOrCreateTag(tagText.trim());
+          if (!tagObj) continue;
 
-          await db.articleTag.create({
-            data: {
-              articleId: article.id,
-              tagId: tagObj.id,
+          const existingRelation = await db.articleTag.findUnique({
+            where: {
+              articleId_tagId: {
+                articleId: article.id,
+                tagId: tagObj.id,
+              },
             },
           });
+
+          if (!existingRelation) {
+            await db.articleTag.create({
+              data: {
+                articleId: article.id,
+                tagId: tagObj.id,
+              },
+            });
+          }
         }
       } catch (e) {}
     }

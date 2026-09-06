@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { getOrCreateTag } from '@/lib/tagUtils';
 
 export async function GET(
   request: Request,
@@ -95,19 +96,28 @@ export async function PUT(
       await db.articleTag.deleteMany({ where: { articleId: id } });
 
       for (const tagText of tags) {
-        if (!tagText.trim()) continue;
-        let tagObj = await db.tag.findFirst({ where: { name: tagText.trim() } });
-        if (!tagObj) {
-          const tagSlug = tagText.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\u0900-\u097F\-]+/g, '');
-          tagObj = await db.tag.create({ data: { name: tagText.trim(), slug: tagSlug || `tag-${Date.now()}` } });
-        }
+        if (!tagText || !tagText.trim()) continue;
+        const tagObj = await getOrCreateTag(tagText.trim());
+        if (!tagObj) continue;
 
-        await db.articleTag.create({
-          data: {
-            articleId: id,
-            tagId: tagObj.id,
+        // Check unique relation before creating
+        const existingRelation = await db.articleTag.findUnique({
+          where: {
+            articleId_tagId: {
+              articleId: id,
+              tagId: tagObj.id,
+            },
           },
         });
+
+        if (!existingRelation) {
+          await db.articleTag.create({
+            data: {
+              articleId: id,
+              tagId: tagObj.id,
+            },
+          });
+        }
       }
     }
 

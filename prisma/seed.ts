@@ -78,41 +78,57 @@ async function main() {
 
   // 3. Create Tags (Multi-tag system)
   const tagsData = [
-    { name: 'जौनपुर', slug: 'jaunpur' },
-    { name: 'विकास', slug: 'vikas' },
-    { name: 'पुल_परियोजना', slug: 'pul_pariyojana' },
-    { name: 'उत्तर_प्रदेश', slug: 'uttar_pradesh' },
-    { name: 'बुनियादी_ढांचा', slug: 'buniyadi_dhancha' },
-    { name: 'राजनीति', slug: 'rajneeti' },
-    { name: 'संसद', slug: 'sansad' },
-    { name: 'देश', slug: 'desh' },
-    { name: 'शिक्षा', slug: 'shiksha' },
-    { name: 'डिजिटल_शिक्षा', slug: 'digital_shiksha' },
-    { name: 'डिफेंस', slug: 'defence' },
-    { name: 'वायुसेना', slug: 'vayusena' },
-    { name: 'स्वास्थ्य', slug: 'swasthya' },
-    { name: 'हेल्थकेयर', slug: 'healthcare' },
-    { name: 'किसान', slug: 'kisan' },
-    { name: 'सब्सिडी', slug: 'subsidy' },
-    { name: 'सरकार', slug: 'sarkar' },
-    { name: 'रोजगार', slug: 'rojgar' },
-    { name: 'युवा', slug: 'yuva' },
-    { name: 'बारिश', slug: 'barish' },
-    { name: 'मानसून', slug: 'monsoon' },
+    { name: '#जौनपुर', slug: 'जौनपुर' },
+    { name: '#विकास', slug: 'विकास' },
+    { name: '#पुल_परियोजना', slug: 'पुल_परियोजना' },
+    { name: '#उत्तर_प्रदेश', slug: 'उत्तर_प्रदेश' },
+    { name: '#बुनियादी_ढांचा', slug: 'बुनियादी_ढांचा' },
+    { name: '#राजनीति', slug: 'राजनीति' },
+    { name: '#संसद', slug: 'संसद' },
+    { name: '#देश', slug: 'देश' },
+    { name: '#शिक्षा', slug: 'शिक्षा' },
+    { name: '#डिजिटल_शिक्षा', slug: 'डिजिटल_शिक्षा' },
+    { name: '#डिफेंस', slug: 'डिफेंस' },
+    { name: '#वायुसेना', slug: 'वायुसेना' },
+    { name: '#स्वास्थ्य', slug: 'स्वास्थ्य' },
+    { name: '#हेल्थकेयर', slug: 'हेल्थकेयर' },
+    { name: '#किसान', slug: 'किसान' },
+    { name: '#सब्सिडी', slug: 'सब्सिडी' },
+    { name: '#सरकार', slug: 'सरकार' },
+    { name: '#रोजगार', slug: 'रोजगार' },
+    { name: '#युवा', slug: 'युवा' },
+    { name: '#बारिश', slug: 'बारिश' },
+    { name: '#मानसून', slug: 'मानसून' },
   ];
 
   const tagMap = new Map<string, string>();
   for (const t of tagsData) {
-    const tag = await prisma.tag.upsert({
-      where: { slug: t.slug },
-      update: { name: t.name },
-      create: {
-        name: t.name,
-        slug: t.slug,
-        seoTitle: `${t.name} की ताज़ा ख़बरें | दैनिक मान्यवर`,
-        seoDescription: `${t.name} से जुड़ी सभी खबरें और अपडेट दैनिक मान्यवर पर पढ़ें।`,
+    let existing = await prisma.tag.findFirst({
+      where: {
+        OR: [
+          { name: t.name },
+          { name: t.name.replace(/^#/, '') },
+          { slug: t.slug },
+        ],
       },
     });
+
+    let tag;
+    if (existing) {
+      tag = await prisma.tag.update({
+        where: { id: existing.id },
+        data: { name: t.name, slug: t.slug },
+      });
+    } else {
+      tag = await prisma.tag.create({
+        data: {
+          name: t.name,
+          slug: t.slug,
+          seoTitle: `${t.name} की ताज़ा ख़बरें | दैनिक मान्यवर`,
+          seoDescription: `${t.name} से जुड़ी सभी खबरें और अपडेट दैनिक मान्यवर पर पढ़ें।`,
+        },
+      });
+    }
     tagMap.set(t.name, tag.id);
   }
 

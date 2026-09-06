@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { slugify } from '@/lib/utils';
+import { getOrCreateTag } from '@/lib/tagUtils';
+import { getAdminSession } from '@/lib/auth';
 
 export async function GET(request: Request) {
   try {
@@ -29,34 +30,30 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, data: formattedTags });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error('Error in GET /api/admin/tags:', error);
+    return NextResponse.json({ success: false, error: 'टैग्स लोड करने में त्रुटि हुई।' }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const { name, seoTitle, seoDescription } = await request.json();
-
-    if (!name) {
-      return NextResponse.json({ success: false, error: 'Tag name is required' }, { status: 400 });
+    const session = await getAdminSession();
+    if (!session) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const cleanName = name.startsWith('#') ? name.slice(1) : name;
-    const slug = slugify(cleanName);
+    const { name, seoTitle, seoDescription } = await request.json();
 
-    const tag = await db.tag.upsert({
-      where: { slug },
-      update: { name: `#${cleanName}` },
-      create: {
-        name: `#${cleanName}`,
-        slug,
-        seoTitle: seoTitle || `#${cleanName} की ताज़ा ख़बरें | दैनिक मान्यवर`,
-        seoDescription: seoDescription || `#${cleanName} से जुड़ी सभी खबरें`,
-      },
-    });
+    if (!name || !name.trim()) {
+      return NextResponse.json({ success: false, error: 'टैग का नाम आवश्यक है।' }, { status: 400 });
+    }
+
+    const tag = await getOrCreateTag(name.trim(), seoTitle, seoDescription);
 
     return NextResponse.json({ success: true, data: tag });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error('Error in POST /api/admin/tags:', error);
+    return NextResponse.json({ success: false, error: 'टैग बनाने में त्रुटि हुई।' }, { status: 500 });
   }
 }
+

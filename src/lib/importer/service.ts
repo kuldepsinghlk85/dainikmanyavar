@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { db } from '@/lib/db';
 import { slugify } from '@/lib/utils';
 import { getNextNewsId } from '@/lib/newsId';
+import { getOrCreateTag } from '@/lib/tagUtils';
 
 interface NormalizedNewsItem {
   externalId: string;
@@ -307,15 +308,11 @@ export class NewsImportService {
     // Find or create tags & deduplicate tag IDs
     const rawTagIds: string[] = [];
     for (const tagName of tagsList) {
-      const cleanTagName = tagName.replace(/^#/, '').trim();
-      if (!cleanTagName) continue;
-      let tagRecord = await db.tag.findUnique({ where: { slug: slugify(cleanTagName) } });
-      if (!tagRecord) {
-        tagRecord = await db.tag.create({
-          data: { name: `#${cleanTagName}`, slug: slugify(cleanTagName) },
-        });
+      if (!tagName || !tagName.trim()) continue;
+      const tagRecord = await getOrCreateTag(tagName);
+      if (tagRecord) {
+        rawTagIds.push(tagRecord.id);
       }
-      rawTagIds.push(tagRecord.id);
     }
 
     // Deduplicate tag IDs to prevent unique constraint error (articleId, tagId)
