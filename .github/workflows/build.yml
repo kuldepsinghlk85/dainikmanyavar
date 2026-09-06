@@ -29,9 +29,9 @@ on:
         value: ${{ jobs.build.outputs.image_tag }}
     secrets:
       DANIKMANYAWAR_BUILD_USERNAME:
-        required: true
+        required: false
       DANIKMANYAWAR_BUILD_TOKEN:
-        required: true
+        required: false
 
 permissions:
   contents: read
@@ -78,6 +78,7 @@ jobs:
           use: true
 
       - name: 🔐 Login to GitLab Container Registry
+        if: ${{ secrets.DANIKMANYAWAR_BUILD_TOKEN != '' }}
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -89,7 +90,7 @@ jobs:
         with:
           context: .
           file: ./.devops/Dockerfile
-          push: ${{ inputs.push_image }}
+          push: ${{ inputs.push_image && secrets.DANIKMANYAWAR_BUILD_TOKEN != '' }}
           platforms: linux/amd64
           tags: |
             ${{ env.IMAGE }}:${{ steps.meta.outputs.short_sha }}
