@@ -7,8 +7,10 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q');
-
     const type = searchParams.get('type');
+    const onlyActive = searchParams.get('onlyActive');
+    const withArticlesOnly = searchParams.get('withArticlesOnly');
+    const orderByParam = searchParams.get('orderBy');
 
     const where: any = {};
     if (query) {
@@ -17,13 +19,34 @@ export async function GET(request: Request) {
     if (type && type !== 'ALL') {
       where.type = type;
     }
+    if (onlyActive === 'true') {
+      where.active = true;
+    } else if (onlyActive === 'false') {
+      where.active = false;
+    }
+    if (withArticlesOnly === 'true') {
+      where.articles = {
+        some: {
+          status: 'PUBLISHED',
+        },
+      };
+    }
+
+    let orderBy: any = { name: 'asc' };
+    if (orderByParam === 'articlesCount') {
+      orderBy = { articles: { _count: 'desc' } };
+    }
 
     const locations = await db.location.findMany({
       where,
-      orderBy: { name: 'asc' },
+      orderBy,
       include: {
         _count: {
-          select: { articles: true },
+          select: {
+            articles: {
+              where: { status: 'PUBLISHED' },
+            },
+          },
         },
       },
     });
@@ -42,7 +65,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, data: formattedLocations });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error('Error in GET /api/locations:', error);
+    return NextResponse.json({ success: false, error: 'स्थान लोड करने में समस्या आई।' }, { status: 500 });
   }
 }
 
@@ -154,8 +178,13 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    const session = await getAdminSession();
+    if (!session) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
-    const { id, name, type, image, parentId, slug } = body;
+    const { id, name, type, image, parentId, slug, active } = body;
 
     if (!id) {
       return NextResponse.json({ success: false, error: 'स्थान ID आवश्यक है।' }, { status: 400 });
@@ -173,6 +202,9 @@ export async function PUT(request: Request) {
     if (parentId !== undefined) updateData.parentId = parentId || null;
     if (slug && typeof slug === 'string' && slug.trim()) {
       updateData.slug = slug.trim();
+    }
+    if (typeof active === 'boolean') {
+      updateData.active = active;
     }
 
     const location = await db.location.update({
@@ -218,7 +250,73 @@ export async function PUT(request: Request) {
       },
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error('Error in PUT /api/locations:', error);
+    return NextResponse.json({ success: false, error: 'स्थान अपडेट करने में समस्या आई।' }, { status: 500 });
+  }
+}
+
+// Quick toggle or Bulk enable/disable
+export async function PATCH(request: Request) {
+  try {
+    const session = await getAdminSession();
+    if (!session) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { id, active, bulk, type } = body;
+
+    // Bulk enable / disable
+    if (bulk === true) {
+      if (typeof active !== 'boolean') {
+        return NextResponse.json({ success: false, error: 'active स्थिति (true/false) आवश्यक है।' }, { status: 400 });
+      }
+
+      const whereClause: any = {};
+      if (type && type !== 'ALL') {
+        whereClause.type = type;
+      }
+
+      const updateResult = await db.location.updateMany({
+        where: whereClause,
+        data: { active },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `${updateResult.count} स्थान सफलतापूर्वक ${active ? 'सक्रिय (Enabled)' : 'निष्क्रिय (Disabled)'} कर दिए गए।`,
+        updatedCount: updateResult.count,
+      });
+    }
+
+    // Single item toggle
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'स्थान ID आवश्यक है।' }, { status: 400 });
+    }
+
+    if (typeof active !== 'boolean') {
+      return NextResponse.json({ success: false, error: 'active स्थिति (true/false) आवश्यक है।' }, { status: 400 });
+    }
+
+    const updated = await db.location.update({
+      where: { id },
+      data: { active },
+      include: {
+        _count: { select: { articles: true } },
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `स्थान '${updated.name}' अब ${active ? 'सक्रिय' : 'निष्क्रिय'} है।`,
+      data: {
+        ...updated,
+        articleCount: updated._count.articles,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error in PATCH /api/locations:', error);
+    return NextResponse.json({ success: false, error: 'स्थान स्थिति बदलने में समस्या आई।' }, { status: 500 });
   }
 }
 

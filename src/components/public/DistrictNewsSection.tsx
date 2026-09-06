@@ -55,11 +55,10 @@ export default function DistrictNewsSection({
     initialLocations && initialLocations.length > 0 ? initialLocations : DEFAULT_DISTRICTS
   );
 
-  // Active district state - defaults to Jaunpur or first available location
+  // Active district state - defaults to the first district on the left (the one with the most news)
   const [activeDistrict, setActiveDistrict] = useState<LocationItem>(() => {
     if (initialLocations && initialLocations.length > 0) {
-      const jaunpur = initialLocations.find((l) => l.name === 'जौनपुर');
-      return jaunpur || initialLocations[0];
+      return initialLocations[0];
     }
     return DEFAULT_DISTRICTS[0];
   });
@@ -84,22 +83,15 @@ export default function DistrictNewsSection({
 
   const [loading, setLoading] = useState(false);
 
-  // If locations weren't provided, fetch dynamically from /api/locations
+  // If locations weren't provided, fetch dynamically only active districts with published articles ordered by news count DESC
   useEffect(() => {
     if (!initialLocations || initialLocations.length === 0) {
-      fetch('/api/locations')
+      fetch('/api/locations?type=DISTRICT&onlyActive=true&withArticlesOnly=true&orderBy=articlesCount')
         .then((res) => res.json())
         .then((data) => {
           if (data.success && Array.isArray(data.data) && data.data.length > 0) {
-            // Put Jaunpur first if present
-            const sorted = [...data.data].sort((a, b) => {
-              if (a.name === 'जौनपुर') return -1;
-              if (b.name === 'जौनपुर') return 1;
-              return a.name.localeCompare(b.name, 'hi');
-            });
-            setLocations(sorted);
-            const jaunpur = sorted.find((l: any) => l.name === 'जौनपुर');
-            setActiveDistrict(jaunpur || sorted[0]);
+            setLocations(data.data);
+            setActiveDistrict(data.data[0]);
           }
         })
         .catch(() => {});

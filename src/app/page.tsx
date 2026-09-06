@@ -236,15 +236,39 @@ export default async function HomePage() {
     take: 10,
   });
 
-  // Fetch dynamic district locations & published articles with locations
+  // Fetch only active DISTRICT locations that have published articles, ordered by news count DESC (most news on left hand side)
   const dbLocations = await db.location.findMany({
-    orderBy: { name: 'asc' },
+    where: {
+      type: 'DISTRICT',
+      active: true,
+      articles: {
+        some: {
+          status: 'PUBLISHED',
+        },
+      },
+    },
+    include: {
+      _count: {
+        select: {
+          articles: {
+            where: { status: 'PUBLISHED' },
+          },
+        },
+      },
+    },
+    orderBy: {
+      articles: {
+        _count: 'desc',
+      },
+    },
   });
-  const sortedLocations = [...dbLocations].sort((a, b) => {
-    if (a.name === 'जौनपुर') return -1;
-    if (b.name === 'जौनपुर') return 1;
-    return a.name.localeCompare(b.name, 'hi');
-  });
+
+  const sortedLocations = dbLocations.map((l) => ({
+    id: l.id,
+    name: l.name,
+    slug: l.slug,
+    articleCount: l._count.articles,
+  }));
 
   const dbDistrictArticles = await db.article.findMany({
     where: {

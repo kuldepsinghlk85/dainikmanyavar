@@ -30,6 +30,7 @@ interface LocationItem {
   parentName?: string | null;
   image?: string | null;
   articleCount?: number;
+  active?: boolean;
   createdAt: string;
 }
 
@@ -50,12 +51,67 @@ export default function LocationsAdminPage() {
     type: 'DISTRICT',
     parentId: '',
     image: '',
+    active: true,
   });
 
   // File Upload State
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const handleToggleActive = async (id: string, currentActive: boolean) => {
+    const nextActive = !currentActive;
+    setLocations((prev) =>
+      prev.map((loc) => (loc.id === id ? { ...loc, active: nextActive } : loc))
+    );
+
+    try {
+      const res = await fetch('/api/locations', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, active: nextActive }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setLocations((prev) =>
+          prev.map((loc) => (loc.id === id ? { ...loc, active: currentActive } : loc))
+        );
+        setErrorMsg(data.error || 'स्थिति बदलने में विफल');
+      } else {
+        setMsg(data.message || 'स्थिति सफलतापूर्वक अपडेट हो गई!');
+      }
+    } catch (e: any) {
+      setLocations((prev) =>
+        prev.map((loc) => (loc.id === id ? { ...loc, active: currentActive } : loc))
+      );
+      setErrorMsg('स्थिति बदलने में विफल');
+    }
+  };
+
+  const handleBulkToggle = async (type: string, active: boolean) => {
+    const typeLabel = type === 'DISTRICT' ? 'सभी जिलों' : 'सभी स्थानों';
+    const actionLabel = active ? 'सक्रिय (Enable)' : 'निष्क्रिय (Disable)';
+    if (!confirm(`क्या आप ${typeLabel} को ${actionLabel} करना चाहते हैं?`)) return;
+
+    setSyncing(true);
+    try {
+      const res = await fetch('/api/locations', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bulk: true, type, active }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMsg(data.message);
+        fetchLocations();
+      } else {
+        setErrorMsg(data.error || 'कार्रवाई विफल रही');
+      }
+    } catch (e: any) {
+      setErrorMsg('कार्रवाई विफल रही');
+    }
+    setSyncing(false);
+  };
 
   const fetchLocations = async () => {
     try {
@@ -99,6 +155,7 @@ export default function LocationsAdminPage() {
       type: 'DISTRICT',
       parentId: '',
       image: '',
+      active: true,
     });
     setIsModalOpen(true);
   };
@@ -110,6 +167,7 @@ export default function LocationsAdminPage() {
       type: loc.type || 'DISTRICT',
       parentId: loc.parentId || '',
       image: loc.image || '',
+      active: loc.active !== false,
     });
     setIsModalOpen(true);
   };
@@ -167,6 +225,7 @@ export default function LocationsAdminPage() {
             type: formData.type,
             parentId: formData.parentId || null,
             image: formData.image || null,
+            active: formData.active !== false,
           }),
         });
         const data = await res.json();
@@ -187,6 +246,7 @@ export default function LocationsAdminPage() {
             type: formData.type,
             parentId: formData.parentId || null,
             image: formData.image || null,
+            active: formData.active !== false,
           }),
         });
         const data = await res.json();
@@ -241,6 +301,26 @@ export default function LocationsAdminPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
+          {/* Bulk Toggle Buttons */}
+          <button
+            type="button"
+            onClick={() => handleBulkToggle('DISTRICT', true)}
+            disabled={syncing}
+            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+            title="सभी 75 जिलों को सक्षम करें"
+          >
+            <span>✅ सभी जिले सक्षम करें</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleBulkToggle('DISTRICT', false)}
+            disabled={syncing}
+            className="bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-300 px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+            title="सभी जिलों को अक्षम करें"
+          >
+            <span>⏸️ सभी जिले अक्षम करें</span>
+          </button>
+
           {/* Add New Location Button */}
           <button
             onClick={handleOpenAddModal}
@@ -370,6 +450,7 @@ export default function LocationsAdminPage() {
                   <th className="p-3">संबद्ध मंडल (Parent Division)</th>
                   <th className="p-3">Slug</th>
                   <th className="p-3">संबद्ध समाचार</th>
+                  <th className="p-3 text-center">स्थिति (Status)</th>
                   <th className="p-3 text-right">कार्रवाई</th>
                 </tr>
               </thead>
@@ -451,6 +532,31 @@ export default function LocationsAdminPage() {
                       }`}>
                         {loc.articleCount || 0} खबरें
                       </span>
+                    </td>
+
+                    {/* Status Toggle */}
+                    <td className="p-3 text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleActive(loc.id, loc.active !== false)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black cursor-pointer transition-all border shadow-2xs ${
+                          loc.active !== false
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'
+                            : 'bg-stone-100 text-stone-500 border-stone-300 hover:bg-stone-200'
+                        }`}
+                        title={
+                          loc.active !== false
+                            ? 'अक्षम (Disable) करने के लिए क्लिक करें'
+                            : 'सक्षम (Enable) करने के लिए क्लिक करें'
+                        }
+                      >
+                        <span
+                          className={`w-2 h-2 rounded-full ${
+                            loc.active !== false ? 'bg-emerald-500' : 'bg-stone-400'
+                          }`}
+                        />
+                        <span>{loc.active !== false ? 'सक्रिय' : 'अक्षम'}</span>
+                      </button>
                     </td>
 
                     {/* Actions */}
@@ -626,6 +732,23 @@ export default function LocationsAdminPage() {
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Active / Inactive Status Checkbox */}
+              <div className="flex items-center gap-3 p-3.5 bg-stone-50 rounded-2xl border border-stone-200">
+                <input
+                  type="checkbox"
+                  id="modal-loc-active"
+                  checked={formData.active !== false}
+                  onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                  className="w-4 h-4 text-[#EA580C] rounded border-stone-300 focus:ring-[#EA580C] cursor-pointer"
+                />
+                <label htmlFor="modal-loc-active" className="text-xs font-bold text-stone-800 cursor-pointer select-none">
+                  यह स्थान वेबसाइट पर सक्रिय (Enabled) रखें
+                  <span className="block text-[11px] font-normal text-stone-500 mt-0.5">
+                    अक्षम करने पर यह स्थान होमपेज और सार्वजनिक सूचियों में दिखाई नहीं देगा।
+                  </span>
+                </label>
               </div>
 
               {/* Action Buttons */}
