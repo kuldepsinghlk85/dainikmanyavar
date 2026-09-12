@@ -15,18 +15,15 @@ import {
   Download,
   Check,
   Flame,
+  ExternalLink,
 } from 'lucide-react';
+import { DEFAULT_FESTIVE_CONFIG, FestiveCard, FestiveConfig } from '@/lib/festive';
 
 interface VideoCardProps {
-  src: string;
-  badge: string;
-  badgeIcon?: string;
-  title: string;
-  subtitle: string;
-  tag: string;
+  card: FestiveCard;
 }
 
-function VideoReelCard({ src, badge, badgeIcon, title, subtitle, tag }: VideoCardProps) {
+function VideoReelCard({ card }: VideoCardProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
@@ -52,11 +49,14 @@ function VideoReelCard({ src, badge, badgeIcon, title, subtitle, tag }: VideoCar
     video.addEventListener('ended', handleEnded);
 
     // Attempt autoplay muted
-    video.play().then(() => {
-      setIsPlaying(true);
-    }).catch(() => {
-      setIsPlaying(false);
-    });
+    video
+      .play()
+      .then(() => {
+        setIsPlaying(true);
+      })
+      .catch(() => {
+        setIsPlaying(false);
+      });
 
     return () => {
       video.removeEventListener('timeupdate', handleTimeUpdate);
@@ -103,7 +103,7 @@ function VideoReelCard({ src, badge, badgeIcon, title, subtitle, tag }: VideoCar
       {/* Video Element */}
       <video
         ref={videoRef}
-        src={src}
+        src={card.mediaUrl}
         className="absolute inset-0 w-full h-full object-cover cursor-pointer"
         playsInline
         muted={isMuted}
@@ -117,13 +117,15 @@ function VideoReelCard({ src, badge, badgeIcon, title, subtitle, tag }: VideoCar
       {/* Top Badges */}
       <div className="relative z-10 p-3.5 flex items-center justify-between w-full pointer-events-none">
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md border border-amber-300/40">
-          <span>{badgeIcon || '🕉️'}</span>
-          <span>{badge}</span>
+          <span>{card.badgeIcon || '🕉️'}</span>
+          <span>{card.badge}</span>
         </span>
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-black/60 backdrop-blur-md text-amber-300 border border-amber-500/30">
-          <Sparkles className="w-3 h-3 text-amber-400 animate-pulse" />
-          {tag}
-        </span>
+        {card.tag && (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-black/60 backdrop-blur-md text-amber-300 border border-amber-500/30">
+            <Sparkles className="w-3 h-3 text-amber-400 animate-pulse" />
+            {card.tag}
+          </span>
+        )}
       </div>
 
       {/* Center Play/Pause Floating Icon (Smooth Fade) */}
@@ -145,11 +147,13 @@ function VideoReelCard({ src, badge, badgeIcon, title, subtitle, tag }: VideoCar
       <div className="relative z-10 p-4 space-y-2.5">
         <div>
           <h4 className="text-white font-bold text-base leading-snug drop-shadow-md">
-            {title}
+            {card.title}
           </h4>
-          <p className="text-amber-200/90 text-xs mt-0.5 line-clamp-2 drop-shadow">
-            {subtitle}
-          </p>
+          {card.subtitle && (
+            <p className="text-amber-200/90 text-xs mt-0.5 line-clamp-2 drop-shadow">
+              {card.subtitle}
+            </p>
+          )}
         </div>
 
         {/* Video Progress Bar */}
@@ -195,16 +199,106 @@ function VideoReelCard({ src, badge, badgeIcon, title, subtitle, tag }: VideoCar
   );
 }
 
-export default function SanatanSpecialSection() {
-  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+interface ImageCardProps {
+  card: FestiveCard;
+  onOpenLightbox: (imageUrl: string) => void;
+}
+
+function ImagePosterCard({ card, onOpenLightbox }: ImageCardProps) {
+  const handleClick = () => {
+    if (card.linkUrl) {
+      if (card.linkUrl.startsWith('http')) {
+        window.open(card.linkUrl, '_blank');
+      } else {
+        window.location.href = card.linkUrl;
+      }
+    } else {
+      onOpenLightbox(card.mediaUrl);
+    }
+  };
+
+  return (
+    <div
+      onClick={handleClick}
+      className="group relative rounded-2xl overflow-hidden bg-stone-950 border border-amber-500/40 shadow-xl hover:shadow-2xl hover:border-amber-400 transition-all duration-300 flex flex-col justify-between cursor-pointer h-[520px]"
+    >
+      {/* Poster Image */}
+      <div className="relative w-full h-full">
+        <Image
+          src={card.mediaUrl || '/imgg.jpg'}
+          alt={card.title || 'फेस्टिव पोस्टर'}
+          fill
+          priority
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 400px"
+          className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
+        />
+        {/* Subtle Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/40 pointer-events-none" />
+      </div>
+
+      {/* Top Badges */}
+      <div className="absolute top-0 left-0 right-0 z-10 p-3.5 flex items-center justify-between pointer-events-none">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md border border-amber-300/40">
+          {card.badgeIcon ? <span>{card.badgeIcon}</span> : <Flame className="w-3.5 h-3.5 text-yellow-300" />}
+          <span>{card.badge}</span>
+        </span>
+        {card.tag && (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-black/60 backdrop-blur-md text-amber-300 border border-amber-500/30">
+            <Sparkles className="w-3 h-3 text-amber-400" />
+            {card.tag}
+          </span>
+        )}
+      </div>
+
+      {/* Hover Zoom Hint in Center */}
+      <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+        <span className="px-4 py-2 rounded-full bg-black/75 backdrop-blur-md border border-amber-400 text-amber-300 text-xs font-bold shadow-2xl flex items-center gap-2 transform group-hover:scale-105 transition-transform">
+          {card.linkUrl ? <ExternalLink className="w-4 h-4 text-amber-400" /> : <Eye className="w-4 h-4 text-amber-400" />}
+          {card.linkUrl ? (card.linkText || 'लिंक खोलें') : 'ज़ूम करके पूरा पोस्टर देखें'}
+        </span>
+      </div>
+
+      {/* Bottom Caption & Action */}
+      <div className="relative z-10 p-4 space-y-2 bg-gradient-to-t from-black via-black/80 to-transparent">
+        <div>
+          <h4 className="text-white font-bold text-base leading-snug drop-shadow">
+            {card.title}
+          </h4>
+          {card.subtitle && (
+            <p className="text-amber-200/90 text-xs mt-0.5 drop-shadow line-clamp-2">
+              {card.subtitle}
+            </p>
+          )}
+        </div>
+        <div className="pt-1 flex items-center justify-between text-xs">
+          <span className="text-stone-300 flex items-center gap-1 font-medium">
+            {card.footerText || '📱 QR कोड स्कैन कर वेबसाइट देखें'}
+          </span>
+          <span className="text-amber-400 font-bold group-hover:underline flex items-center gap-0.5">
+            {card.linkText || 'विस्तार से'} <Eye className="w-3 h-3 ml-0.5" />
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface SanatanSpecialSectionProps {
+  config?: FestiveConfig;
+}
+
+export default function SanatanSpecialSection({ config }: SanatanSpecialSectionProps) {
+  const currentConfig = config || DEFAULT_FESTIVE_CONFIG;
+
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   // Close lightbox on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsLightboxOpen(false);
+      if (e.key === 'Escape') setLightboxImage(null);
     };
-    if (isLightboxOpen) {
+    if (lightboxImage) {
       window.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
     } else {
@@ -214,14 +308,19 @@ export default function SanatanSpecialSection() {
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
-  }, [isLightboxOpen]);
+  }, [lightboxImage]);
+
+  if (currentConfig.enabled === false) {
+    return null;
+  }
 
   const handleShare = async () => {
+    if (typeof window === 'undefined') return;
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'दैनिक मान्यवर - लॉन्च एवं सनातन विशेष',
-          text: 'श्रीकृष्ण जन्माष्टमी के पावन अवसर पर दैनिक मान्यवर का लॉन्च!',
+          title: `${currentConfig.brandPrefix} - ${currentConfig.mainTitle}`,
+          text: currentConfig.subtitle,
           url: window.location.origin,
         });
       } catch {}
@@ -232,6 +331,8 @@ export default function SanatanSpecialSection() {
     }
   };
 
+  const defaultPoster = currentConfig.posterModalImage || currentConfig.cards.find(c => c.type === 'image')?.mediaUrl || '/imgg.jpg';
+
   return (
     <section className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-stone-900 via-[#1c120a] to-[#0f0904] border-2 border-amber-500/30 shadow-2xl p-4 sm:p-6 lg:p-7 my-6">
       {/* Decorative Aura Background Glows */}
@@ -241,145 +342,92 @@ export default function SanatanSpecialSection() {
       {/* Section Header */}
       <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4 pb-5 mb-6 border-b border-amber-500/20">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-400/30 text-amber-300 text-xs font-bold mb-2 shadow-sm">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" style={{ animationDuration: '6s' }} />
-            <span>श्रीकृष्ण जन्माष्टमी एवं लॉन्च विशेष</span>
-          </div>
+          {currentConfig.headerTag && (
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-400/30 text-amber-300 text-xs font-bold mb-2 shadow-sm">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" style={{ animationDuration: '6s' }} />
+              <span>{currentConfig.headerTag}</span>
+            </div>
+          )}
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-400 to-orange-400">
-              दैनिक मान्यवर
+              {currentConfig.brandPrefix || 'दैनिक मान्यवर'}
             </span>
             <span className="text-stone-300 font-medium text-xl sm:text-2xl">|</span>
-            <span className="text-stone-100">लॉन्च एवं सनातन विशेष</span>
+            <span className="text-stone-100">{currentConfig.mainTitle}</span>
           </h2>
-          <p className="text-stone-300 text-xs sm:text-sm mt-1.5 max-w-2xl font-normal">
-            इस पावन अवसर पर आपके अपने समाचार पत्र का नया डिजिटल अवतार —{' '}
-            <span className="text-amber-300 font-semibold">सच की धारा, जन-जन की पुकार</span>
-          </p>
+          {currentConfig.subtitle && (
+            <p className="text-stone-300 text-xs sm:text-sm mt-1.5 max-w-2xl font-normal">
+              {currentConfig.subtitle}
+            </p>
+          )}
         </div>
 
         {/* Right Action buttons */}
         <div className="flex items-center gap-2 self-start md:self-auto">
-          <button
-            onClick={() => setIsLightboxOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold text-xs shadow-md transition-all transform hover:-translate-y-0.5"
-          >
-            <Eye className="w-3.5 h-3.5" />
-            <span>बड़ा पोस्टर देखें</span>
-          </button>
-          <button
-            onClick={handleShare}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-stone-800/80 hover:bg-stone-700 border border-amber-500/30 text-amber-300 font-bold text-xs transition-all"
-            title="शेयर करें"
-          >
-            {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Share2 className="w-3.5 h-3.5" />}
-            <span>{copied ? 'लिंक कॉपी हो गया' : 'शेयर करें'}</span>
-          </button>
+          {currentConfig.primaryBtnText && (
+            <button
+              onClick={() => setLightboxImage(defaultPoster)}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold text-xs shadow-md transition-all transform hover:-translate-y-0.5"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>{currentConfig.primaryBtnText}</span>
+            </button>
+          )}
+          {currentConfig.shareBtnText && (
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-stone-800/80 hover:bg-stone-700 border border-amber-500/30 text-amber-300 font-bold text-xs transition-all"
+              title="शेयर करें"
+            >
+              {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Share2 className="w-3.5 h-3.5" />}
+              <span>{copied ? 'लिंक कॉपी हो गया' : currentConfig.shareBtnText}</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* 3-Column Arrangement: Poster + Reel 1 + Reel 2 */}
+      {/* Grid of Cards (Dynamic based on cards array) */}
       <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6">
-        {/* CARD 1: Official Janmashtami Launch Poster */}
-        <div
-          onClick={() => setIsLightboxOpen(true)}
-          className="group relative rounded-2xl overflow-hidden bg-stone-950 border border-amber-500/40 shadow-xl hover:shadow-2xl hover:border-amber-400 transition-all duration-300 flex flex-col justify-between cursor-pointer h-[520px]"
-        >
-          {/* Poster Image */}
-          <div className="relative w-full h-full">
-            <Image
-              src="/imgg.jpg"
-              alt="दैनिक मान्यवर - श्रीकृष्ण जन्माष्टमी लॉन्च पोस्टर"
-              fill
-              priority
-              className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
+        {currentConfig.cards && currentConfig.cards.map((card) => {
+          if (card.type === 'video') {
+            return <VideoReelCard key={card.id} card={card} />;
+          }
+          return (
+            <ImagePosterCard
+              key={card.id}
+              card={card}
+              onOpenLightbox={(img) => setLightboxImage(img || defaultPoster)}
             />
-            {/* Subtle Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/40 pointer-events-none" />
-          </div>
-
-          {/* Top Badges */}
-          <div className="absolute top-0 left-0 right-0 z-10 p-3.5 flex items-center justify-between pointer-events-none">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md border border-amber-300/40">
-              <Flame className="w-3.5 h-3.5 text-yellow-300" />
-              <span>लॉन्च</span>
-            </span>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-black/60 backdrop-blur-md text-amber-300 border border-amber-500/30">
-              <Sparkles className="w-3 h-3 text-amber-400" />
-              आधिकारिक घोषणा
-            </span>
-          </div>
-
-          {/* Hover Zoom Hint in Center */}
-          <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-            <span className="px-4 py-2 rounded-full bg-black/75 backdrop-blur-md border border-amber-400 text-amber-300 text-xs font-bold shadow-2xl flex items-center gap-2 transform group-hover:scale-105 transition-transform">
-              <Eye className="w-4 h-4 text-amber-400" />
-              ज़ूम करके पूरा पोस्टर देखें
-            </span>
-          </div>
-
-          {/* Bottom Caption & Action */}
-          <div className="relative z-10 p-4 space-y-2 bg-gradient-to-t from-black via-black/80 to-transparent">
-            <div>
-              <h4 className="text-white font-bold text-base leading-snug drop-shadow">
-                दैनिक मान्यवर का लॉन्च
-              </h4>
-              <p className="text-amber-200/90 text-xs mt-0.5 drop-shadow line-clamp-2">
-                नई सोच, नई ऊर्जा और नए संकल्प के साथ... सच की धारा, जन-जन की पुकार
-              </p>
-            </div>
-            <div className="pt-1 flex items-center justify-between text-xs">
-              <span className="text-stone-300 flex items-center gap-1 font-medium">
-                📱 QR कोड स्कैन कर वेबसाइट देखें
-              </span>
-              <span className="text-amber-400 font-bold group-hover:underline flex items-center gap-0.5">
-                विस्तार से <Eye className="w-3 h-3 ml-0.5" />
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* CARD 2: Sanatan Reel 1 (sanatan1.mp4 - Krishna Janmashtami / Dahi Handi) */}
-        <VideoReelCard
-          src="/sanatan1.mp4"
-          badge="श्रीकृष्ण जन्मोत्सव"
-          badgeIcon="🦚"
-          title="माखन चोर, नंद किशोर | पावन दही हांडी उत्सव"
-          subtitle="दैनिक मान्यवर का विशेष डिजिटल अनावरण व दिव्य प्रस्तुति"
-          tag="सनातन रील #1"
-        />
-
-        {/* CARD 3: Sanatan Reel 2 (sanatan2.mp4 - Kashi Varanasi Ganga Aarti) */}
-        <VideoReelCard
-          src="/sanatan2.mp4"
-          badge="काशी दिव्य गंगा आरती"
-          badgeIcon="🔱"
-          title="हर हर गंगे | काशी के पावन घाट व प्रभात आरती"
-          subtitle="सनातन संस्कृति, भारतीय धरोहर एवं दैनिक मान्यवर संदेश"
-          tag="सनातन रील #2"
-        />
+          );
+        })}
       </div>
 
       {/* Bottom Ticker / Brand Pledge */}
-      <div className="relative z-10 mt-6 pt-4 border-t border-amber-500/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-amber-200/80">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-          <span className="font-semibold text-stone-200">
-            दैनिक मान्यवर - निष्पक्ष, निर्भीक, जन-सरोकारों को समर्पित पत्रकारिता
-          </span>
+      {(currentConfig.tickerText || currentConfig.tickerWebsite || currentConfig.tickerOffice) && (
+        <div className="relative z-10 mt-6 pt-4 border-t border-amber-500/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-amber-200/80">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+            <span className="font-semibold text-stone-200">
+              {currentConfig.tickerText}
+            </span>
+          </div>
+          <div className="flex items-center gap-4 text-stone-400">
+            {currentConfig.tickerWebsite && (
+              <span>वेबसाइट: <strong className="text-amber-300">{currentConfig.tickerWebsite}</strong></span>
+            )}
+            {currentConfig.tickerWebsite && currentConfig.tickerOffice && <span>•</span>}
+            {currentConfig.tickerOffice && (
+              <span>संपादकीय कार्यालय: <strong>{currentConfig.tickerOffice}</strong></span>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-4 text-stone-400">
-          <span>वेबसाइट: <strong className="text-amber-300">www.dainikmanyavar.com</strong></span>
-          <span>•</span>
-          <span>संपादकीय कार्यालय: <strong>जौनपुर / लखनऊ</strong></span>
-        </div>
-      </div>
+      )}
 
-      {/* FULLSCREEN LIGHTBOX MODAL FOR IMGG.JPG */}
-      {isLightboxOpen && (
+      {/* FULLSCREEN LIGHTBOX MODAL */}
+      {lightboxImage && (
         <div
           className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 transition-all"
-          onClick={() => setIsLightboxOpen(false)}
+          onClick={() => setLightboxImage(null)}
         >
           <div
             className="relative max-w-2xl w-full max-h-[92vh] flex flex-col items-center rounded-2xl overflow-hidden bg-stone-900 border-2 border-amber-500/50 shadow-2xl"
@@ -392,20 +440,20 @@ export default function SanatanSpecialSection() {
                   विशेष पोस्टर
                 </span>
                 <h3 className="font-bold text-sm sm:text-base text-amber-300 truncate">
-                  दैनिक मान्यवर - लॉन्च (श्रीकृष्ण जन्माष्टमी)
+                  {currentConfig.brandPrefix} - {currentConfig.mainTitle}
                 </h3>
               </div>
               <div className="flex items-center gap-2">
                 <a
-                  href="/imgg.jpg"
-                  download="dainik-manyavar-launch-poster.jpg"
+                  href={lightboxImage}
+                  download="dainik-manyavar-special-poster.jpg"
                   className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-amber-300 transition-colors"
                   title="पोस्टर डाउनलोड करें"
                 >
                   <Download className="w-4 h-4" />
                 </a>
                 <button
-                  onClick={() => setIsLightboxOpen(false)}
+                  onClick={() => setLightboxImage(null)}
                   className="p-1.5 rounded-lg bg-red-600/80 hover:bg-red-600 text-white transition-colors"
                   title="बंद करें (Esc)"
                 >
@@ -417,8 +465,8 @@ export default function SanatanSpecialSection() {
             {/* Poster Image Container */}
             <div className="relative w-full flex-1 overflow-y-auto max-h-[calc(92vh-60px)] p-2 sm:p-4 flex justify-center bg-stone-950">
               <img
-                src="/imgg.jpg"
-                alt="दैनिक मान्यवर लॉन्च पोस्टर"
+                src={lightboxImage}
+                alt="दैनिक मान्यवर विशेष पोस्टर"
                 className="max-h-[80vh] w-auto object-contain rounded-lg shadow-2xl border border-amber-500/20"
               />
             </div>
@@ -428,3 +476,5 @@ export default function SanatanSpecialSection() {
     </section>
   );
 }
+
+export { SanatanSpecialSection };

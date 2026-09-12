@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Newspaper, Eye, Trash2, Plus, Calendar, FileText, BarChart3, RefreshCw } from 'lucide-react';
@@ -122,18 +124,19 @@ export default function PublishedEpapersAdminPage() {
                   <span>ई-पेपर खोलें</span>
                 </Link>
 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
                   <Link
                     href={`/admin/epaper/pages?editionId=${ed.id}`}
-                    className="p-1.5 bg-stone-200 hover:bg-stone-300 text-stone-800 rounded-lg text-xs font-bold"
-                    title="पेज प्रबंधित करें"
+                    className="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-800 hover:text-white text-stone-800 rounded-xl text-xs font-bold flex items-center gap-1 transition-colors border border-stone-200"
+                    title="इस एडिशन के पन्ने बदलें या नए पेज जोड़ें"
                   >
-                    <FileText className="w-3.5 h-3.5" />
+                    <FileText className="w-3.5 h-3.5 text-[#EA580C]" />
+                    <span>पेज बदलें/जोड़ें</span>
                   </Link>
 
                   <button
                     onClick={() => handleDelete(ed.id)}
-                    className="p-1.5 bg-red-50 hover:bg-red-600 text-red-600 hover:text-white rounded-lg transition-colors cursor-pointer"
+                    className="p-1.5 bg-red-50 hover:bg-red-600 text-red-600 hover:text-white rounded-xl transition-colors cursor-pointer"
                     title="संस्करण हटाएं"
                   >
                     <Trash2 className="w-3.5 h-3.5" />

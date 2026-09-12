@@ -79,25 +79,25 @@ export default async function EpaperPublicPage({
       <Header />
       <Navigation />
 
-      <main className="wrap my-6 space-y-8 flex-1">
+      <main className="max-w-[1480px] w-full mx-auto px-2 sm:px-4 lg:px-6 my-4 space-y-6 flex-1">
         {/* Page Title & Breadcrumb Header */}
-        <div className="bg-white p-5 rounded-3xl border border-stone-200 shadow-sm flex flex-wrap justify-between items-center gap-4">
+        <div className="bg-white px-4 py-3.5 sm:px-6 sm:py-4 rounded-2xl border border-stone-200 shadow-xs flex flex-wrap justify-between items-center gap-3">
           <div>
-            <div className="flex items-center gap-2 text-xs text-stone-500 font-bold mb-1">
+            <div className="flex items-center gap-1.5 text-xs text-stone-500 font-bold mb-0.5">
               <Link href="/" className="hover:text-[#EA580C]">होम</Link>
               <span>/</span>
-              <span className="text-[#EA580C] font-black">आज का अखबार (E-Paper)</span>
+              <span className="text-[#EA580C] font-black">डिजिटल ई-पेपर</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight flex items-center gap-2">
-              <Newspaper className="w-8 h-8 text-[#EA580C]" />
-              <span>दैनिक मान्यवर - डिजिटल ई-पेपर (Today's Newspaper)</span>
+            <h1 className="text-lg sm:text-2xl font-black text-stone-900 tracking-tight flex items-center gap-2">
+              <Newspaper className="w-5 h-5 sm:w-6 sm:h-6 text-[#EA580C]" />
+              <span>दैनिक मान्यवर - डिजिटल ई-पेपर</span>
             </h1>
           </div>
 
           {/* Quick Date Selector */}
-          <div className="flex items-center gap-2 bg-stone-50 border border-stone-200 p-2.5 rounded-2xl">
-            <Calendar className="w-4 h-4 text-[#EA580C]" />
-            <span className="text-xs font-extrabold text-stone-700">तिथि चुनें:</span>
+          <div className="flex items-center gap-2 bg-stone-50 border border-stone-200 px-3 py-1.5 rounded-xl">
+            <Calendar className="w-3.5 h-3.5 text-[#EA580C]" />
+            <span className="text-xs font-bold text-stone-700">तिथि:</span>
             <EpaperDateSelector defaultDate={selectedEdition ? new Date(selectedEdition.editionDate).toISOString().split('T')[0] : ''} />
           </div>
         </div>

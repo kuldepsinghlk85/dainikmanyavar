@@ -44,22 +44,28 @@ const updatePage = async (request: Request) => {
 };
 export { updatePage as PATCH };
 
-// POST /api/epaper/pages (Upload new image for a page)
+// POST /api/epaper/pages (Upload new image for a page OR add a new page to an edition)
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-    const pageId = formData.get('pageId') as string;
+    const pageId = formData.get('pageId') as string | null;
+    const editionId = formData.get('editionId') as string | null;
+    const pageTitle = (formData.get('pageTitle') as string) || '';
     const file = formData.get('imageFile') as File | null;
 
-    if (!pageId || !file) {
-      return NextResponse.json({ success: false, error: 'pageId and imageFile are required' }, { status: 400 });
+    if (!file) {
+      return NextResponse.json({ success: false, error: 'imageFile is required' }, { status: 400 });
+    }
+
+    if (!pageId && !editionId) {
+      return NextResponse.json({ success: false, error: 'Either pageId or editionId is required' }, { status: 400 });
     }
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
     const ext = path.extname(file.name) || '.png';
-    const filename = `page_${pageId}_${Date.now()}${ext}`;
+    const filename = `page_${pageId || editionId}_${Date.now()}${ext}`;
     const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'epaper', 'pages');
     await mkdir(uploadDir, { recursive: true });
 
@@ -68,15 +74,51 @@ export async function POST(request: Request) {
 
     const imageUrl = `/uploads/epaper/pages/${filename}`;
 
-    const updated = await db.epaperPage.update({
-      where: { id: pageId },
-      data: {
-        pageImage: imageUrl,
-        thumbnailImage: imageUrl,
-      },
-    });
+    if (pageId) {
+      // Update existing page image
+      const updated = await db.epaperPage.update({
+        where: { id: pageId },
+        data: {
+          pageImage: imageUrl,
+          thumbnailImage: imageUrl,
+          ...(pageTitle && { pageTitle }),
+        },
+      });
+      return NextResponse.json({ success: true, page: updated, imageUrl });
+    } else if (editionId) {
+      // Add a brand new page to this edition
+      const existingPages = await db.epaperPage.findMany({
+        where: { editionId },
+        orderBy: { pageNumber: 'asc' },
+      });
 
-    return NextResponse.json({ success: true, page: updated, imageUrl });
+      const nextNum =
+        existingPages.length > 0
+          ? Math.max(...existingPages.map((p) => p.pageNumber)) + 1
+          : 1;
+
+      const newPage = await db.epaperPage.create({
+        data: {
+          editionId,
+          pageNumber: nextNum,
+          pageTitle: pageTitle || `पेज ${nextNum}`,
+          pageImage: imageUrl,
+          thumbnailImage: imageUrl,
+        },
+      });
+
+      await db.epaperEdition.update({
+        where: { id: editionId },
+        data: { totalPages: existingPages.length + 1 },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `पेज ${nextNum} सफलतापूर्वक जोड़ा गया!`,
+        page: newPage,
+        imageUrl,
+      });
+    }
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

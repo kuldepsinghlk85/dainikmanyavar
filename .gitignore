@@ -31,3 +31,9 @@ next-env.d.ts
 # OS files
 .DS_Store
 Thumbs.db
+
+# Temporary / runtime uploads
+/public/uploads/epaper/1789*
+/public/uploads/epaper/pages/1789*
+/public/uploads/1789*
+

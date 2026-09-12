@@ -215,86 +215,144 @@ export default function EpaperFlipbookViewer({ edition }: FlipbookProps) {
     <div
       ref={containerRef}
       suppressHydrationWarning
-      className={`bg-stone-900 text-white flex flex-col justify-between select-none ${
-        isFullscreen ? 'h-screen w-screen p-0' : 'min-h-[85vh] rounded-3xl overflow-hidden border border-slate-800 shadow-2xl'
+      className={`bg-[#0f1013] text-white flex flex-col justify-between select-none ${
+        isFullscreen ? 'h-screen w-screen p-0' : 'min-h-[88vh] rounded-3xl overflow-hidden border border-stone-800 shadow-2xl'
       }`}
     >
       {/* Top Banner Advertisement */}
       {topAd && (
-        <div className="bg-slate-950 p-2 text-center border-b border-slate-800 flex justify-center items-center">
-          <a href={topAd.targetUrl || '#'} target="_blank" rel="noreferrer" className="inline-block max-h-14 overflow-hidden">
-            <img src={topAd.imageUrl} alt="Advertisement" className="h-12 w-auto object-contain rounded" />
+        <div className="bg-stone-950 p-2 text-center border-b border-stone-800 flex justify-center items-center">
+          <a href={topAd.targetUrl || '#'} target="_blank" rel="noreferrer" className="inline-block max-h-12 overflow-hidden">
+            <img src={topAd.imageUrl} alt="Advertisement" className="h-10 w-auto object-contain rounded" />
           </a>
         </div>
       )}
 
-      {/* Header Bar */}
-      <div className="bg-slate-950 px-4 py-3 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-3">
-          <span className="bg-[#EA580C] text-white font-extrabold text-[10px] px-2.5 py-1 rounded-full shadow-xs">
+      {/* Sleek, Minimalist & Precise Top Header */}
+      <div className="bg-stone-950/95 backdrop-blur-md px-3 sm:px-5 py-2.5 border-b border-stone-800/80 flex flex-wrap items-center justify-between gap-2.5 text-xs z-30">
+        {/* Left: Edition Info */}
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="bg-[#EA580C] text-white font-extrabold text-[10px] px-2 py-0.5 rounded shadow-xs">
             {edition.editionType || 'दैनिक'}
           </span>
-          <div>
-            <h2 className="font-extrabold text-amber-400 text-sm leading-tight">
-              {edition.title} - {activePageObj?.pageTitle || `पेज ${currentPage}`}
-            </h2>
-            <p className="text-[11px] text-stone-400 flex items-center gap-1 font-mono">
-              <Calendar className="w-3 h-3 text-orange-400" />
-              <span>{new Date(edition.editionDate).toLocaleDateString('hi-IN', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
-              <span className="text-orange-500 font-bold ml-2">कुल पृष्ठ: {totalPages}</span>
-            </p>
-          </div>
+          <h2 className="font-extrabold text-stone-100 text-xs sm:text-sm truncate">
+            {edition.title}
+          </h2>
+          <span className="text-stone-500 hidden md:inline text-[11px] font-mono">
+            {new Date(edition.editionDate).toLocaleDateString('hi-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+          </span>
         </div>
 
-        {/* Top Controls: Search, OCR Text, Zoom & Fullscreen */}
-        <div className="flex items-center gap-2">
+        {/* Center: Sleek Page Stepper Pill */}
+        <div className="flex items-center gap-1 bg-stone-900 border border-stone-800 rounded-xl px-2 py-1 shadow-xs">
           <button
-            onClick={() => setShowSearchModal(true)}
-            className="bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-xs px-3 py-1.5 rounded-xl flex items-center gap-1 transition-colors cursor-pointer"
+            onClick={handlePrevPage}
+            disabled={currentPage === 1}
+            className="p-1 text-stone-300 hover:text-amber-400 disabled:opacity-30 disabled:hover:text-stone-300 transition-colors cursor-pointer"
+            title="पिछला पेज"
           >
-            <Search className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">अखबार में खोजें</span>
+            <ChevronLeft className="w-4 h-4" />
           </button>
 
-          <button
-            onClick={() => setShowTextModal(true)}
-            className="bg-slate-800 hover:bg-slate-700 text-stone-200 font-bold text-xs px-3 py-1.5 rounded-xl flex items-center gap-1 transition-colors cursor-pointer"
-          >
-            <FileText className="w-3.5 h-3.5 text-orange-400" />
-            <span className="hidden sm:inline">पेज पाठ पढ़ें</span>
-          </button>
+          <div className="flex items-center gap-1 px-2">
+            <select
+              value={currentPage}
+              onChange={(e) => setCurrentPage(parseInt(e.target.value, 10))}
+              className="bg-transparent text-amber-400 font-mono font-black text-xs focus:outline-none cursor-pointer"
+            >
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                <option key={n} value={n} className="bg-stone-900 text-white">
+                  पेज {n}
+                </option>
+              ))}
+            </select>
+            <span className="text-stone-500 font-mono text-[11px] font-bold">/ {totalPages}</span>
+          </div>
 
           <button
-            onClick={() => setZoomLevel((z) => Math.min(z + 0.25, 2.5))}
-            className="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors cursor-pointer"
-            title="Zoom In (+)"
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            className="p-1 text-stone-300 hover:text-amber-400 disabled:opacity-30 disabled:hover:text-stone-300 transition-colors cursor-pointer"
+            title="अगला पेज"
           >
-            <ZoomIn className="w-4 h-4 text-amber-400" />
+            <ChevronRight className="w-4 h-4" />
           </button>
+        </div>
 
+        {/* Right: Clean, Unified Toolbar */}
+        <div className="flex items-center gap-1 sm:gap-1.5">
+          {/* Zoom Out */}
           <button
             onClick={() => setZoomLevel((z) => Math.max(z - 0.25, 0.75))}
-            className="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors cursor-pointer"
-            title="Zoom Out (-)"
+            className="p-1.5 sm:p-2 bg-stone-900 hover:bg-stone-800 text-stone-300 hover:text-white rounded-lg transition-colors cursor-pointer"
+            title="छोटा करें (Zoom Out -)"
           >
-            <ZoomOut className="w-4 h-4 text-amber-400" />
+            <ZoomOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
 
+          {/* Zoom Level Indicator / Reset */}
           {zoomLevel !== 1 && (
             <button
               onClick={() => setZoomLevel(1)}
-              className="px-2.5 py-1 bg-[#EA580C] hover:bg-orange-700 rounded-xl text-[10px] font-mono font-bold text-white cursor-pointer"
+              className="px-2 py-1 bg-[#EA580C] hover:bg-orange-700 rounded-lg text-[10px] font-mono font-bold text-white cursor-pointer"
+              title="रीसेट करें"
             >
-              100% Reset
+              100%
             </button>
           )}
 
+          {/* Zoom In */}
+          <button
+            onClick={() => setZoomLevel((z) => Math.min(z + 0.25, 2.5))}
+            className="p-1.5 sm:p-2 bg-stone-900 hover:bg-stone-800 text-stone-300 hover:text-white rounded-lg transition-colors cursor-pointer"
+            title="बड़ा करें (Zoom In +)"
+          >
+            <ZoomIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          </button>
+
+          {/* Search inside text */}
+          <button
+            onClick={() => setShowSearchModal(true)}
+            className="p-1.5 sm:p-2 bg-stone-900 hover:bg-stone-800 text-stone-300 hover:text-amber-400 rounded-lg transition-colors cursor-pointer"
+            title="अखबार में शब्द खोजें"
+          >
+            <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          </button>
+
+          {/* OCR text reader */}
+          <button
+            onClick={() => setShowTextModal(true)}
+            className="p-1.5 sm:p-2 bg-stone-900 hover:bg-stone-800 text-stone-300 hover:text-amber-400 rounded-lg transition-colors cursor-pointer"
+            title="पेज का टेक्स्ट पढ़ें व सुनें"
+          >
+            <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          </button>
+
+          {/* Download PDF */}
+          <button
+            onClick={handleDownloadPdf}
+            className="p-1.5 sm:p-2 bg-stone-900 hover:bg-stone-800 text-stone-300 hover:text-orange-400 rounded-lg transition-colors cursor-pointer"
+            title="मूल PDF डाउनलोड करें"
+          >
+            <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          </button>
+
+          {/* WhatsApp Share */}
+          <button
+            onClick={handleShare}
+            className="p-1.5 sm:p-2 bg-emerald-700/80 hover:bg-emerald-600 text-white rounded-lg transition-colors cursor-pointer"
+            title="व्हाट्सएप पर शेयर करें"
+          >
+            <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          </button>
+
+          {/* Fullscreen Toggle */}
           <button
             onClick={toggleFullscreen}
-            className="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors cursor-pointer"
-            title="Full Screen"
+            className="p-1.5 sm:p-2 bg-stone-900 hover:bg-stone-800 text-stone-300 hover:text-white rounded-lg transition-colors cursor-pointer"
+            title="फुलस्क्रीन"
           >
-            {isFullscreen ? <Minimize2 className="w-4 h-4 text-white" /> : <Maximize2 className="w-4 h-4 text-white" />}
+            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
           </button>
         </div>
       </div>
@@ -387,28 +445,28 @@ export default function EpaperFlipbookViewer({ edition }: FlipbookProps) {
         </div>
       )}
 
-      {/* Main 3D Newspaper Flipbook Stage Area */}
+      {/* Main Newspaper Stage Area — Large, Immersive, Minimalist */}
       <div
-        className="relative flex-1 bg-stone-950 flex items-center justify-center p-2 sm:p-6 overflow-auto min-h-[520px]"
+        className="relative flex-1 bg-[#111215] flex items-center justify-center p-1 sm:p-3 overflow-auto min-h-[640px]"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Left Arrow Button */}
+        {/* Sleek Floating Left Arrow Button */}
         <button
           onClick={handlePrevPage}
           disabled={currentPage === 1}
-          className={`absolute left-3 z-30 p-3 rounded-full bg-slate-900/90 hover:bg-[#EA580C] text-white border border-slate-700 transition-all cursor-pointer shadow-2xl ${
-            currentPage === 1 ? 'opacity-20 cursor-not-allowed' : 'hover:scale-110 active:scale-95'
+          className={`absolute left-2 sm:left-5 z-20 w-10 sm:w-12 h-16 sm:h-20 rounded-2xl bg-black/40 hover:bg-[#EA580C] text-white/70 hover:text-white backdrop-blur-md border border-white/10 transition-all flex items-center justify-center cursor-pointer shadow-2xl ${
+            currentPage === 1 ? 'opacity-0 pointer-events-none' : 'hover:scale-105 active:scale-95'
           }`}
           title="पिछला पेज (Left Arrow)"
         >
-          <ChevronLeft className="w-6 h-6" />
+          <ChevronLeft className="w-6 h-6 sm:w-7 sm:h-7" />
         </button>
 
-        {/* Real Newspaper Page Container with 3D Flip Animation */}
-        <div className="relative max-w-4xl w-full flex items-center justify-center transition-all duration-300">
+        {/* Real Newspaper Page Container */}
+        <div className="relative w-full max-w-5xl 2xl:max-w-6xl flex items-center justify-center transition-all duration-300">
           <div
-            className={`relative transition-all duration-300 shadow-2xl rounded-lg overflow-hidden border-2 border-stone-800 bg-white ${
+            className={`relative transition-all duration-300 shadow-2xl rounded-sm overflow-hidden bg-white border border-stone-800/60 ${
               isFlipping
                 ? flipDirection === 'next'
                   ? 'animate-flip-next rotate-y-6 opacity-75'
@@ -417,7 +475,7 @@ export default function EpaperFlipbookViewer({ edition }: FlipbookProps) {
             }`}
             style={{
               transform: zoomLevel !== 1 ? `scale(${zoomLevel})` : undefined,
-              transformOrigin: 'center center',
+              transformOrigin: 'top center',
             }}
           >
             {/* Real Newspaper Scanned High-Res Page Image */}
@@ -425,18 +483,15 @@ export default function EpaperFlipbookViewer({ edition }: FlipbookProps) {
               key={`page-${currentPage}`}
               src={getPageImage(currentPage)}
               alt={`दैनिक मान्यवर - पेज ${currentPage} / ${totalPages}`}
-              className="max-h-[76vh] w-auto object-contain mx-auto select-none pointer-events-auto shadow-inner"
+              className="max-h-[85vh] w-auto max-w-full object-contain mx-auto select-none pointer-events-auto shadow-inner cursor-zoom-in"
               loading="eager"
+              onClick={() => setZoomLevel((z) => (z === 1 ? 1.4 : 1))}
+              title="क्लिक करके ज़ूम करें"
             />
-
-            {/* Page Title Tag */}
-            <div className="absolute top-2 right-2 bg-slate-950/90 text-amber-400 font-mono text-[11px] font-extrabold px-3 py-1 rounded-full border border-slate-800 shadow-md">
-              पेज {currentPage} / {totalPages}
-            </div>
 
             {/* Page Specific Overlay Advertisement */}
             {pageAd && (
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-slate-950/90 p-2 rounded-xl border border-amber-500/50 shadow-2xl max-w-xs">
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-stone-950/90 p-2 rounded-xl border border-amber-500/50 shadow-2xl max-w-xs">
                 <a href={pageAd.targetUrl || '#'} target="_blank" rel="noreferrer">
                   <img src={pageAd.imageUrl} alt="Ad" className="w-full h-16 object-cover rounded-lg" />
                 </a>
@@ -445,75 +500,41 @@ export default function EpaperFlipbookViewer({ edition }: FlipbookProps) {
           </div>
         </div>
 
-        {/* Right Arrow Button */}
+        {/* Sleek Floating Right Arrow Button */}
         <button
           onClick={handleNextPage}
           disabled={currentPage === totalPages}
-          className={`absolute right-3 z-30 p-3 rounded-full bg-slate-900/90 hover:bg-[#EA580C] text-white border border-slate-700 transition-all cursor-pointer shadow-2xl ${
-            currentPage === totalPages ? 'opacity-20 cursor-not-allowed' : 'hover:scale-110 active:scale-95'
+          className={`absolute right-2 sm:right-5 z-20 w-10 sm:w-12 h-16 sm:h-20 rounded-2xl bg-black/40 hover:bg-[#EA580C] text-white/70 hover:text-white backdrop-blur-md border border-white/10 transition-all flex items-center justify-center cursor-pointer shadow-2xl ${
+            currentPage === totalPages ? 'opacity-0 pointer-events-none' : 'hover:scale-105 active:scale-95'
           }`}
           title="अगला पेज (Right Arrow)"
         >
-          <ChevronRight className="w-6 h-6" />
+          <ChevronRight className="w-6 h-6 sm:w-7 sm:h-7" />
         </button>
       </div>
 
-      {/* Bottom Newspaper Controls Toolbar */}
-      <div className="bg-slate-950 px-4 py-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-4 text-xs">
-        {/* Navigation & Counter */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handlePrevPage}
-            disabled={currentPage === 1}
-            className="bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-bold px-3 py-1.5 rounded-xl flex items-center gap-1 transition-colors cursor-pointer"
-          >
-            <ChevronLeft className="w-4 h-4 text-orange-400" />
-            <span className="hidden sm:inline">पिछला</span>
-          </button>
-
-          {/* Page Counter & Direct Select Dropdown */}
-          <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl">
-            <span className="text-stone-400 font-bold text-[11px]">पेज</span>
-            <select
-              value={currentPage}
-              onChange={(e) => setCurrentPage(parseInt(e.target.value, 10))}
-              className="bg-transparent text-amber-400 font-mono font-bold text-xs focus:outline-none cursor-pointer"
-            >
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-                <option key={n} value={n} className="bg-slate-900 text-white">
-                  पेज {n}
-                </option>
-              ))}
-            </select>
-            <span className="text-stone-400 font-mono font-bold text-[11px]">/ {totalPages}</span>
-          </div>
-
-          <button
-            onClick={handleNextPage}
-            disabled={currentPage === totalPages}
-            className="bg-[#EA580C] hover:bg-orange-700 disabled:opacity-30 text-white font-bold px-3 py-1.5 rounded-xl flex items-center gap-1 transition-colors cursor-pointer shadow-xs"
-          >
-            <span className="hidden sm:inline">अगला</span>
-            <ChevronRight className="w-4 h-4 text-white" />
-          </button>
+      {/* Sleek Bottom Thumbnail Bar */}
+      <div className="bg-stone-950/95 backdrop-blur-md px-3 py-2 border-t border-stone-800/80 flex items-center justify-between gap-3 text-xs z-30">
+        <div className="text-[11px] font-extrabold text-stone-400 hidden sm:flex items-center gap-1.5">
+          <span>{activePageObj?.pageTitle || `पेज ${currentPage}`}</span>
         </div>
 
-        {/* Thumbnail Page Selector Slider - Visually shows all 8 newspaper pages */}
-        <div className="flex items-center gap-2 overflow-x-auto max-w-xs sm:max-w-md lg:max-w-lg no-scrollbar py-1">
+        {/* Thumbnail Strip */}
+        <div className="flex items-center gap-2 overflow-x-auto mx-auto no-scrollbar py-0.5 max-w-full">
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((pNum) => {
             const isCur = currentPage === pNum;
             return (
               <button
                 key={pNum}
                 onClick={() => setCurrentPage(pNum)}
-                className={`flex flex-col items-center gap-1 p-1 rounded-lg border transition-all cursor-pointer flex-shrink-0 ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-all cursor-pointer flex-shrink-0 ${
                   isCur
-                    ? 'bg-orange-600/30 border-orange-500 ring-2 ring-orange-500 scale-105'
-                    : 'bg-slate-900 border-slate-800 opacity-60 hover:opacity-100 hover:border-slate-700'
+                    ? 'bg-[#EA580C] border-[#EA580C] text-white shadow-sm ring-1 ring-orange-400'
+                    : 'bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200 hover:bg-stone-800'
                 }`}
                 title={`पेज ${pNum}`}
               >
-                <div className="w-9 h-12 bg-stone-800 rounded overflow-hidden relative border border-stone-700">
+                <div className="w-5 h-7 bg-stone-800 rounded-xs overflow-hidden relative border border-stone-700/60 flex-shrink-0">
                   <img
                     src={getPageImage(pNum)}
                     alt={`पेज ${pNum}`}
@@ -521,7 +542,7 @@ export default function EpaperFlipbookViewer({ edition }: FlipbookProps) {
                     loading="lazy"
                   />
                 </div>
-                <span className={`text-[10px] font-mono font-black leading-none ${isCur ? 'text-amber-400' : 'text-stone-400'}`}>
+                <span className="text-[11px] font-mono font-bold leading-none">
                   {pNum}
                 </span>
               </button>
@@ -529,25 +550,8 @@ export default function EpaperFlipbookViewer({ edition }: FlipbookProps) {
           })}
         </div>
 
-        {/* Action Buttons: PDF Download & Share */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleDownloadPdf}
-            className="bg-stone-800 hover:bg-stone-700 text-white font-extrabold text-xs px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
-            title="मूल PDF डाउनलोड करें"
-          >
-            <Download className="w-3.5 h-3.5 text-orange-400" />
-            <span>Download PDF</span>
-          </button>
-
-          <button
-            onClick={handleShare}
-            className="bg-green-600 hover:bg-green-700 text-white font-extrabold text-xs px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
-            title="व्हाट्सएप पर शेयर करें"
-          >
-            <Share2 className="w-3.5 h-3.5" />
-            <span>शेयर करें</span>
-          </button>
+        <div className="text-[11px] font-mono text-stone-500 hidden sm:block">
+          कुल पृष्ठ: {totalPages}
         </div>
       </div>
     </div>

@@ -6,6 +6,7 @@ export interface ProcessedPage {
   pageTitle: string;
   pageImage: string;
   thumbnailImage: string;
+  extractedText?: string | null;
 }
 
 /**

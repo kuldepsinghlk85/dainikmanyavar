@@ -28,6 +28,7 @@ export default function HomepageAdminPage() {
     widget_horoscope_enabled: 'true',
     widget_stock_enabled: 'true',
     widget_gold_silver_enabled: 'true',
+    festive_section_enabled: 'true',
     section_hero_enabled: 'true',
     section_trending_enabled: 'true',
     section_latest_enabled: 'true',
@@ -127,6 +128,17 @@ export default function HomepageAdminPage() {
       borderColor: 'border-yellow-200',
       manageHref: '/admin/gold-silver',
       manageLabel: 'सोना-चांदी भाव प्रबंधित करें',
+    },
+    {
+      key: 'festive_section_enabled',
+      title: '✨ फेस्टिव व कमर्शियल शोकेस (Festive Showcase & Video Reels)',
+      desc: 'होमपेज के टॉप पर चलने वाला फेस्टिव पोस्टर व सनातन वीडियो रील्स बैनर',
+      icon: Sparkles,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+      borderColor: 'border-orange-200',
+      manageHref: '/admin/festive',
+      manageLabel: 'फेस्टिव अपलोडर खोलें',
     },
   ];
 

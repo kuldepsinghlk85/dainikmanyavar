@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -15,6 +17,7 @@ import {
   FileText,
   ExternalLink,
   Trash2,
+  Plus,
 } from 'lucide-react';
 
 interface PageItem {
@@ -55,6 +58,8 @@ export default function EpaperPageManagementAdminPage() {
   const [uploadingPageId, setUploadingPageId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [targetUploadPageId, setTargetUploadPageId] = useState<string | null>(null);
+  const addNewPageInputRef = useRef<HTMLInputElement>(null);
+  const [addingPage, setAddingPage] = useState(false);
 
   // Notification
   const [toastMsg, setToastMsg] = useState('');
@@ -62,6 +67,33 @@ export default function EpaperPageManagementAdminPage() {
   const showToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(''), 3000);
+  };
+
+  const handleAddNewPage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedEdition) return;
+
+    setAddingPage(true);
+    const formData = new FormData();
+    formData.append('editionId', selectedEdition.id);
+    formData.append('imageFile', file);
+
+    try {
+      const res = await fetch('/api/epaper/pages', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`✅ ${data.message || 'नया पेज सफलतापूर्वक जोड़ा गया!'}`);
+        fetchEditions();
+      } else {
+        alert(data.error || 'पेज जोड़ने में त्रुटि हुई');
+      }
+    } catch (err: any) {
+      alert(err.message || 'सर्वर एरर');
+    }
+    setAddingPage(false);
   };
 
   const fetchEditions = async () => {
@@ -196,6 +228,14 @@ export default function EpaperPageManagementAdminPage() {
         accept="image/png, image/jpeg, image/jpg, image/webp"
         className="hidden"
       />
+      {/* Hidden File Input for Adding New Page */}
+      <input
+        type="file"
+        ref={addNewPageInputRef}
+        onChange={handleAddNewPage}
+        accept="image/png, image/jpeg, image/jpg, image/webp"
+        className="hidden"
+      />
 
       {/* Toast Notification */}
       {toastMsg && (
@@ -266,16 +306,26 @@ export default function EpaperPageManagementAdminPage() {
       {/* Pages Grid */}
       {selectedEdition && (
         <div className="space-y-4">
-          <div className="flex justify-between items-center bg-stone-900 text-white p-4 rounded-xl">
+          <div className="flex flex-wrap justify-between items-center bg-stone-900 text-white p-4 rounded-xl gap-3">
             <h3 className="font-extrabold text-sm flex items-center gap-2">
               <span>{selectedEdition.title}</span>
               <span className="bg-[#EA580C] text-white text-[10px] font-bold px-2 py-0.5 rounded">
                 कुल {selectedEdition.pages?.length || 0} पृष्ठ
               </span>
             </h3>
-            <span className="text-xs text-amber-400 font-mono font-bold">
-              ● सभी पृष्ठ असली छवियों के साथ सक्रिय हैं
-            </span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => addNewPageInputRef.current?.click()}
+                disabled={addingPage}
+                className="bg-[#EA580C] hover:bg-orange-700 disabled:opacity-50 text-white text-xs font-black px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>{addingPage ? 'पेज जुड़ रहा है...' : '➕ नया पेज जोड़ें (इमेज)'}</span>
+              </button>
+              <span className="text-xs text-amber-400 font-mono font-bold hidden sm:inline">
+                ● सभी पृष्ठ सक्रिय हैं
+              </span>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">

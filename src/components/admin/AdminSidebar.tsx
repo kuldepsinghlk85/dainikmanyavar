@@ -135,6 +135,7 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
         { label: '🔮 राशिफल (Horoscope)', href: '/admin/horoscope', icon: Sparkles },
         { label: '📈 शेयर बाजार (Stock Market)', href: '/admin/stock-market', icon: TrendingUp },
         { label: '🪙 सोना-चांदी भाव (Gold-Silver)', href: '/admin/gold-silver', icon: Coins },
+        { label: '✨ फेस्टिव अपलोडर (Festive / Commercials)', href: '/admin/festive', icon: Sparkles },
         { label: '🎛️ विगेट्स ऑन/ऑफ (Homepage Control)', href: '/admin/homepage', icon: Sliders },
       ],
     },
