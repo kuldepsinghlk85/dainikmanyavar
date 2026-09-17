@@ -39,7 +39,7 @@ permissions:
 
 env:
   REGISTRY: registry.gitlab.com
-  IMAGE: registry.gitlab.com/danikmanyawar/danikmanyawar
+  IMAGE: registry.gitlab.com/easylauncher/elks/danikmanyawar
 
 jobs:
   build:
