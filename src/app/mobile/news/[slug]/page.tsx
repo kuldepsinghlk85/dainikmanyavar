@@ -9,6 +9,7 @@ import MobileNewsList from '@/components/mobile/MobileNewsList';
 import MobileFooter from '@/components/mobile/MobileFooter';
 import AudioPlayer from '@/components/public/AudioPlayer';
 import UserActivityTracker from '@/components/public/UserActivityTracker';
+import ShareBar from '@/components/public/ShareBar';
 
 export const dynamic = 'force-dynamic';
 
@@ -132,6 +133,13 @@ export default async function MobileNewsDetailPage({
     },
   });
 
+  let reviewData: any = null;
+  if (article.gallery) {
+    try {
+      reviewData = JSON.parse(article.gallery);
+    } catch (_) {}
+  }
+
   const siteUrl = getPublicSiteUrl();
   const shareUrl = `${siteUrl}/mobile/news/${encodeURIComponent(article.slug)}`;
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(
@@ -196,8 +204,50 @@ export default async function MobileNewsDetailPage({
           </a>
         </div>
 
-        {/* Featured Image */}
-        {article.featuredImage && (
+        {/* Movie Review Card (for entertainment review items) */}
+        {reviewData && (reviewData.rating || reviewData.verdict) && (
+          <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 rounded-2xl p-4 text-white shadow-md space-y-2.5">
+            <div className="flex items-center justify-between gap-2 border-b border-white/20 pb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🎬</span>
+                <span className="text-xs font-black tracking-wider uppercase text-amber-200">रिव्यू स्कोरकार्ड</span>
+              </div>
+              {reviewData.rating && (
+                <div className="bg-black/35 px-3 py-1 rounded-full text-amber-300 font-black text-xs">
+                  {'★'.repeat(Math.floor(reviewData.rating))} {reviewData.rating}/5
+                </div>
+              )}
+            </div>
+            {reviewData.verdict && (
+              <div className="text-xs">
+                <span className="text-orange-100 font-bold">वर्डिक्ट: </span>
+                <span className="font-black bg-white/20 px-2 py-0.5 rounded text-white">{reviewData.verdict}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Video / Reel Player or Featured Image */}
+        {article.videoEnabled && article.videoUrl ? (
+          <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-lg border border-stone-800">
+            {article.videoUrl.includes('youtube.com') || article.videoUrl.includes('youtu.be') ? (
+              <iframe
+                src={`https://www.youtube.com/embed/${article.videoUrl.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/)?.[2] || ''}`}
+                title={article.title}
+                className="w-full h-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <video
+                src={article.videoUrl}
+                controls
+                poster={article.featuredImage || ''}
+                className="w-full h-full object-contain"
+              />
+            )}
+          </div>
+        ) : article.featuredImage ? (
           <div className="relative w-full aspect-[16/10] bg-stone-100 rounded-2xl overflow-hidden border border-stone-200">
             <Image
               src={article.featuredImage}
@@ -208,7 +258,7 @@ export default async function MobileNewsDetailPage({
               className="object-cover"
             />
           </div>
-        )}
+        ) : null}
 
         {/* Audio News Player */}
         {article.allowAudio && (
@@ -216,6 +266,17 @@ export default async function MobileNewsDetailPage({
             <AudioPlayer articleId={article.id} title={article.title} content={article.content} />
           </div>
         )}
+
+        {/* Social Share Bar */}
+        <ShareBar
+          articleId={article.id}
+          title={article.title}
+          slug={article.slug}
+          initialLikeCount={article.likeCount}
+          categoryName={article.category?.name}
+          reviewData={reviewData}
+          isMobile={true}
+        />
 
         {/* User Activity & Bookmark Tracker */}
         <UserActivityTracker
@@ -231,32 +292,31 @@ export default async function MobileNewsDetailPage({
           dangerouslySetInnerHTML={{ __html: article.content }}
         />
 
-        {/* Tags */}
+        {/* Clickable Tags (First-class Data Content) */}
         {article.tags && article.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 pt-3 border-t border-stone-100">
             {article.tags.map((t) => (
-              <span
+              <Link
                 key={t.tag.id}
-                className="text-xs bg-stone-100 text-stone-700 font-bold px-2.5 py-1 rounded-lg"
+                href={`/mobile/tag/${t.tag.slug}`}
+                className="text-xs bg-orange-50 hover:bg-orange-100 text-orange-800 font-bold px-2.5 py-1 rounded-lg border border-orange-200 transition-colors"
               >
                 #{t.tag.name.replace(/^#/, '')}
-              </span>
+              </Link>
             ))}
           </div>
         )}
 
-        {/* WhatsApp Share Big Button */}
-        <div className="pt-2">
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-green-600 text-white font-black py-3 px-4 rounded-xl shadow-md transition-transform active:scale-98 text-sm"
-          >
-            <MessageCircle className="w-5 h-5" />
-            <span>व्हाट्सएप पर मित्रों को शेयर करें</span>
-          </a>
-        </div>
+        {/* Bottom Social Share Bar */}
+        <ShareBar
+          articleId={article.id}
+          title={article.title}
+          slug={article.slug}
+          initialLikeCount={article.likeCount}
+          categoryName={article.category?.name}
+          reviewData={reviewData}
+          isMobile={true}
+        />
       </div>
 
       {/* Related News Feed */}

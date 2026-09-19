@@ -142,6 +142,7 @@ export async function POST(request: Request) {
       excerpt,
       content,
       featuredImage,
+      gallery,
       primaryCategoryId,
       authorId,
       locationId,
@@ -153,6 +154,7 @@ export async function POST(request: Request) {
       allowAudio = true,
       seoTitle,
       seoDescription,
+      sourceType,
     } = body;
 
     if (!title || !content || !primaryCategoryId) {
@@ -175,6 +177,8 @@ export async function POST(request: Request) {
         excerpt,
         content,
         featuredImage,
+        gallery: gallery || null,
+        sourceType: sourceType || null,
         primaryCategoryId,
         authorId: authorId || null,
         locationId: locationId || null,

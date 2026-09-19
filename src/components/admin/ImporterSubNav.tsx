@@ -11,6 +11,7 @@ export default function ImporterSubNav() {
   const subLinks = [
     { label: '📥 इम्पोर्ट इनबॉक्स', href: '/admin/importer/inbox', icon: Inbox },
     { label: '📡 सभी RSS सोर्सेज', href: '/admin/rss/sources', icon: Radio },
+    { label: '🎬 मनोरंजन RSS हब', href: '/admin/manoranjan?tab=rss', icon: Radio },
     { label: '⚠️ डुप्लिकेट्स', href: '/admin/importer/duplicates', icon: Copy },
     { label: '❌ अस्वीकृत', href: '/admin/importer/rejected', icon: Ban },
     { label: '📜 सिंक हिस्ट्री', href: '/admin/rss/history', icon: History },

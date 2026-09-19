@@ -41,7 +41,12 @@ export default async function MobileCategoryPage({
   } else if (decodedSlug.toLowerCase() === 'latest' || decodedSlug.toLowerCase() === 'news') {
     categoryName = 'ताज़ा ख़बरें (All Latest News)';
     articles = await db.article.findMany({
-      where: { status: 'PUBLISHED' },
+      where: {
+        status: 'PUBLISHED',
+        category: {
+          slug: { not: 'manoranjan' },
+        },
+      },
       orderBy: [
         { publishedAt: 'desc' },
         { newsId: 'desc' },

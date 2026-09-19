@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ArrowLeft, Save, Eye, CheckCircle2, Image as ImageIcon, Volume2, Tag as TagIcon, Sparkles, ExternalLink, Plus, MapPin, Upload, X, FolderArchive } from 'lucide-react';
 import ImageUploadWidget from '@/components/admin/ImageUploadWidget';
 import HtmlContentEditor from '@/components/admin/HtmlContentEditor';
+import AutoTranslateButton from '@/components/admin/AutoTranslateButton';
 
 export default function EditArticleAdminPage() {
   const router = useRouter();
@@ -296,16 +297,37 @@ export default function EditArticleAdminPage() {
           <h1 className="text-2xl font-black text-stone-900">✏️ समाचार संपादित करें (Edit News)</h1>
         </div>
 
-        {form.slug && (
-          <Link
-            href={`/news/${form.slug}`}
-            target="_blank"
-            className="bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 border border-stone-300 transition-colors"
-          >
-            <Eye className="w-4 h-4 text-[#EA580C]" />
-            <span>👁 लाइव साइट पर देखें</span>
-          </Link>
-        )}
+        <div className="flex items-center gap-3">
+          {/* 🌐 Auto Translate to Hindi Button */}
+          <AutoTranslateButton
+            currentData={{
+              title: form.title,
+              subtitle: form.subtitle,
+              excerpt: form.excerpt,
+              content: form.content,
+            }}
+            onTranslate={(translated) => {
+              setForm((prev) => ({
+                ...prev,
+                title: translated.title ?? prev.title,
+                subtitle: translated.subtitle ?? prev.subtitle,
+                excerpt: translated.excerpt ?? prev.excerpt,
+                content: translated.content ?? prev.content,
+              }));
+            }}
+          />
+
+          {form.slug && (
+            <Link
+              href={`/news/${form.slug}`}
+              target="_blank"
+              className="bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 border border-stone-300 transition-colors"
+            >
+              <Eye className="w-4 h-4 text-[#EA580C]" />
+              <span>👁 लाइव साइट पर देखें</span>
+            </Link>
+          )}
+        </div>
       </div>
 
       {msg && (

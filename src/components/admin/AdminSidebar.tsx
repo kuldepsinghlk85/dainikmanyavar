@@ -44,6 +44,7 @@ import {
   Target,
   Shield,
   Eye,
+  Film,
 } from 'lucide-react';
 
 interface AdminSidebarProps {
@@ -117,6 +118,7 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
       icon: Radio,
       items: [
         { label: 'All RSS Sources', href: '/admin/rss/sources', icon: Sliders },
+        { label: '🎬 Entertainment Feeds', href: '/admin/rss/sources?category=Entertainment', icon: Film },
         { label: 'Cricket Feeds', href: '/admin/rss/sources?category=Cricket', icon: Trophy },
         { label: 'Rashifal Feeds', href: '/admin/rss/sources?category=Rashifal', icon: Sparkles },
         { label: 'Stock Market Feeds', href: '/admin/rss/sources?category=Stock Market', icon: TrendingUp },
@@ -135,6 +137,8 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
         { label: '🔮 राशिफल (Horoscope)', href: '/admin/horoscope', icon: Sparkles },
         { label: '📈 शेयर बाजार (Stock Market)', href: '/admin/stock-market', icon: TrendingUp },
         { label: '🪙 सोना-चांदी भाव (Gold-Silver)', href: '/admin/gold-silver', icon: Coins },
+        { label: '🎬 मनोरंजन हब (Manoranjan Hub)', href: '/admin/manoranjan', icon: Film },
+        { label: '📡 मनोरंजन RSS फ़ीड्स (RSS Desk)', href: '/admin/manoranjan?tab=rss', icon: Radio },
         { label: '✨ फेस्टिव अपलोडर (Festive / Commercials)', href: '/admin/festive', icon: Sparkles },
         { label: '🎛️ विगेट्स ऑन/ऑफ (Homepage Control)', href: '/admin/homepage', icon: Sliders },
       ],

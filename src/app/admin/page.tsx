@@ -21,6 +21,7 @@ import {
   ArrowRight,
   Smartphone,
   CheckCircle2,
+  Film,
 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -98,6 +99,13 @@ export default async function AdminDashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2.5">
+          <Link
+            href="/admin/manoranjan"
+            className="bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors"
+          >
+            <Film className="w-4 h-4 text-purple-200" />
+            <span>🎬 मनोरंजन हब</span>
+          </Link>
           <Link
             href="/admin/editor"
             className="bg-stone-900 hover:bg-black text-white px-3.5 py-2.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors"

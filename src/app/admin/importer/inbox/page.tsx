@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Inbox, RefreshCw, Trash2, FileText, Eye, CheckSquare, Square, AlertOctagon, Zap } from 'lucide-react';
+import { Inbox, RefreshCw, Trash2, FileText, Eye, CheckSquare, Square, AlertOctagon, Zap, Languages } from 'lucide-react';
 import ImporterSubNav from '@/components/admin/ImporterSubNav';
 
 interface ImportItem {
@@ -24,6 +24,7 @@ export default function ImportInboxAdminPage() {
   const [syncingAll, setSyncingAll] = useState(false);
   const [bulkLoading, setBulkLoading] = useState(false);
   const [convertingId, setConvertingId] = useState<string | null>(null);
+  const [translatingId, setTranslatingId] = useState<string | null>(null);
   const [msg, setMsg] = useState('');
 
   const fetchInbox = async () => {
@@ -156,6 +157,31 @@ export default function ImportInboxAdminPage() {
     } catch (err) {}
   };
 
+  const handleTranslateItem = async (id: string) => {
+    setTranslatingId(id);
+    try {
+      const res = await fetch('/api/admin/importer/inbox', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, action: 'TRANSLATE_ITEM' }),
+      });
+      const data = await res.json();
+      if (data.success && data.item) {
+        setItems((prev) =>
+          prev.map((i) => (i.id === id ? { ...i, ...data.item } : i))
+        );
+        setMsg('🌐 खबर का शीर्षक, विवरण व टैग्स हिंदी में अनुवादित हो गए!');
+        setTimeout(() => setMsg(''), 4000);
+      } else {
+        alert(data.error || 'अनुवाद में समस्या आई');
+      }
+    } catch (err) {
+      alert('नेटवर्क समस्या');
+    } finally {
+      setTranslatingId(null);
+    }
+  };
+
   const isAllSelected = items.length > 0 && selectedIds.length === items.length;
 
   return (
@@ -282,9 +308,20 @@ export default function ImportInboxAdminPage() {
                     </span>
                   </div>
 
-                  <span className="text-[10px] font-mono text-stone-400">
-                    {new Date(item.sourcePublishedAt).toLocaleTimeString('hi-IN')}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-mono text-stone-400">
+                      {new Date(item.sourcePublishedAt).toLocaleTimeString('hi-IN')}
+                    </span>
+                    {/[a-zA-Z]{3,}/.test(item.originalTitle) ? (
+                      <span className="text-[9.5px] font-extrabold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded">
+                        अंग्रेज़ी (EN)
+                      </span>
+                    ) : (
+                      <span className="text-[9.5px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
+                        ✓ हिंदी (HI)
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex gap-3">
@@ -314,7 +351,7 @@ export default function ImportInboxAdminPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-3 border-t border-stone-100 flex items-center justify-between gap-2">
+              <div className="pt-3 border-t border-stone-100 flex items-center justify-between gap-2 flex-wrap">
                 <a
                   href={item.sourceUrl}
                   target="_blank"
@@ -325,14 +362,27 @@ export default function ImportInboxAdminPage() {
                   <span>स्रोत देखें</span>
                 </a>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* 1-Click Translate Button */}
+                  {(/[a-zA-Z]{3,}/.test(item.originalTitle) || /[a-zA-Z]{3,}/.test(item.originalExcerpt || '')) && (
+                    <button
+                      onClick={() => handleTranslateItem(item.id)}
+                      disabled={translatingId === item.id}
+                      className="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-black text-xs px-2.5 py-1.5 rounded-xl flex items-center gap-1 transition-colors cursor-pointer active:scale-95"
+                      title="खबर का शीर्षक व विवरण तुरंत हिंदी में अनुवाद करें"
+                    >
+                      <Languages className={`w-3.5 h-3.5 ${translatingId === item.id ? 'animate-spin' : ''}`} />
+                      <span>{translatingId === item.id ? 'अनुवाद...' : '🌐 हिंदी अनुवाद'}</span>
+                    </button>
+                  )}
+
                   <button
                     onClick={() => handleCreateSingleDraft(item.id)}
                     disabled={convertingId === item.id}
                     className="bg-[#EA580C] hover:bg-orange-700 text-white font-extrabold text-xs px-3 py-1.5 rounded-xl flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
                   >
                     <FileText className="w-3.5 h-3.5 text-white" />
-                    <span>{convertingId === item.id ? 'Drafting...' : 'Create Dainik Manyavar Draft'}</span>
+                    <span>{convertingId === item.id ? 'ड्राफ्ट बन रहा है...' : '✍️ ड्राफ्ट बनाएं'}</span>
                   </button>
 
                   <button

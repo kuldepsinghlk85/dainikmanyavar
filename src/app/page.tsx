@@ -22,6 +22,7 @@ import CricketWidget from '@/components/public/CricketWidget';
 import HoroscopeWidget from '@/components/public/HoroscopeWidget';
 import StockMarketWidget from '@/components/public/StockMarketWidget';
 import GoldSilverWidget from '@/components/public/GoldSilverWidget';
+import ManoranjanSection from '@/components/public/ManoranjanSection';
 
 import { db } from '@/lib/db';
 
@@ -85,6 +86,9 @@ export default async function HomePage() {
       where: {
         status: 'PUBLISHED',
         id: { notIn: Array.from(existingIds) },
+        category: {
+          slug: { not: 'manoranjan' },
+        },
       },
       include: {
         category: true,
@@ -122,10 +126,13 @@ export default async function HomePage() {
     select: { id: true, title: true, slug: true, viewCount: true },
   });
 
-  // Fetch latest news cards
+  // Fetch latest news cards (pure hard news, excluding Manoranjan)
   const latestArticles = await db.article.findMany({
     where: {
       status: 'PUBLISHED',
+      category: {
+        slug: { not: 'manoranjan' },
+      },
     },
     include: {
       category: true,
@@ -304,6 +311,11 @@ export default async function HomePage() {
           'section_multitag_enabled',
           'section_video_enabled',
           'section_tags_enabled',
+          'section_manoranjan_enabled',
+          'manoranjan_widget_reviews_enabled',
+          'manoranjan_widget_viral_enabled',
+          'manoranjan_widget_cricket_enabled',
+          'manoranjan_widget_films_enabled',
         ],
       },
     },
@@ -322,6 +334,44 @@ export default async function HomePage() {
   const isMultiTagEnabled = settingsMap.section_multitag_enabled !== 'false';
   const isVideoEnabled = settingsMap.section_video_enabled !== 'false';
   const isTagsEnabled = settingsMap.section_tags_enabled !== 'false';
+  const isManoranjanEnabled = settingsMap.section_manoranjan_enabled !== 'false';
+
+  // Fetch Manoranjan articles if enabled
+  let manoranjanArticles: any[] = [];
+  if (isManoranjanEnabled) {
+    const manoranjanCat = await db.category.findUnique({
+      where: { slug: 'manoranjan' },
+      select: { id: true },
+    });
+    if (manoranjanCat) {
+      manoranjanArticles = await db.article.findMany({
+        where: {
+          primaryCategoryId: manoranjanCat.id,
+          status: 'PUBLISHED',
+        },
+        orderBy: [
+          { isFeatured: 'desc' },
+          { publishedAt: 'desc' },
+          { createdAt: 'desc' },
+        ],
+        take: 10,
+        select: {
+          id: true,
+          newsId: true,
+          title: true,
+          subtitle: true,
+          slug: true,
+          excerpt: true,
+          featuredImage: true,
+          gallery: true,
+          sourceType: true,
+          isFeatured: true,
+          publishedAt: true,
+          viewCount: true,
+        },
+      });
+    }
+  }
 
   // Fetch active menu categories for navigation
   const menuCategories = await db.category.findMany({
@@ -404,6 +454,19 @@ export default async function HomePage() {
             <AdBanner position="sidebar_box2" sizeText="300 × 250 / Sidebar Ad #3" />
           </aside>
         </div>
+
+        {/* Full-Width Bollywood & Entertainment Showcase Section */}
+        {isManoranjanEnabled && manoranjanArticles.length > 0 && (
+          <ManoranjanSection
+            articles={manoranjanArticles}
+            settings={{
+              showReviews: settingsMap.manoranjan_widget_reviews_enabled !== 'false',
+              showViral: settingsMap.manoranjan_widget_viral_enabled !== 'false',
+              showCricket: settingsMap.manoranjan_widget_cricket_enabled !== 'false',
+              showFilms: settingsMap.manoranjan_widget_films_enabled !== 'false',
+            }}
+          />
+        )}
 
         {/* Social Connect Bar */}
         <SocialConnect />

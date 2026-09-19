@@ -77,6 +77,27 @@ export function generateSuggestedTags(title: string, category: string, region?: 
     tags.add('#Sensex');
   } else if (category === 'Gold Silver' || title.includes('सोना')) {
     tags.add('#सोना_चांदी_भाव');
+  } else if (category === 'Entertainment' || region === 'Bollywood' || region === 'Hollywood' || region === 'Box Office' || region === 'OTT' || region === 'Viral') {
+    tags.add('#मनोरंजन');
+    if (region === 'Bollywood' || /bollywood|बॉलीवुड|फिल्म|सिनेमा|स्टार|अभिनेता|अभिनेत्री/i.test(title)) {
+      tags.add('#बॉलीवुड');
+      tags.add('#सिनेमा');
+    }
+    if (region === 'Hollywood' || /hollywood|हॉलीवुड/i.test(title)) {
+      tags.add('#हॉलीवुड');
+    }
+    if (region === 'Box Office' || /box office|कलेक्शन|कमाई/i.test(title)) {
+      tags.add('#बॉक्स_ऑफिस');
+    }
+    if (region === 'OTT' || /ott|ओटीटी|netflix|वेब सीरीज|series/i.test(title)) {
+      tags.add('#ओटीटी');
+    }
+    if (region === 'Viral' || /viral|वायरल|वीडियो|trending/i.test(title)) {
+      tags.add('#वायरल_वीडियो');
+    }
+    if (/review|रिव्यू|रेटिंग|समीक्षा/i.test(title)) {
+      tags.add('#मूवी_रिव्यू');
+    }
   } else {
     tags.add('#ताजा_खबर');
   }
@@ -106,6 +127,7 @@ export async function syncSingleRssSource(sourceId: string) {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8',
       },
+      signal: AbortSignal.timeout(10000),
     });
 
     if (!res.ok) {
@@ -205,6 +227,7 @@ export async function syncSingleRssSource(sourceId: string) {
           sourceUrl: item.sourceUrl,
           sourcePublishedAt: item.publishedAt,
           suggestedTagsJson: JSON.stringify(item.tags),
+          suggestedCategoryId: source.defaultCategoryId || undefined,
           contentHash: item.contentHash,
           copyrightMode: 'METADATA_ONLY',
           status: 'NEW',

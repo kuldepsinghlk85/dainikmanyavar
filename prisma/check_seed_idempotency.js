@@ -41,7 +41,7 @@ const MODELS = [
 const repoRoot = path.join(__dirname, '..');
 const dbFile = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'seedcheck-')), 'check.db');
 const env = { ...process.env, DATABASE_URL: `file:${dbFile}` };
-const run = (cmd, args) => execFileSync(cmd, args, { cwd: repoRoot, env, stdio: 'inherit' });
+const run = (cmd, args) => execFileSync(cmd, args, { cwd: repoRoot, env, stdio: 'inherit', shell: true });
 
 async function counts() {
   // Required lazily: the client must pick up DATABASE_URL set above.

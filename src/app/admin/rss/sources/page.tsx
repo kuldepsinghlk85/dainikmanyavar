@@ -305,6 +305,7 @@ export default function RssSourcesAdminPage() {
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
                 className="w-full p-2.5 border border-stone-300 rounded-xl text-xs font-bold text-stone-900"
               >
+                <option value="Entertainment">🎬 Entertainment</option>
                 <option value="Regional News">📰 Regional News</option>
                 <option value="Cricket">🏏 Cricket</option>
                 <option value="Rashifal">🔮 Rashifal</option>
@@ -320,6 +321,11 @@ export default function RssSourcesAdminPage() {
                 onChange={(e) => setForm({ ...form, region: e.target.value })}
                 className="w-full p-2.5 border border-stone-300 rounded-xl text-xs font-bold text-stone-900"
               >
+                <option value="Bollywood">🎬 Bollywood</option>
+                <option value="Hollywood">🌟 Hollywood</option>
+                <option value="Box Office">💰 Box Office</option>
+                <option value="OTT">📺 OTT</option>
+                <option value="Viral">🔥 Viral</option>
                 <option value="Uttar Pradesh">📍 Uttar Pradesh</option>
                 <option value="Varanasi">📍 Varanasi</option>
                 <option value="Jaunpur">📍 Jaunpur</option>
@@ -349,6 +355,66 @@ export default function RssSourcesAdminPage() {
           </button>
         </form>
       )}
+
+      {/* Category & Region Filter Tabs */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none flex-wrap">
+        <Link
+          href="/admin/rss/sources"
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
+            !categoryFilter && !regionFilter
+              ? 'bg-stone-900 text-white shadow-xs'
+              : 'bg-white border border-stone-200 text-stone-700 hover:bg-stone-50'
+          }`}
+        >
+          सभी सोर्सेज
+        </Link>
+        <Link
+          href="/admin/rss/sources?category=Entertainment"
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1 ${
+            categoryFilter === 'Entertainment'
+              ? 'bg-[#EA580C] text-white shadow-xs'
+              : 'bg-white border border-stone-200 text-stone-700 hover:bg-stone-50'
+          }`}
+        >
+          <span>🎬 Entertainment ({sources.filter(s => s.category === 'Entertainment').length || '25+'})</span>
+        </Link>
+        <Link
+          href="/admin/rss/sources?category=Cricket"
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1 ${
+            categoryFilter === 'Cricket'
+              ? 'bg-emerald-600 text-white shadow-xs'
+              : 'bg-white border border-stone-200 text-stone-700 hover:bg-stone-50'
+          }`}
+        >
+          <span>🏏 Cricket</span>
+        </Link>
+        <Link
+          href="/admin/rss/sources?category=Gold%20Silver"
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1 ${
+            categoryFilter === 'Gold Silver'
+              ? 'bg-amber-500 text-white shadow-xs'
+              : 'bg-white border border-stone-200 text-stone-700 hover:bg-stone-50'
+          }`}
+        >
+          <span>🪙 Gold Silver</span>
+        </Link>
+        <Link
+          href="/admin/rss/sources?region=Uttar%20Pradesh"
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1 ${
+            regionFilter === 'Uttar Pradesh'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'bg-white border border-stone-200 text-stone-700 hover:bg-stone-50'
+          }`}
+        >
+          <span>📍 Uttar Pradesh</span>
+        </Link>
+        <Link
+          href="/admin/manoranjan?tab=rss"
+          className="ml-auto px-3 py-1.5 rounded-xl text-xs font-black bg-orange-50 border border-orange-200 text-[#EA580C] hover:bg-orange-100 shrink-0 transition-all flex items-center gap-1"
+        >
+          <span>⚡ पर्सनल मनोरंजन RSS डेस्क खोलें ➔</span>
+        </Link>
+      </div>
 
       {/* Sources Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

@@ -8,6 +8,7 @@ import MobileTwoColGrid from '@/components/mobile/MobileTwoColGrid';
 import MobileHeroCard from '@/components/mobile/MobileHeroCard';
 import MobileNewsList from '@/components/mobile/MobileNewsList';
 import MobileReelsFeed from '@/components/mobile/MobileReelsFeed';
+import MobileManoranjanSection from '@/components/mobile/MobileManoranjanSection';
 import MobileFooter from '@/components/mobile/MobileFooter';
 import { Building2, Globe, MapPin, Sparkles, Newspaper } from 'lucide-react';
 
@@ -32,7 +33,7 @@ export default async function MobileHomePage() {
   const leadArticle = await db.article.findFirst({
     where: {
       status: 'PUBLISHED',
-      ...(topLeadArticleId ? { id: topLeadArticleId } : {}),
+      ...(topLeadArticleId ? { id: topLeadArticleId } : { category: { slug: { not: 'manoranjan' } } }),
     },
     orderBy: [
       { newsId: 'desc' },
@@ -44,10 +45,13 @@ export default async function MobileHomePage() {
     },
   });
 
-  // 2. Fetch latest news stream
+  // 2. Fetch latest news stream (excluding Manoranjan)
   const latestArticles = await db.article.findMany({
     where: {
       status: 'PUBLISHED',
+      category: {
+        slug: { not: 'manoranjan' },
+      },
       ...(leadArticle ? { id: { not: leadArticle.id } } : {}),
     },
     orderBy: [
@@ -141,6 +145,55 @@ export default async function MobileHomePage() {
   });
   const showShabdkhoj = shabdkhojSetting?.value === 'true';
 
+  // 7. Manoranjan Entertainment section settings & articles
+  const manoranjanSettings = await db.siteSetting.findMany({
+    where: {
+      key: {
+        in: [
+          'mobile_manoranjan_enabled',
+          'manoranjan_widget_reviews_enabled',
+          'manoranjan_widget_viral_enabled',
+          'manoranjan_widget_cricket_enabled',
+          'manoranjan_widget_films_enabled',
+        ],
+      },
+    },
+  });
+  const manoranjanMap = Object.fromEntries(manoranjanSettings.map((s) => [s.key, s.value]));
+  const isMobileManoranjanEnabled = manoranjanMap.mobile_manoranjan_enabled !== 'false';
+
+  let mobileManoranjanArticles: any[] = [];
+  if (isMobileManoranjanEnabled) {
+    const manoranjanCat = await db.category.findUnique({
+      where: { slug: 'manoranjan' },
+      select: { id: true },
+    });
+    if (manoranjanCat) {
+      mobileManoranjanArticles = await db.article.findMany({
+        where: {
+          primaryCategoryId: manoranjanCat.id,
+          status: 'PUBLISHED',
+        },
+        orderBy: [
+          { isFeatured: 'desc' },
+          { publishedAt: 'desc' },
+          { createdAt: 'desc' },
+        ],
+        take: 8,
+        select: {
+          id: true,
+          title: true,
+          subtitle: true,
+          slug: true,
+          featuredImage: true,
+          gallery: true,
+          sourceType: true,
+          publishedAt: true,
+        },
+      });
+    }
+  }
+
   return (
     <div className="bg-stone-100 dark:bg-[#0D0D0D] min-h-screen transition-colors">
       {/* 1. Category Chips Bar (Amar Ujala style with filter button) */}
@@ -174,6 +227,22 @@ export default async function MobileHomePage() {
             reels={formattedReels}
             title="वीडियो REEL"
             viewAllLink="/mobile/category/video"
+          />
+          <div className="h-2 bg-stone-100 dark:bg-[#0D0D0D] border-y border-stone-200/80 dark:border-stone-800/80" />
+        </>
+      )}
+
+      {/* Manoranjan Entertainment Section (when enabled & articles exist) */}
+      {isMobileManoranjanEnabled && mobileManoranjanArticles.length > 0 && (
+        <>
+          <MobileManoranjanSection
+            articles={mobileManoranjanArticles}
+            settings={{
+              showReviews: manoranjanMap.manoranjan_widget_reviews_enabled !== 'false',
+              showViral: manoranjanMap.manoranjan_widget_viral_enabled !== 'false',
+              showCricket: manoranjanMap.manoranjan_widget_cricket_enabled !== 'false',
+              showFilms: manoranjanMap.manoranjan_widget_films_enabled !== 'false',
+            }}
           />
           <div className="h-2 bg-stone-100 dark:bg-[#0D0D0D] border-y border-stone-200/80 dark:border-stone-800/80" />
         </>

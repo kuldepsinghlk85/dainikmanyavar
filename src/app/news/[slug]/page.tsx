@@ -122,6 +122,13 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
 
   const tags = article.tags.map((t) => t.tag);
 
+  let reviewData: any = null;
+  if (article.gallery) {
+    try {
+      reviewData = JSON.parse(article.gallery);
+    } catch (_) {}
+  }
+
   // Fetch related news & trending articles for sidebar
   const [relatedArticles, trendingArticles] = await Promise.all([
     db.article.findMany({
@@ -250,8 +257,64 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
               <AudioPlayer articleId={article.id} title={article.title} content={article.content} />
             )}
 
-            {/* Featured Image */}
-            {article.featuredImage && (
+            {/* Movie Review Scorecard (if entertainment review) */}
+            {reviewData && (reviewData.rating || reviewData.verdict) && (
+              <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 rounded-2xl p-5 text-white shadow-md my-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/20 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">🎬</span>
+                    <div>
+                      <span className="text-[10px] font-black tracking-wider uppercase text-amber-200">दैनिक मान्यवर रिव्यू</span>
+                      <h3 className="text-lg sm:text-xl font-black">{reviewData.movieName || article.title}</h3>
+                    </div>
+                  </div>
+                  {reviewData.rating && (
+                    <div className="flex items-center gap-2 bg-black/40 backdrop-blur-xs px-3.5 py-1.5 rounded-full text-amber-300 font-black text-base shadow-inner">
+                      <span className="text-yellow-400">{'★'.repeat(Math.floor(reviewData.rating))}</span>
+                      <span>{reviewData.rating} / 5</span>
+                    </div>
+                  )}
+                </div>
+
+                {reviewData.verdict && (
+                  <div className="mt-3 flex items-center gap-2">
+                    <span className="text-xs font-bold text-orange-100">वर्डिक्ट (Verdict):</span>
+                    <span className="text-sm font-black bg-white/25 px-3 py-0.5 rounded-lg border border-white/30">
+                      {reviewData.verdict}
+                    </span>
+                  </div>
+                )}
+
+                {(reviewData.director || reviewData.cast) && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 pt-3 border-t border-white/15 text-xs text-orange-50">
+                    {reviewData.director && <div><span className="font-bold">निर्देशक:</span> {reviewData.director}</div>}
+                    {reviewData.cast && <div><span className="font-bold">प्रमुख कलाकार:</span> {reviewData.cast}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Video / Reel Player or Featured Image */}
+            {article.videoEnabled && article.videoUrl ? (
+              <div className="relative w-full aspect-video rounded-2xl overflow-hidden my-4 bg-black shadow-lg border border-stone-800">
+                {article.videoUrl.includes('youtube.com') || article.videoUrl.includes('youtu.be') ? (
+                  <iframe
+                    src={`https://www.youtube.com/embed/${article.videoUrl.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/)?.[2] || ''}`}
+                    title={article.title}
+                    className="w-full h-full border-0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  <video
+                    src={article.videoUrl}
+                    controls
+                    poster={article.featuredImage || ''}
+                    className="w-full h-full object-contain"
+                  />
+                )}
+              </div>
+            ) : article.featuredImage ? (
               <div className="relative w-full h-[260px] sm:h-[380px] rounded-xl overflow-hidden my-4 bg-stone-100">
                 <Image
                   src={article.featuredImage}
@@ -261,7 +324,7 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
                   className="object-cover"
                 />
               </div>
-            )}
+            ) : null}
 
             {/* Social Share & Reaction Bar */}
             <ShareBar
@@ -269,6 +332,8 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
               title={article.title}
               slug={article.slug}
               initialLikeCount={article.likeCount}
+              categoryName={article.category?.name}
+              reviewData={reviewData}
             />
 
             {/* User Activity & Bookmark Tracker */}
@@ -284,6 +349,22 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
               dangerouslySetInnerHTML={{ __html: article.content }}
             />
 
+            {/* Clickable Tags (First-Class Data Content) */}
+            {tags && tags.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 my-5 pt-4 border-t border-stone-200">
+                <span className="text-xs font-bold text-stone-500">🏷️ संबंधित टैग्स:</span>
+                {tags.map((t: any) => (
+                  <Link
+                    key={t.id}
+                    href={`/tag/${t.slug}`}
+                    className="text-xs bg-orange-50 hover:bg-orange-100 text-orange-800 font-bold px-3 py-1 rounded-lg border border-orange-200 transition-colors shadow-2xs"
+                  >
+                    #{t.name.replace(/^#/, '')}
+                  </Link>
+                ))}
+              </div>
+            )}
+
             {/* In-Article Advertisement */}
             <AdBanner position="header_wide" sizeText="In-Article Ad Banner (728×90)" />
 
@@ -293,6 +374,8 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
               title={article.title}
               slug={article.slug}
               initialLikeCount={article.likeCount}
+              categoryName={article.category?.name}
+              reviewData={reviewData}
             />
 
             {/* Related News (यह भी पढ़ें) */}

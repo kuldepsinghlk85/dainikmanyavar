@@ -60,7 +60,12 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   if (decodedSlug === 'latest' || decodedSlug === 'news') {
     categoryName = '🔥 ताज़ा ख़बरें (All Latest News)';
     articles = await db.article.findMany({
-      where: { status: 'PUBLISHED' },
+      where: {
+        status: 'PUBLISHED',
+        category: {
+          slug: { not: 'manoranjan' },
+        },
+      },
       orderBy: [
         { newsId: 'desc' },
         { publishedAt: 'desc' },

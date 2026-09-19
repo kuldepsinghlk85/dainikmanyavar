@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Newspaper, PlusCircle, Trash2, Edit, Eye, CheckSquare, Square, AlertOctagon, Archive, RotateCcw } from 'lucide-react';
+import { Newspaper, PlusCircle, Trash2, Edit, Eye, CheckSquare, Square, AlertOctagon, Archive, RotateCcw, Film } from 'lucide-react';
 import DeleteConfirmModal from '@/components/admin/DeleteConfirmModal';
 
 interface Article {
@@ -360,6 +360,14 @@ export default function AdminNewsPage() {
         >
           <span>📋 सभी रिकॉर्ड्स (All)</span>
         </button>
+
+        <Link
+          href="/admin/manoranjan"
+          className="px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 bg-purple-50 text-purple-800 hover:bg-purple-100 border border-purple-200 shadow-2xs"
+        >
+          <Film className="w-3.5 h-3.5 text-purple-600" />
+          <span>🎬 मनोरंजन हब</span>
+        </Link>
       </div>
 
       {msg && (

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import ImageUploader from '@/components/admin/ImageUploader';
 import HtmlContentEditor from '@/components/admin/HtmlContentEditor';
 import VoiceInputButton from '@/components/public/VoiceInputButton';
+import AutoTranslateButton from '@/components/admin/AutoTranslateButton';
 import { ArrowLeft, Save, ExternalLink, Plus, MapPin, Upload, X, CheckCircle2 } from 'lucide-react';
 
 interface Category {
@@ -246,14 +247,27 @@ export default function AddNewsPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div className="flex items-center gap-3">
-        <button onClick={() => router.back()} className="p-2 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 cursor-pointer">
-          <ArrowLeft className="w-4 h-4 text-stone-600" />
-        </button>
-        <div>
-          <h1 className="text-2xl font-extrabold text-stone-900">नया समाचार जोड़ें (Add News)</h1>
-          <p className="text-xs text-stone-500">सभी फ़ील्ड्स भरें और चित्र अपलोड करें</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div className="flex items-center gap-3">
+          <button onClick={() => router.back()} className="p-2 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 cursor-pointer">
+            <ArrowLeft className="w-4 h-4 text-stone-600" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-extrabold text-stone-900">नया समाचार जोड़ें (Add News)</h1>
+            <p className="text-xs text-stone-500">सभी फ़ील्ड्स भरें और चित्र अपलोड करें</p>
+          </div>
         </div>
+
+        {/* 🌐 Auto Translate to Hindi Button */}
+        <AutoTranslateButton
+          currentData={{ title, subtitle, excerpt, content }}
+          onTranslate={(translated) => {
+            if (translated.title) setTitle(translated.title);
+            if (translated.subtitle) setSubtitle(translated.subtitle);
+            if (translated.excerpt) setExcerpt(translated.excerpt);
+            if (translated.content) setContent(translated.content);
+          }}
+        />
       </div>
 
       {error && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-xs font-bold">{error}</div>}

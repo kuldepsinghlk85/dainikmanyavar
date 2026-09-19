@@ -298,8 +298,36 @@ export class NewsImportService {
     if (!item) throw new Error('इम्पोर्ट इनबॉक्स रिकॉर्ड नहीं मिला');
 
     // Default Primary Category
-    const categoryId = item.suggestedCategoryId || (await db.category.findFirst())?.id;
+    let categoryId: string | null = item.suggestedCategoryId || item.source.defaultCategoryId || null;
+    if (!categoryId) {
+      if (item.source.category === 'Entertainment' || ['Bollywood', 'Hollywood', 'Box Office', 'OTT', 'Viral'].includes(item.source.region)) {
+        const manoranjanCat = await db.category.findUnique({ where: { slug: 'manoranjan' } });
+        if (manoranjanCat) categoryId = manoranjanCat.id;
+      }
+    }
+    if (!categoryId) {
+      const fallbackCat = await db.category.findFirst();
+      categoryId = fallbackCat ? fallbackCat.id : null;
+    }
     if (!categoryId) throw new Error('श्रेणी उपलब्ध नहीं है');
+
+    const catRecord = await db.category.findUnique({ where: { id: categoryId } });
+    let articleSourceType: string | null = null;
+    if (catRecord?.slug === 'manoranjan' || item.source.category === 'Entertainment') {
+      const title = item.originalTitle || '';
+      const region = item.source.region || '';
+      if (/review|रिव्यू|रेटिंग|समीक्षा/i.test(title)) {
+        articleSourceType = 'movie_review';
+      } else if (region === 'Viral' || /वायरल|viral|video|वीडियो/i.test(title)) {
+        articleSourceType = 'viral';
+      } else if (item.source.category === 'Cricket' || /क्रिकेट|cricket/i.test(title)) {
+        articleSourceType = 'cricket_buzz';
+      } else {
+        articleSourceType = 'movies';
+      }
+    } else {
+      articleSourceType = item.source.sourceType;
+    }
 
     const cleanSlug = `${slugify(item.originalTitle)}-${Date.now().toString().slice(-4)}`;
 
@@ -342,7 +370,7 @@ export class NewsImportService {
         source: item.publisherName,
         isImported: true,
         importItemId: item.id,
-        sourceType: item.source.sourceType,
+        sourceType: articleSourceType,
         originalSourceName: item.publisherName,
         originalSourceUrl: item.sourceUrl,
         sourcePublishedAt: item.sourcePublishedAt || new Date(),
