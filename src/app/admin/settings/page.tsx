@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Save, CheckCircle2, Upload, Image as ImageIcon, Trash2, RefreshCw, Link as LinkIcon } from 'lucide-react';
+import { Sparkles, Save, CheckCircle2, Upload, Image as ImageIcon, Trash2, RefreshCw, Link as LinkIcon, Type } from 'lucide-react';
+import VoiceInputButton from '@/components/public/VoiceInputButton';
 
 export default function SettingsAdminPage() {
   const [settings, setSettings] = useState({
     site_name: 'दैनिक मान्यवर',
     site_subtitle: 'सच के साथ... समाज के लिए...',
+    site_tagline: 'सच के साथ... समाज के लिए...',
     site_logo: '/logo.png',
     whatsapp_number: '+91 93361 81297',
     contact_email: 'editor.dainikmanyavar@gmail.com',
@@ -47,7 +49,13 @@ export default function SettingsAdminPage() {
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.data) {
-          setSettings((prev) => ({ ...prev, ...data.data }));
+          const tagline = data.data.site_tagline || data.data.site_subtitle || 'सच के साथ... समाज के लिए...';
+          setSettings((prev) => ({
+            ...prev,
+            ...data.data,
+            site_tagline: tagline,
+            site_subtitle: tagline,
+          }));
         }
       })
       .catch(() => {});
@@ -55,6 +63,14 @@ export default function SettingsAdminPage() {
 
   const handleChange = (key: string, value: string) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleTaglineChange = (value: string) => {
+    setSettings((prev) => ({
+      ...prev,
+      site_tagline: value,
+      site_subtitle: value,
+    }));
   };
 
   const handleBannerFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -339,39 +355,26 @@ export default function SettingsAdminPage() {
           </div>
         </div>
 
-        {/* General Settings */}
-        <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-sm space-y-4">
-          <h3 className="font-bold text-sm text-stone-900 border-b border-stone-100 pb-2">सामान्य सेटिंग्स</h3>
-
-          <div>
-            <label className="block text-xs font-bold text-stone-700 mb-1">पोर्टल का नाम (Site Name)</label>
-            <input
-              type="text"
-              value={settings.site_name}
-              onChange={(e) => handleChange('site_name', e.target.value)}
-              className="w-full p-2.5 border border-stone-300 rounded-lg text-sm font-bold"
-            />
+        {/* Website Logo & Tagline Settings (Dedicated Section) */}
+        <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-5">
+          <div className="flex items-center gap-2 text-stone-900 font-extrabold text-sm border-b border-stone-100 pb-3">
+            <ImageIcon className="w-4 h-4 text-[#EA580C]" />
+            <h2>वेबसाइट मुख्य लोगो एवं टैगलाइन (Website Logo & Tagline)</h2>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-stone-700 mb-1">टैगलाइन / सब-टाइटल</label>
-            <input
-              type="text"
-              value={settings.site_subtitle}
-              onChange={(e) => handleChange('site_subtitle', e.target.value)}
-              className="w-full p-2.5 border border-stone-300 rounded-lg text-sm"
-            />
-          </div>
+          <p className="text-xs text-stone-600">
+            वेबसाइट के मुख्य हेडर पर दिखने वाला आधिकारिक लोगो और उसके ठीक नीचे प्रदर्शित होने वाली टैगलाइन (स्लोगन) को यहाँ से बदलें:
+          </p>
 
-          {/* Portal Logo Uploader */}
+          {/* 1. Portal Logo Uploader */}
           <div className="p-4 bg-stone-50 rounded-xl border border-stone-200 space-y-3">
             <div className="flex justify-between items-center">
               <div>
                 <label className="block text-xs font-bold text-stone-900">
-                  पोर्टल मुख्य लोगो (Portal Main Header Logo)
+                  1. पोर्टल मुख्य लोगो (Portal Main Header Logo)
                 </label>
                 <p className="text-[11px] text-stone-500">
-                  हैडर में प्रदर्शित होने वाला आधिकारिक लोगो (पारदर्शी PNG सर्वोत्तम है)
+                  हैडर में प्रदर्शित होने वाला आधिकारिक लोगो (पारदर्शी PNG/WebP सर्वोत्तम है)
                 </p>
               </div>
               <button
@@ -392,7 +395,7 @@ export default function SettingsAdminPage() {
                         <img
                           src={settings.site_logo}
                           alt="Logo Preview"
-                          className="h-10 max-w-[140px] object-contain"
+                          className="h-10 max-w-[160px] object-contain"
                         />
                       </div>
                       <div>
@@ -458,6 +461,70 @@ export default function SettingsAdminPage() {
                 )}
               </div>
             )}
+          </div>
+
+          {/* 2. Tagline under logo */}
+          <div className="p-4 bg-orange-50/40 rounded-xl border border-orange-200 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-stone-900 flex items-center gap-1.5">
+                <Type className="w-3.5 h-3.5 text-[#EA580C]" />
+                <span>2. लोगो के नीचे टैगलाइन (Tagline / Slogan under Logo)</span>
+              </label>
+              <div className="flex items-center gap-1 bg-white px-2 py-0.5 rounded-lg border border-orange-200 shadow-2xs">
+                <VoiceInputButton
+                  mode="append"
+                  currentValue={settings.site_tagline || settings.site_subtitle || ''}
+                  onTranscript={(full) => handleTaglineChange(full)}
+                  placeholderHint="टैगलाइन बोलिए..."
+                  size="sm"
+                />
+                <span className="text-[10px] font-bold text-orange-900 select-none">बोलकर लिखें</span>
+              </div>
+            </div>
+            <p className="text-[11px] text-stone-500">
+              यह टैगलाइन वेबसाइट के हेडर में मुख्य लोगो के ठीक नीचे अखबारी अंदाज में प्रदर्शित होगी।
+            </p>
+            <input
+              type="text"
+              value={settings.site_tagline || settings.site_subtitle || ''}
+              onChange={(e) => handleTaglineChange(e.target.value)}
+              placeholder="उदा. सच के साथ... समाज के लिए... | निष्पक्ष, निर्भीक एवं जन-सरोकारों को समर्पित"
+              className="w-full p-2.5 border border-stone-300 rounded-lg text-sm bg-white font-medium text-stone-900 focus:outline-none focus:border-[#EA580C]"
+            />
+          </div>
+
+          {/* 3. Live Header Masthead Simulator Preview */}
+          <div className="p-4 bg-stone-100 rounded-xl border border-stone-200 space-y-2">
+            <p className="text-[11px] font-mono font-bold text-stone-600">
+              वेबसाइट हेडर में ऐसा दिखेगा (Live Header Masthead Simulator):
+            </p>
+            <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-xs flex flex-col items-center justify-center max-w-sm mx-auto sm:mx-0">
+              <img
+                src={settings.site_logo || '/logo.png'}
+                alt="दैनिक मान्यवर लोगो"
+                className="h-16 sm:h-20 w-auto object-contain"
+              />
+              {(settings.site_tagline || settings.site_subtitle) && (
+                <p className="text-[11px] sm:text-xs font-bold text-stone-700 tracking-wider text-center mt-1 font-serif border-t border-stone-200/80 pt-0.5 w-full whitespace-nowrap">
+                  {settings.site_tagline || settings.site_subtitle}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* General Settings */}
+        <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-sm space-y-4">
+          <h3 className="font-bold text-sm text-stone-900 border-b border-stone-100 pb-2">अन्य सामान्य सेटिंग्स</h3>
+
+          <div>
+            <label className="block text-xs font-bold text-stone-700 mb-1">पोर्टल का नाम (Site Name)</label>
+            <input
+              type="text"
+              value={settings.site_name}
+              onChange={(e) => handleChange('site_name', e.target.value)}
+              className="w-full p-2.5 border border-stone-300 rounded-lg text-sm font-bold"
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

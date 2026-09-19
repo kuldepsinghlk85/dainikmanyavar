@@ -51,7 +51,10 @@ export async function POST(req: NextRequest) {
       });
     } catch (_) {}
 
-    const origin = req.nextUrl.origin || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3015';
+    let origin = process.env.NEXT_PUBLIC_SITE_URL || 'https://dainikmanyavar.com';
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      origin = 'https://dainikmanyavar.com';
+    }
     const shareUrl = `${origin}/share/${code}`;
 
     return NextResponse.json({

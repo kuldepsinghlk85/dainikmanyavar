@@ -98,3 +98,32 @@ export function generateShortCode(length = 6): string {
   }
   return result;
 }
+
+// Canonical public site URL for clean social sharing.
+// Guarantees localhost / 127.0.0.1 / internal IPs are never leaked in shared links.
+export function getPublicSiteUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (
+    envUrl &&
+    !envUrl.includes('localhost') &&
+    !envUrl.includes('127.0.0.1') &&
+    !envUrl.includes('192.168.') &&
+    !envUrl.includes('10.0.')
+  ) {
+    return envUrl.replace(/\/+$/, '');
+  }
+
+  if (typeof window !== 'undefined' && window.location.origin) {
+    const origin = window.location.origin;
+    if (
+      !origin.includes('localhost') &&
+      !origin.includes('127.0.0.1') &&
+      !origin.includes('192.168.') &&
+      !origin.includes('10.0.')
+    ) {
+      return origin.replace(/\/+$/, '');
+    }
+  }
+
+  return 'https://dainikmanyavar.com';
+}

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -23,7 +23,7 @@ export default function MobileKeyEvents({ article }: { article?: ArticleItem | n
       </div>
 
       {/* Prominent Lead Headline */}
-      <Link href={`/mobile/news/${article.slug}`} className="block group">
+      <Link href={`/mobile/news/${encodeURIComponent(article.slug)}`} className="block group">
         <h2 className="text-[17.5px] sm:text-[19px] font-black leading-snug text-stone-900 dark:text-white group-hover:text-[#E53935] transition-colors">
           {article.title}
         </h2>

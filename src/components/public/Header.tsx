@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Search, Sparkles, User, LogIn } from 'lucide-react';
 import AdBanner from './AdBanner';
 import PortalAuthModal from './PortalAuthModal';
+import VoiceInputButton from './VoiceInputButton';
 
 interface HeaderProps {
   festivalBanner?: {
@@ -15,12 +16,15 @@ interface HeaderProps {
     title?: string;
     linkUrl?: string;
   };
+  siteLogo?: string;
+  siteTagline?: string;
 }
 
-export default function Header({ festivalBanner }: HeaderProps) {
+export default function Header({ festivalBanner, siteLogo: propLogo, siteTagline: propTagline }: HeaderProps) {
   const [query, setQuery] = useState('');
   const [siteBanner, setSiteBanner] = useState<any>(null);
-  const [siteLogo, setSiteLogo] = useState<string>('/logo.png');
+  const [siteLogo, setSiteLogo] = useState<string>(propLogo || '/uploads/1788514240911_adlogomain.jpg');
+  const [siteTagline, setSiteTagline] = useState<string>(propTagline || 'सब पर नजर  सबकी खबर');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const router = useRouter();
@@ -44,6 +48,10 @@ export default function Header({ festivalBanner }: HeaderProps) {
         if (data.success && data.data) {
           if (data.data.site_logo) {
             setSiteLogo(data.data.site_logo);
+          }
+          const tagline = data.data.site_tagline || data.data.site_subtitle;
+          if (tagline !== undefined && tagline !== null) {
+            setSiteTagline(tagline);
           }
           setSiteBanner({
             enabled: data.data.festival_banner_enabled === 'true',
@@ -76,9 +84,9 @@ export default function Header({ festivalBanner }: HeaderProps) {
   return (
     <header className="py-3 sm:py-3.5 bg-white border-b border-stone-100">
       <div className="wrap flex flex-col lg:flex-row items-center justify-between gap-3">
-        {/* Prominent Brand Logo */}
+        {/* Prominent Brand Logo & Tagline */}
         <div className="flex items-center justify-center lg:justify-start">
-          <Link href="/" className="block">
+          <Link href="/" className="inline-flex flex-col items-center group select-none">
             <Image
               src={siteLogo || '/logo.png'}
               alt="दैनिक मान्यवर"
@@ -88,6 +96,11 @@ export default function Header({ festivalBanner }: HeaderProps) {
               unoptimized
               className="h-16 sm:h-20 md:h-22 lg:h-24 w-auto object-contain"
             />
+            {siteTagline && (
+              <p className="text-[11px] sm:text-xs font-bold text-stone-700 tracking-wider text-center mt-1 font-serif border-t border-stone-200/80 pt-0.5 w-full whitespace-nowrap">
+                {siteTagline}
+              </p>
+            )}
           </Link>
         </div>
 
@@ -124,14 +137,24 @@ export default function Header({ festivalBanner }: HeaderProps) {
 
           {/* Search Bar & WhatsApp Button */}
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <form onSubmit={handleSearch} className="flex flex-1 sm:w-48 lg:w-56">
+            <form onSubmit={handleSearch} className="flex flex-1 sm:w-56 lg:w-64 relative items-center">
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="खबर खोजें..."
-                className="w-full px-3 py-1.5 text-xs border border-stone-300 rounded-l-lg focus:outline-none focus:border-[#F97316]"
+                className="w-full pl-3 pr-14 py-1.5 text-xs border border-stone-300 rounded-l-lg focus:outline-none focus:border-[#F97316]"
               />
+              <div className="absolute right-9 flex items-center">
+                <VoiceInputButton
+                  onTranscript={(text) => {
+                    setQuery(text);
+                    router.push(`/search?q=${encodeURIComponent(text)}`);
+                  }}
+                  size="sm"
+                  placeholderHint="खोजने के लिए बोलिए..."
+                />
+              </div>
               <button
                 type="submit"
                 aria-label="खोजें"

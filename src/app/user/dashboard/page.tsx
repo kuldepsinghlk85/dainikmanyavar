@@ -77,8 +77,16 @@ export default function UserDashboardPage() {
     }
   };
 
+  const [isFromMobile, setIsFromMobile] = useState(false);
+
   useEffect(() => {
     fetchUserProfile();
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('from') === 'mobile' || document.referrer.includes('/mobile') || window.innerWidth < 768) {
+        setIsFromMobile(true);
+      }
+    }
   }, []);
 
   // Fetch saved news when switching to saved tab
@@ -197,7 +205,7 @@ export default function UserDashboardPage() {
         body: JSON.stringify({ action: 'logout' }),
       });
       setUser(null);
-      router.push('/');
+      router.push(isFromMobile ? '/mobile' : '/');
     } catch (_) {}
   };
 
@@ -209,11 +217,11 @@ export default function UserDashboardPage() {
         {/* Breadcrumb & Navigation */}
         <div className="flex items-center justify-between mb-4">
           <Link
-            href="/"
+            href={isFromMobile ? '/mobile' : '/'}
             className="flex items-center gap-1.5 text-xs font-bold text-stone-600 hover:text-[#EA580C] transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>मुख्य पृष्ठ पर वापस जाएं</span>
+            <span>{isFromMobile ? 'मोबाइल मुख्य पृष्ठ पर वापस जाएं' : 'मुख्य पृष्ठ पर वापस जाएं'}</span>
           </Link>
           <span className="text-xs font-black text-[#EA580C] bg-orange-100 px-3 py-1 rounded-full border border-orange-200">
             दैनिक मान्यवर पाठक डैशबोर्ड
@@ -503,7 +511,7 @@ export default function UserDashboardPage() {
                               )}
                               <div className="min-w-0">
                                 <Link
-                                  href={`/news/${art.slug}`}
+                                  href={isFromMobile ? `/mobile/news/${encodeURIComponent(art.slug)}` : `/news/${encodeURIComponent(art.slug)}`}
                                   className="text-xs font-bold text-stone-900 hover:text-[#EA580C] line-clamp-1 transition-colors"
                                 >
                                   {art.title}
@@ -520,7 +528,7 @@ export default function UserDashboardPage() {
 
                             <div className="flex items-center gap-2 flex-shrink-0">
                               <Link
-                                href={`/news/${art.slug}`}
+                                href={isFromMobile ? `/mobile/news/${encodeURIComponent(art.slug)}` : `/news/${encodeURIComponent(art.slug)}`}
                                 className="p-1.5 bg-white hover:bg-orange-100 text-[#EA580C] rounded-lg border border-stone-200 transition-colors"
                                 title="पढ़ें"
                               >
@@ -570,7 +578,7 @@ export default function UserDashboardPage() {
                           >
                             <div className="min-w-0 flex-1">
                               <Link
-                                href={`/news/${art.slug}`}
+                                href={isFromMobile ? `/mobile/news/${encodeURIComponent(art.slug)}` : `/news/${encodeURIComponent(art.slug)}`}
                                 className="text-xs font-bold text-stone-800 hover:text-[#EA580C] line-clamp-1 transition-colors"
                               >
                                 {art.title}
@@ -580,7 +588,7 @@ export default function UserDashboardPage() {
                               </span>
                             </div>
                             <Link
-                              href={`/news/${art.slug}`}
+                              href={isFromMobile ? `/mobile/news/${encodeURIComponent(art.slug)}` : `/news/${encodeURIComponent(art.slug)}`}
                               className="text-[11px] font-bold text-[#EA580C] hover:underline flex items-center gap-1 flex-shrink-0"
                             >
                               <span>पुनः पढ़ें</span>

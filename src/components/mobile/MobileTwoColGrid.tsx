@@ -74,7 +74,7 @@ export default function MobileTwoColGrid({
           </div>
 
           {leftLead && (
-            <Link href={`/mobile/news/${leftLead.slug}`} className="block group mb-2.5">
+            <Link href={`/mobile/news/${encodeURIComponent(leftLead.slug)}`} className="block group mb-2.5">
               <div className="relative aspect-video rounded-lg overflow-hidden bg-stone-900 border border-stone-200 dark:border-stone-800 mb-1.5 shadow-2xs">
                 <SafeGridImage
                   src={leftLead.featuredImage}
@@ -97,7 +97,7 @@ export default function MobileTwoColGrid({
           )}
 
           {leftSub && (
-            <Link href={`/mobile/news/${leftSub.slug}`} className="block group pt-2 border-t border-stone-100 dark:border-stone-800/80">
+            <Link href={`/mobile/news/${encodeURIComponent(leftSub.slug)}`} className="block group pt-2 border-t border-stone-100 dark:border-stone-800/80">
               <div className="relative aspect-[16/9] rounded-md overflow-hidden bg-stone-900 mb-1">
                 <SafeGridImage
                   src={leftSub.featuredImage}
@@ -121,7 +121,7 @@ export default function MobileTwoColGrid({
           </div>
 
           {rightLead && (
-            <Link href={`/mobile/news/${rightLead.slug}`} className="block group mb-2.5">
+            <Link href={`/mobile/news/${encodeURIComponent(rightLead.slug)}`} className="block group mb-2.5">
               <div className="relative aspect-video rounded-lg overflow-hidden bg-stone-900 border border-stone-200 dark:border-stone-800 mb-1.5 shadow-2xs">
                 <SafeGridImage
                   src={rightLead.featuredImage}
@@ -136,7 +136,7 @@ export default function MobileTwoColGrid({
           )}
 
           {rightSub && (
-            <Link href={`/mobile/news/${rightSub.slug}`} className="block group pt-2 border-t border-stone-100 dark:border-stone-800/80">
+            <Link href={`/mobile/news/${encodeURIComponent(rightSub.slug)}`} className="block group pt-2 border-t border-stone-100 dark:border-stone-800/80">
               <div className="relative aspect-[16/9] rounded-md overflow-hidden bg-stone-900 mb-1">
                 <SafeGridImage
                   src={rightSub.featuredImage}

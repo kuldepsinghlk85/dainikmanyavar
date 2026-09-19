@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Bookmark, Share2, Check, Crown, Play } from 'lucide-react';
-import { formatHindiTimeAgo } from '@/lib/utils';
+import { formatHindiTimeAgo, getPublicSiteUrl } from '@/lib/utils';
 
 interface ArticleItem {
   id: string;
@@ -65,7 +65,7 @@ export default function MobileNewsList({
     e.preventDefault();
     e.stopPropagation();
 
-    const url = `${window.location.origin}/news/${art.slug}`;
+    const url = `${getPublicSiteUrl()}/mobile/news/${encodeURIComponent(art.slug)}`;
     const text = art.title;
 
     if (navigator.share) {
@@ -119,23 +119,14 @@ export default function MobileNewsList({
 
           return (
             <article key={art.id} className="py-3">
-              <Link href={`/mobile/news/${art.slug}`} className="block group">
+              <Link href={`/mobile/news/${encodeURIComponent(art.slug)}`} className="block group">
                 {/* Top Content Row: Left Headline + Right 4:3 Thumbnail */}
                 <div className="flex gap-3 items-start justify-between">
-                  {/* Left: Headline & Category Date */}
+                  {/* Left: Headline */}
                   <div className="flex-1 min-w-0 pr-1 flex flex-col justify-between self-stretch">
                     <h4 className="text-[14px] sm:text-[15px] leading-snug text-stone-900 dark:text-stone-100 tracking-tight font-extrabold line-clamp-3 group-hover:text-[#E53935] transition-colors">
                       {art.title}
                     </h4>
-
-                    {/* Bottom Meta: Category • Date */}
-                    <div className="pt-2 text-[11px] text-stone-500 dark:text-stone-400 font-bold flex items-center gap-1.5">
-                      <span className="text-stone-800 dark:text-stone-300">
-                        {art.category?.name || 'देश'}
-                      </span>
-                      <span className="text-stone-400">•</span>
-                      <span>{formattedDate}</span>
-                    </div>
                   </div>
 
                   {/* Right: Rounded 4:3 Thumbnail with Play button & Crown */}
@@ -165,9 +156,24 @@ export default function MobileNewsList({
                     )}
                   </div>
                 </div>
+              </Link>
 
-                {/* Actions Row: Bookmark & Share */}
-                <div className="flex items-center justify-end gap-3 pt-2 text-stone-500 dark:text-stone-400">
+              {/* Bottom Meta & Actions Row */}
+              <div className="flex items-center justify-between pt-2 text-stone-500 dark:text-stone-400">
+                {/* Meta: Category • Date */}
+                <Link
+                  href={`/mobile/news/${encodeURIComponent(art.slug)}`}
+                  className="text-[11px] font-bold flex items-center gap-1.5 hover:text-stone-900 dark:hover:text-stone-200"
+                >
+                  <span className="text-stone-800 dark:text-stone-300">
+                    {art.category?.name || 'देश'}
+                  </span>
+                  <span className="text-stone-400">•</span>
+                  <span>{formattedDate}</span>
+                </Link>
+
+                {/* Actions: Bookmark & Share */}
+                <div className="flex items-center gap-3">
                   {/* Bookmark Button */}
                   <button
                     type="button"
@@ -194,7 +200,7 @@ export default function MobileNewsList({
                     )}
                   </button>
                 </div>
-              </Link>
+              </div>
             </article>
           );
         })}

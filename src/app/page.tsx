@@ -1,6 +1,5 @@
 import React from 'react';
 import TopBar from '@/components/public/TopBar';
-import MobileRedirectBanner from '@/components/public/MobileRedirectBanner';
 import Header from '@/components/public/Header';
 import Navigation from '@/components/public/Navigation';
 import BreakingTicker from '@/components/public/BreakingTicker';
@@ -336,7 +335,6 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white font-sans">
-      <MobileRedirectBanner />
       <TopBar />
       <Header />
       <Navigation categories={menuCategories} />

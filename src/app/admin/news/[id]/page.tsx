@@ -4,6 +4,7 @@ import React, { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import ImageUploader from '@/components/admin/ImageUploader';
 import HtmlContentEditor from '@/components/admin/HtmlContentEditor';
+import VoiceInputButton from '@/components/public/VoiceInputButton';
 import { ArrowLeft, Save, Eye, Heart, Share2, Volume2, RotateCcw, History } from 'lucide-react';
 import { formatCount } from '@/lib/utils';
 
@@ -226,7 +227,19 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
       <form onSubmit={handleSubmit} className="space-y-5 bg-white p-6 rounded-xl border border-stone-200 shadow-sm">
         {/* Title */}
         <div>
-          <label className="block text-xs font-bold text-stone-700 mb-1">मुख्य शीर्षक (Headline) *</label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs font-bold text-stone-700">मुख्य शीर्षक (Headline) *</label>
+            <div className="flex items-center gap-1 bg-stone-100 px-2 py-0.5 rounded-lg">
+              <VoiceInputButton
+                mode="append"
+                onTranscript={(txt) => setTitle(txt)}
+                currentValue={title}
+                placeholderHint="मुख्य शीर्षक बोलिए..."
+                size="sm"
+              />
+              <span className="text-[10px] font-bold text-stone-600 select-none">बोलकर लिखें</span>
+            </div>
+          </div>
           <input
             type="text"
             required
@@ -238,7 +251,19 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
 
         {/* Subtitle */}
         <div>
-          <label className="block text-xs font-bold text-stone-700 mb-1">उप-शीर्षक (Secondary Headline)</label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs font-bold text-stone-700">उप-शीर्षक (Secondary Headline)</label>
+            <div className="flex items-center gap-1 bg-stone-100 px-2 py-0.5 rounded-lg">
+              <VoiceInputButton
+                mode="append"
+                onTranscript={(txt) => setSubtitle(txt)}
+                currentValue={subtitle}
+                placeholderHint="उप-शीर्षक बोलिए..."
+                size="sm"
+              />
+              <span className="text-[10px] font-bold text-stone-600 select-none">बोलकर लिखें</span>
+            </div>
+          </div>
           <input
             type="text"
             value={subtitle}
@@ -310,7 +335,19 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
 
         {/* Excerpt */}
         <div>
-          <label className="block text-xs font-bold text-stone-700 mb-1">संक्षिप्त विवरण (Excerpt Summary)</label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs font-bold text-stone-700">संक्षिप्त विवरण (Excerpt Summary)</label>
+            <div className="flex items-center gap-1 bg-stone-100 px-2 py-0.5 rounded-lg">
+              <VoiceInputButton
+                mode="append"
+                onTranscript={(txt) => setExcerpt(txt)}
+                currentValue={excerpt}
+                placeholderHint="संक्षिप्त विवरण बोलिए..."
+                size="sm"
+              />
+              <span className="text-[10px] font-bold text-stone-600 select-none">बोलकर लिखें</span>
+            </div>
+          </div>
           <textarea
             rows={2}
             value={excerpt}

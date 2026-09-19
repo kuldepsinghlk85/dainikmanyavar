@@ -27,6 +27,7 @@ import {
   Minimize2,
   FileCode,
 } from 'lucide-react';
+import VoiceInputButton from '@/components/public/VoiceInputButton';
 
 interface HtmlContentEditorProps {
   value: string;
@@ -132,6 +133,52 @@ export default function HtmlContentEditor({
     onChange(cleaned);
     if (editorRef.current) {
       editorRef.current.innerHTML = cleaned;
+    }
+  };
+
+  // Handle Voice Dictation insertion into rich-text editor
+  const handleInsertVoiceChunk = (chunkText?: string) => {
+    if (!chunkText || !chunkText.trim()) return;
+    const cleanChunk = chunkText.trim();
+
+    if (activeTab === 'code') {
+      const addition = `\n<p>${cleanChunk}</p>`;
+      onChange((value || '') + addition);
+      return;
+    }
+
+    if (activeTab === 'preview') {
+      setActiveTab('visual');
+    }
+
+    if (editorRef.current) {
+      editorRef.current.focus();
+
+      const currentHtml = editorRef.current.innerHTML.trim();
+      const isEmpty =
+        !currentHtml ||
+        currentHtml === '<p><br></p>' ||
+        currentHtml === '<br>' ||
+        currentHtml === '<p></p>';
+
+      if (isEmpty) {
+        editorRef.current.innerHTML = `<p>${cleanChunk}</p>`;
+        handleVisualInput();
+      } else {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0 && editorRef.current.contains(sel.anchorNode)) {
+          // Cursor is inside editor: insert text at cursor position with space
+          document.execCommand('insertText', false, ' ' + cleanChunk + ' ');
+        } else {
+          // Append new paragraph at the end of existing content
+          const p = document.createElement('p');
+          p.textContent = cleanChunk;
+          editorRef.current.appendChild(p);
+        }
+        handleVisualInput();
+      }
+    } else {
+      onChange((value || '') + `<p>${cleanChunk}</p>`);
     }
   };
 
@@ -382,6 +429,21 @@ export default function HtmlContentEditor({
           >
             <Redo2 className="w-3.5 h-3.5" />
           </button>
+
+          <div className="h-4 w-px bg-stone-300 mx-1" />
+
+          {/* Voice Typing Speech-to-Text */}
+          <div className="flex items-center gap-1.5 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-lg shadow-2xs">
+            <VoiceInputButton
+              mode="append"
+              onTranscript={(_full, newChunk) => {
+                handleInsertVoiceChunk(newChunk);
+              }}
+              placeholderHint="समाचार बोलिए..."
+              size="sm"
+            />
+            <span className="text-[11px] font-bold text-orange-900 select-none">बोलकर लिखें</span>
+          </div>
         </div>
       )}
 

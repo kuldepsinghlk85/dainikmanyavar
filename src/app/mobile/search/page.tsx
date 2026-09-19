@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import MobileCategoryChips from '@/components/mobile/MobileCategoryChips';
 import MobileNewsList from '@/components/mobile/MobileNewsList';
 import MobileFooter from '@/components/mobile/MobileFooter';
+import MobileSearchInput from '@/components/mobile/MobileSearchInput';
 import { ArrowLeft, Search, Flame } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -63,24 +64,9 @@ export default async function MobileSearchPage({
         </span>
       </div>
 
-      {/* Inline Search Bar */}
+      {/* Inline Search Bar with Voice Typing */}
       <div className="px-3">
-        <form action="/mobile/search" method="GET" className="relative flex items-center">
-          <input
-            type="search"
-            name="q"
-            defaultValue={query}
-            placeholder="मुद्दा, जिला या खबर खोजें..."
-            className="w-full pl-9 pr-20 py-2 bg-white dark:bg-[#181818] text-xs font-semibold rounded-xl border border-stone-300 dark:border-stone-700 text-stone-900 dark:text-white focus:outline-none focus:border-[#E53935]"
-          />
-          <Search className="w-4 h-4 text-stone-400 absolute left-3 pointer-events-none" />
-          <button
-            type="submit"
-            className="absolute right-1.5 px-3 py-1 bg-[#E53935] hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"
-          >
-            खोजें
-          </button>
-        </form>
+        <MobileSearchInput defaultValue={query} />
       </div>
 
       {/* Results or Empty State */}

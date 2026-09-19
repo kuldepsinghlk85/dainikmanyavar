@@ -36,6 +36,7 @@ export default function HomepageAdminPage() {
     section_multitag_enabled: 'true',
     section_video_enabled: 'true',
     section_tags_enabled: 'true',
+    section_shabdkhoj_enabled: 'false',
   });
 
   useEffect(() => {
@@ -150,6 +151,7 @@ export default function HomepageAdminPage() {
     { key: 'section_multitag_enabled', title: '# मल्टी टैग न्यूज़ (Multi-Tag Cards)', layout: '3 Column Grid Cards' },
     { key: 'section_video_enabled', title: '▶ वीडियो न्यूज़ (Video Bulletins)', layout: 'Video Playlist Player' },
     { key: 'section_tags_enabled', title: '🏷️ लोकप्रिय टैग्स (Tag Cloud)', layout: 'Pill Tags Cloud' },
+    { key: 'section_shabdkhoj_enabled', title: '🧩 शब्दखोज पहेली बैनर (Mobile Word Puzzle)', layout: 'Interactive Banner' },
   ];
 
   return (

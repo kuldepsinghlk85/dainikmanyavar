@@ -66,7 +66,7 @@ const DEFAULT_REELS: ReelItem[] = [
 export default function MobileReelsFeed({
   reels = [],
   title = 'बॉलीवुड REEL',
-  viewAllLink = '/video',
+  viewAllLink = '/mobile/category/video',
 }: MobileReelsFeedProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const items = reels && reels.length > 0 ? reels : DEFAULT_REELS;
@@ -99,7 +99,7 @@ export default function MobileReelsFeed({
           className="flex gap-2.5 overflow-x-auto px-3.5 no-scrollbar scroll-smooth"
         >
           {items.map((reel, idx) => {
-            const href = reel.slug && !reel.id?.startsWith('reel-') ? `/mobile/news/${reel.slug}` : (viewAllLink || '/video');
+            const href = reel.slug && !reel.id?.startsWith('reel-') ? `/mobile/news/${reel.slug}` : (viewAllLink || '/mobile/category/video');
             return (
               <Link
                 key={reel.id || idx}

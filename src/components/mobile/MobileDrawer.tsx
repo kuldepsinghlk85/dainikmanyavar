@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -265,7 +265,7 @@ export default function MobileDrawer({
     {
       id: 'jaunpur',
       title: 'जौनपुर हलचल',
-      href: '/district/जौनपुर',
+      href: '/mobile/category/जौनपुर',
       icon: <JaunpurIcon />,
     },
     {
@@ -278,7 +278,7 @@ export default function MobileDrawer({
     {
       id: 'dm-investigation',
       title: 'मान्यवर इन्वेस्टिगेशन (पड़ताल)',
-      href: '/category/investigation',
+      href: '/mobile/category/investigation',
       icon: <InvestigationEyeIcon />,
       badge: 'SPECIAL',
     },
@@ -291,13 +291,13 @@ export default function MobileDrawer({
     {
       id: 'dm-special',
       title: 'मान्यवर विशेष (खास)',
-      href: '/category/special',
+      href: '/mobile/category/special',
       icon: <SpecialStarIcon />,
     },
     {
       id: 'dm-original',
       title: 'DM ओरिजिनल',
-      href: '/category/original',
+      href: '/mobile/category/original',
       icon: <DmOriginalIcon />,
       badge: 'ORIGINAL',
     },
@@ -374,7 +374,7 @@ export default function MobileDrawer({
             </div>
           </div>
           <Link
-            href="/user/dashboard"
+            href="/user/dashboard?from=mobile"
             onClick={onClose}
             className="px-2.5 py-1 bg-[#E53935] text-white text-[11px] font-bold rounded-lg shadow-xs hover:bg-red-700"
           >
@@ -422,7 +422,7 @@ export default function MobileDrawer({
               {DISTRICTS.map((d) => (
                 <Link
                   key={d}
-                  href={`/district/${encodeURIComponent(d)}`}
+                  href={`/mobile/category/${encodeURIComponent(d)}`}
                   onClick={onClose}
                   className="text-[11px] font-bold bg-white dark:bg-stone-800 hover:bg-red-50 dark:hover:bg-red-950/30 text-stone-700 dark:text-stone-300 hover:text-[#E53935] px-2.5 py-1 rounded-lg border border-stone-200/80 dark:border-stone-700 shadow-2xs"
                 >
@@ -433,25 +433,14 @@ export default function MobileDrawer({
           </div>
         )}
 
-        {/* Footer Info & Desktop Switch */}
+        {/* Footer Info */}
         <div className="p-3 bg-stone-50 dark:bg-[#181818] border-t border-stone-200 dark:border-stone-800 mt-auto space-y-2 text-xs font-semibold text-stone-600 dark:text-stone-400">
-          {config.showDesktopSwitch !== false && (
-            <Link
-              href="/?view=desktop"
-              onClick={onClose}
-              className="flex items-center justify-center gap-2 w-full py-2 bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 rounded-xl text-stone-800 dark:text-white font-black hover:bg-stone-100 dark:hover:bg-stone-700 active:scale-98 shadow-2xs"
-            >
-              <Monitor className="w-4 h-4 text-[#E53935]" />
-              <span>🖥️ डेस्कटॉप वर्जन देखें</span>
-            </Link>
-          )}
-
           {config.showContact !== false && (
             <div className="flex justify-between items-center text-[11px] text-stone-500 dark:text-stone-400 pt-1">
-              <Link href="/contact" onClick={onClose} className="hover:underline flex items-center gap-1">
+              <Link href="/mobile/contact" onClick={onClose} className="hover:underline flex items-center gap-1">
                 <Phone className="w-3 h-3" /> संपर्क
               </Link>
-              <Link href="/contact" onClick={onClose} className="hover:underline flex items-center gap-1">
+              <Link href="/mobile/contact" onClick={onClose} className="hover:underline flex items-center gap-1">
                 <Info className="w-3 h-3" /> हमारे बारे में
               </Link>
             </div>

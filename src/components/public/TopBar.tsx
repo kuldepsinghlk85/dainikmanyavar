@@ -28,13 +28,6 @@ export default function TopBar() {
           <span className="hidden sm:inline">📍 उत्तर प्रदेश</span>
         </div>
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap text-[11px] sm:text-xs">
-          <Link
-            href="/mobile"
-            className="bg-[#EA580C] hover:bg-orange-700 text-white font-black text-[10px] px-2 py-0.5 rounded-full shadow-xs flex items-center gap-1"
-          >
-            <span>📱 मोबाइल संस्करण</span>
-          </Link>
-          <span className="text-stone-300 hidden sm:inline">|</span>
           <Link href="/category/latest" className="hover:text-[#EA580C] font-medium hidden sm:inline">
             ताज़ा ख़बरें
           </Link>

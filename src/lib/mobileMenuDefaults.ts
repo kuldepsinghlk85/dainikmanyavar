@@ -33,11 +33,11 @@ export interface MobileMenuConfig {
 export const DEFAULT_MOBILE_MENU_CONFIG: MobileMenuConfig = {
   bottomNav: [
     { id: 'home', label: 'होम', icon: 'Home', href: '/mobile', enabled: true, order: 1 },
-    { id: 'video', label: 'वीडियो', icon: 'Video', href: '/video', enabled: true, order: 2 },
-    { id: 'search', label: 'सर्च', icon: 'Search', href: '/search', enabled: true, order: 3 },
-    { id: 'watch', label: 'वॉच', icon: 'Watch', href: '/video', enabled: true, order: 4 },
+    { id: 'video', label: 'वीडियो', icon: 'Video', href: '/mobile/category/video', enabled: true, order: 2 },
+    { id: 'search', label: 'सर्च', icon: 'Search', href: '/mobile/search', enabled: true, order: 3 },
+    { id: 'watch', label: 'वॉच', icon: 'Watch', href: '/mobile/category/video', enabled: true, order: 4 },
     { id: 'webstories', label: 'वेब स्टोरीज', icon: 'Stories', href: '/mobile', enabled: true, order: 5 },
-    { id: 'epaper', label: 'ई-पेपर', icon: 'Newspaper', href: '/epaper', enabled: true, order: 6 },
+    { id: 'epaper', label: 'ई-पेपर', icon: 'Newspaper', href: '/mobile/epaper', enabled: true, order: 6 },
     { id: 'profile', label: 'प्रोफाइल', icon: 'User', href: '/user/dashboard', enabled: true, order: 7 },
   ],
   header: {

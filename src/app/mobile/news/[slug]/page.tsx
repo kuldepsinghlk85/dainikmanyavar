@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
-import { formatHindiTimeAgo } from '@/lib/utils';
+import { formatHindiTimeAgo, getPublicSiteUrl } from '@/lib/utils';
 import { ArrowLeft, Clock, Eye, Share2, MessageCircle, Volume2 } from 'lucide-react';
 import MobileNewsList from '@/components/mobile/MobileNewsList';
 import MobileFooter from '@/components/mobile/MobileFooter';
@@ -132,9 +132,10 @@ export default async function MobileNewsDetailPage({
     },
   });
 
-  const shareUrl = `https://dainikmanyavar.com/news/${article.slug}`;
-  const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(
-    article.title + '\n\nपूरा समाचार पढ़ें: ' + shareUrl
+  const siteUrl = getPublicSiteUrl();
+  const shareUrl = `${siteUrl}/mobile/news/${encodeURIComponent(article.slug)}`;
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(
+    article.title + '\n\nपूरा समाचार मोबाइल पर पढ़ें: ' + shareUrl
   )}`;
 
   return (

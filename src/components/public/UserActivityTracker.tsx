@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Bookmark, BookmarkCheck, Share2, Heart, MessageCircle } from 'lucide-react';
+import { getPublicSiteUrl } from '@/lib/utils';
 
 interface UserActivityTrackerProps {
   newsId: string;
@@ -95,6 +96,10 @@ export default function UserActivityTracker({
 
   // Handle Tracked WhatsApp Share
   const handleWhatsAppShare = async () => {
+    const publicBase = getPublicSiteUrl();
+    const fallbackPath = isMobile ? `/mobile/news/${encodeURIComponent(newsSlug)}` : `/news/${encodeURIComponent(newsSlug)}`;
+    const fallbackUrl = `${publicBase}${fallbackPath}`;
+
     try {
       const res = await fetch('/api/share', {
         method: 'POST',
@@ -102,15 +107,19 @@ export default function UserActivityTracker({
         body: JSON.stringify({ newsId, platform: 'whatsapp' }),
       });
       const data = await res.json();
-      const generatedShareUrl = data.success ? data.shareUrl : window.location.href;
-      setShareUrl(generatedShareUrl);
+      let targetShareUrl = data.success && data.shareUrl ? data.shareUrl : fallbackUrl;
+      if (targetShareUrl.includes('localhost') || targetShareUrl.includes('127.0.0.1')) {
+        targetShareUrl = targetShareUrl.replace(/^https?:\/\/[^/]+/, publicBase);
+      }
+      setShareUrl(targetShareUrl);
 
-      const shareText = `*दैनिक मान्यवर*\n${newsTitle}\n\nपूरी खबर पढ़ें:\n${generatedShareUrl}`;
-      const waLink = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
+      const shareText = `*दैनिक मान्यवर*\n${newsTitle}\n\nपूरी खबर पढ़ें:\n${targetShareUrl}`;
+      const waLink = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
       window.open(waLink, '_blank');
     } catch (_) {
-      const fallbackLink = `https://api.whatsapp.com/send?text=${encodeURIComponent(newsTitle + ' ' + window.location.href)}`;
-      window.open(fallbackLink, '_blank');
+      const shareText = `*दैनिक मान्यवर*\n${newsTitle}\n\nपूरी खबर पढ़ें:\n${fallbackUrl}`;
+      const waLink = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+      window.open(waLink, '_blank');
     }
   };
 

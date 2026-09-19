@@ -47,7 +47,7 @@ export async function GET(
     }
 
     const isMobile = request.headers.get('user-agent')?.toLowerCase().includes('mobile');
-    const targetPath = isMobile ? `/mobile/news/${article.slug}` : `/news/${article.slug}`;
+    const targetPath = isMobile ? `/mobile/news/${encodeURIComponent(article.slug)}` : `/news/${encodeURIComponent(article.slug)}`;
 
     return NextResponse.redirect(new URL(targetPath, request.url));
   } catch (error) {

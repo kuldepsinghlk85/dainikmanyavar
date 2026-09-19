@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -39,7 +39,7 @@ export default function MobileBottomNav({
 
         {/* 2. वीडियो (Video) */}
         <Link
-          href="/video"
+          href="/mobile/category/video"
           className={`flex flex-col items-center justify-center py-1 transition-colors ${
             isVideo
               ? 'text-[#E53935] font-black'
@@ -53,7 +53,7 @@ export default function MobileBottomNav({
         {/* 3. Center Elevated Button with Golden Crown + 'म' (Amar Ujala style) */}
         <div className="flex flex-col items-center justify-center relative">
           <Link
-            href="/epaper"
+            href="/mobile/epaper"
             title="दैनिक मान्यवर प्रीमियम व ई-पेपर"
             className="w-12 h-12 rounded-full -mt-6 bg-[#1e1e1e] dark:bg-[#181818] border-2 border-amber-400/90 shadow-lg shadow-black/40 flex flex-col items-center justify-center active:scale-95 transition-transform group"
           >
@@ -66,7 +66,7 @@ export default function MobileBottomNav({
 
         {/* 4. ई-पेपर (ePaper) */}
         <Link
-          href="/epaper"
+          href="/mobile/epaper"
           className={`flex flex-col items-center justify-center py-1 transition-colors ${
             isEpaper
               ? 'text-[#E53935] font-black'

@@ -24,7 +24,7 @@ export default function MobileVideoFeed({ videos = [] }: { videos: VideoItem[] }
           <Video className="w-4 h-4 text-red-500" />
           <span>वीडियो बुलेटिन</span>
         </h3>
-        <Link href="/video" className="text-[11px] font-bold text-stone-400 hover:text-white">
+        <Link href="/mobile/category/video" className="text-[11px] font-bold text-stone-400 hover:text-white">
           सभी वीडियो &rarr;
         </Link>
       </div>

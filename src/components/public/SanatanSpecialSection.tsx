@@ -17,6 +17,7 @@ import {
   Flame,
   ExternalLink,
 } from 'lucide-react';
+import { getPublicSiteUrl } from '@/lib/utils';
 import { DEFAULT_FESTIVE_CONFIG, FestiveCard, FestiveConfig } from '@/lib/festive';
 
 interface VideoCardProps {
@@ -316,16 +317,17 @@ export default function SanatanSpecialSection({ config }: SanatanSpecialSectionP
 
   const handleShare = async () => {
     if (typeof window === 'undefined') return;
+    const siteUrl = getPublicSiteUrl();
     if (navigator.share) {
       try {
         await navigator.share({
           title: `${currentConfig.brandPrefix} - ${currentConfig.mainTitle}`,
           text: currentConfig.subtitle,
-          url: window.location.origin,
+          url: siteUrl,
         });
       } catch {}
     } else {
-      navigator.clipboard.writeText(window.location.origin);
+      navigator.clipboard.writeText(siteUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     }

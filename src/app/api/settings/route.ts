@@ -11,6 +11,7 @@ export async function GET() {
           in: [
             'site_name',
             'site_subtitle',
+            'site_tagline',
             'site_logo',
             'festival_banner_enabled',
             'festival_banner_image',

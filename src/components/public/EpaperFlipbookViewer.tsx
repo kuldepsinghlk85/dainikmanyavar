@@ -16,6 +16,8 @@ import {
   Volume2,
   X,
 } from 'lucide-react';
+import { getPublicSiteUrl } from '@/lib/utils';
+import VoiceInputButton from '@/components/public/VoiceInputButton';
 
 interface PageItem {
   id: string;
@@ -186,8 +188,12 @@ export default function EpaperFlipbookViewer({ edition }: FlipbookProps) {
   };
 
   const handleShare = () => {
-    const text = `दैनिक मान्यवर आज का ई-पेपर (${new Date(edition.editionDate).toLocaleDateString('hi-IN')}) ऑनलाइन पढ़ें: ${window.location.href}`;
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+    const siteUrl = getPublicSiteUrl();
+    const isMobile = typeof window !== 'undefined' && window.location.pathname.startsWith('/mobile');
+    const shareUrl = `${siteUrl}${isMobile ? '/mobile/epaper' : '/epaper'}`;
+    const dateStr = edition?.editionDate ? new Date(edition.editionDate).toLocaleDateString('hi-IN') : 'आज का';
+    const text = `*दैनिक मान्यवर*\nआज का ई-पेपर (${dateStr}) ऑनलाइन पढ़ें:\n${shareUrl}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const handleReadAudio = () => {
@@ -371,14 +377,25 @@ export default function EpaperFlipbookViewer({ edition }: FlipbookProps) {
               </button>
             </div>
 
-            <input
-              type="text"
-              autoFocus
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="उदा. प्रधानमंत्री, वाराणसी, जौनपुर, विकास, खेल..."
-              className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-[#EA580C]"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                autoFocus
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="उदा. प्रधानमंत्री, वाराणसी, जौनपुर, विकास, खेल..."
+                className="w-full p-3 pr-10 bg-slate-950 border border-slate-800 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-[#EA580C]"
+              />
+              <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                <VoiceInputButton
+                  onTranscript={(txt) => setSearchQuery(txt)}
+                  currentValue={searchQuery}
+                  placeholderHint="शब्द बोलिए..."
+                  size="sm"
+                  className="text-slate-400 hover:text-white"
+                />
+              </div>
+            </div>
 
             <div className="max-h-60 overflow-y-auto space-y-2 no-scrollbar">
               {searchResults?.map((p) => (

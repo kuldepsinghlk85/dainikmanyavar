@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -31,7 +31,7 @@ export default function MobileInteractiveBanner() {
 
       {/* Right: Action Button */}
       <Link
-        href="/epaper"
+        href="/mobile/epaper"
         className="bg-[#E53935] hover:bg-red-700 active:scale-95 text-white text-[11px] font-black px-3.5 py-1.5 rounded-lg shadow-sm shrink-0 transition-all"
       >
         अभी खेलें

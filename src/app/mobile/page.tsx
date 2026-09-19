@@ -134,6 +134,13 @@ export default async function MobileHomePage() {
     select: { id: true, name: true, slug: true },
   });
 
+  // 6. Section toggle settings
+  const shabdkhojSetting = await db.siteSetting.findUnique({
+    where: { key: 'section_shabdkhoj_enabled' },
+    select: { value: true },
+  });
+  const showShabdkhoj = shabdkhojSetting?.value === 'true';
+
   return (
     <div className="bg-stone-100 dark:bg-[#0D0D0D] min-h-screen transition-colors">
       {/* 1. Category Chips Bar (Amar Ujala style with filter button) */}
@@ -142,8 +149,8 @@ export default async function MobileHomePage() {
       {/* 2. Trending Topics Strip (Dainik Bhaskar style) */}
       <MobileTrendingBar />
 
-      {/* 3. Interactive Engagement Banner: 'शब्दखोज' (Amar Ujala style) */}
-      <MobileInteractiveBanner />
+      {/* 3. Interactive Engagement Banner: 'शब्दखोज' (disabled by default) */}
+      {showShabdkhoj && <MobileInteractiveBanner />}
 
       {/* 4. 'आज के अहम घटनाक्रम' (Amar Ujala style) */}
       <MobileKeyEvents article={leadArticle} />
@@ -166,7 +173,7 @@ export default async function MobileHomePage() {
           <MobileReelsFeed
             reels={formattedReels}
             title="वीडियो REEL"
-            viewAllLink="/video"
+            viewAllLink="/mobile/category/video"
           />
           <div className="h-2 bg-stone-100 dark:bg-[#0D0D0D] border-y border-stone-200/80 dark:border-stone-800/80" />
         </>
@@ -218,7 +225,7 @@ export default async function MobileHomePage() {
           <MobileNewsList
             articles={jaunpurArticles}
             sectionTitle="जौनपुर हलचल"
-            viewAllLink="/district/जौनपुर"
+            viewAllLink="/mobile/category/जौनपुर"
             buttonText="सभी खबरें"
             icon={<MapPin className="w-3.5 h-3.5 text-[#E53935]" />}
           />

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ImageUploader from '@/components/admin/ImageUploader';
 import HtmlContentEditor from '@/components/admin/HtmlContentEditor';
+import VoiceInputButton from '@/components/public/VoiceInputButton';
 import { ArrowLeft, Save, ExternalLink, Plus, MapPin, Upload, X, CheckCircle2 } from 'lucide-react';
 
 interface Category {
@@ -260,7 +261,19 @@ export default function AddNewsPage() {
       <form onSubmit={handleSubmit} className="space-y-5 bg-white p-6 rounded-xl border border-stone-200 shadow-sm">
         {/* Title */}
         <div>
-          <label className="block text-xs font-bold text-stone-700 mb-1">मुख्य शीर्षक (Headline) *</label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs font-bold text-stone-700">मुख्य शीर्षक (Headline) *</label>
+            <div className="flex items-center gap-1 bg-stone-100 px-2 py-0.5 rounded-lg">
+              <VoiceInputButton
+                mode="append"
+                onTranscript={(txt) => setTitle(txt)}
+                currentValue={title}
+                placeholderHint="मुख्य शीर्षक बोलिए..."
+                size="sm"
+              />
+              <span className="text-[10px] font-bold text-stone-600 select-none">बोलकर लिखें</span>
+            </div>
+          </div>
           <input
             type="text"
             required
@@ -273,7 +286,19 @@ export default function AddNewsPage() {
 
         {/* Subtitle */}
         <div>
-          <label className="block text-xs font-bold text-stone-700 mb-1">उप-शीर्षक (Secondary Headline)</label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs font-bold text-stone-700">उप-शीर्षक (Secondary Headline)</label>
+            <div className="flex items-center gap-1 bg-stone-100 px-2 py-0.5 rounded-lg">
+              <VoiceInputButton
+                mode="append"
+                onTranscript={(txt) => setSubtitle(txt)}
+                currentValue={subtitle}
+                placeholderHint="उप-शीर्षक बोलिए..."
+                size="sm"
+              />
+              <span className="text-[10px] font-bold text-stone-600 select-none">बोलकर लिखें</span>
+            </div>
+          </div>
           <input
             type="text"
             value={subtitle}
@@ -398,17 +423,28 @@ export default function AddNewsPage() {
           </div>
 
           <div className="flex gap-2">
-            <input
-              type="text"
-              value={newTagName}
-              onChange={(e) => setNewTagName(e.target.value)}
-              placeholder="नया टैग नाम दर्ज करें..."
-              className="flex-1 p-2 text-xs border border-stone-300 rounded focus:outline-none focus:border-[#F97316]"
-            />
+            <div className="relative flex-1">
+              <input
+                type="text"
+                value={newTagName}
+                onChange={(e) => setNewTagName(e.target.value)}
+                placeholder="नया टैग नाम दर्ज करें..."
+                className="w-full p-2 pr-9 text-xs border border-stone-300 rounded focus:outline-none focus:border-[#F97316]"
+              />
+              <div className="absolute right-1.5 top-1/2 -translate-y-1/2">
+                <VoiceInputButton
+                  mode="append"
+                  onTranscript={(txt) => setNewTagName(txt)}
+                  currentValue={newTagName}
+                  placeholderHint="टैग बोलिए..."
+                  size="sm"
+                />
+              </div>
+            </div>
             <button
               type="button"
               onClick={handleCreateNewTag}
-              className="bg-[#F97316] text-white text-xs font-bold px-3 py-2 rounded hover:bg-[#EA580C]"
+              className="bg-[#F97316] text-white text-xs font-bold px-3 py-2 rounded hover:bg-[#EA580C] cursor-pointer"
             >
               + नया टैग जोड़ें
             </button>
@@ -417,7 +453,19 @@ export default function AddNewsPage() {
 
         {/* Excerpt Summary */}
         <div>
-          <label className="block text-xs font-bold text-stone-700 mb-1">संक्षिप्त विवरण (Excerpt Summary)</label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs font-bold text-stone-700">संक्षिप्त विवरण (Excerpt Summary)</label>
+            <div className="flex items-center gap-1 bg-stone-100 px-2 py-0.5 rounded-lg">
+              <VoiceInputButton
+                mode="append"
+                onTranscript={(txt) => setExcerpt(txt)}
+                currentValue={excerpt}
+                placeholderHint="संक्षिप्त विवरण बोलिए..."
+                size="sm"
+              />
+              <span className="text-[10px] font-bold text-stone-600 select-none">बोलकर लिखें</span>
+            </div>
+          </div>
           <textarea
             rows={2}
             value={excerpt}

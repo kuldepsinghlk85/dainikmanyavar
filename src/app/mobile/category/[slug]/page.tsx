@@ -52,6 +52,19 @@ export default async function MobileCategoryPage({
         category: { select: { name: true } },
       },
     });
+  } else if (decodedSlug.toLowerCase() === 'video' || decodedSlug.toLowerCase() === 'videos') {
+    categoryName = 'वीडियो समाचार (Video Bulletins)';
+    articles = await db.article.findMany({
+      where: {
+        status: 'PUBLISHED',
+        OR: [{ videoEnabled: true }, { videoUrl: { not: null } }],
+      },
+      orderBy: [{ publishedAt: 'desc' }, { newsId: 'desc' }],
+      take: 40,
+      include: {
+        category: { select: { name: true } },
+      },
+    });
   } else {
     // 1. Try finding Category by slug, name, or id
     const category = await db.category.findFirst({

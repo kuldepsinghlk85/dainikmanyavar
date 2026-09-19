@@ -7,6 +7,7 @@ import { Search, X, Bell, Sun, Moon } from 'lucide-react';
 import { HeaderButtonsConfig, DEFAULT_MOBILE_MENU_CONFIG } from '@/lib/mobileMenuDefaults';
 import { useMobileTheme } from './MobileThemeProvider';
 import MobileBrandLogo from './MobileBrandLogo';
+import VoiceInputButton from '@/components/public/VoiceInputButton';
 
 interface MobileHeaderProps {
   onOpenDrawer?: () => void;
@@ -33,8 +34,8 @@ export default function MobileHeader({
     <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#121212]/95 backdrop-blur-md border-b border-stone-200 dark:border-stone-800 transition-colors shadow-xs">
       {/* Top Main Bar matching Amar Ujala */}
       <div className="flex items-center justify-between px-3 py-2 min-h-[54px]">
-        {/* Left: Restructured Vector Brand Logo (No white box, completely transparent!) */}
-        <div className="flex-1 min-w-0 pr-2">
+        {/* Left: Restructured Vector Brand Logo */}
+        <div className="shrink-0 flex items-center pr-2">
           <MobileBrandLogo />
         </div>
 
@@ -42,7 +43,7 @@ export default function MobileHeader({
         <div className="flex items-center gap-2 shrink-0">
           {/* 1. Amar Ujala Style Rich Gold & Red Coin Badge */}
           <Link
-            href="/epaper"
+            href="/mobile/epaper"
             title="दैनिक मान्यवर ई-पेपर और विशेषांक"
             className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#FFD700] via-[#F59E0B] to-[#B45309] p-[2px] shadow-sm active:scale-95 transition-transform flex items-center justify-center shrink-0"
           >
@@ -104,15 +105,25 @@ export default function MobileHeader({
               onChange={(e) => setQuery(e.target.value)}
               placeholder="समाचार, मुद्दा या कीवर्ड खोजें..."
               autoFocus
-              className="w-full pl-9 pr-16 py-2 bg-white dark:bg-stone-900 text-xs font-semibold rounded-xl border border-stone-300 dark:border-stone-700 focus:outline-none focus:border-red-500 text-stone-900 dark:text-white"
+              className="w-full pl-9 pr-24 py-2 bg-white dark:bg-stone-900 text-xs font-semibold rounded-xl border border-stone-300 dark:border-stone-700 focus:outline-none focus:border-red-500 text-stone-900 dark:text-white"
             />
             <Search className="w-4 h-4 text-stone-400 absolute left-3 pointer-events-none" />
-            <button
-              type="submit"
-              className="absolute right-1.5 px-3 py-1 bg-[#E53935] hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"
-            >
-              खोजें
-            </button>
+            <div className="absolute right-1.5 flex items-center gap-1">
+              <VoiceInputButton
+                onTranscript={(text) => {
+                  setQuery(text);
+                  router.push(`/mobile/search?q=${encodeURIComponent(text)}`);
+                }}
+                size="sm"
+                placeholderHint="खोजने के लिए बोलिए..."
+              />
+              <button
+                type="submit"
+                className="px-2.5 py-1 bg-[#E53935] hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"
+              >
+                खोजें
+              </button>
+            </div>
           </form>
         </div>
       )}

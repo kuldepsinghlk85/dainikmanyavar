@@ -18,6 +18,7 @@ import {
   Briefcase,
   HelpCircle,
 } from 'lucide-react';
+import VoiceInputButton from '@/components/public/VoiceInputButton';
 
 const CATEGORIES = [
   { id: 'NEWS_TIP', label: '📰 समाचार / खबर की सूचना दें', desc: 'कोई बड़ी खबर, प्रेस नोट या घटना का विवरण साझा करें' },
@@ -391,9 +392,17 @@ export default function ContactForm() {
                 {/* Name & Phone */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-stone-700 mb-1">
-                      आपका पूरा नाम <span className="text-red-500">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-bold text-stone-700">
+                        आपका पूरा नाम <span className="text-red-500">*</span>
+                      </label>
+                      <VoiceInputButton
+                        onTranscript={(txt) => setFormData((prev) => ({ ...prev, name: txt }))}
+                        currentValue={formData.name}
+                        placeholderHint="नाम बोलिए..."
+                        size="sm"
+                      />
+                    </div>
                     <input
                       type="text"
                       required
@@ -436,9 +445,17 @@ export default function ContactForm() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-stone-700 mb-1">
-                      ज़िला / शहर (City / District)
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-bold text-stone-700">
+                        ज़िला / शहर (City / District)
+                      </label>
+                      <VoiceInputButton
+                        onTranscript={(txt) => setFormData((prev) => ({ ...prev, location: txt }))}
+                        currentValue={formData.location}
+                        placeholderHint="ज़िला या शहर बोलिए..."
+                        size="sm"
+                      />
+                    </div>
                     <input
                       type="text"
                       placeholder="उदा. लखनऊ, वाराणसी, प्रयागराज..."
@@ -451,9 +468,17 @@ export default function ContactForm() {
 
                 {/* Subject */}
                 <div>
-                  <label className="block text-xs font-bold text-stone-700 mb-1">
-                    विषय / मुख्य शीर्षक (Subject) <span className="text-red-500">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-stone-700">
+                      विषय / मुख्य शीर्षक (Subject) <span className="text-red-500">*</span>
+                    </label>
+                    <VoiceInputButton
+                      onTranscript={(txt) => setFormData((prev) => ({ ...prev, subject: txt }))}
+                      currentValue={formData.subject}
+                      placeholderHint="विषय बोलिए..."
+                      size="sm"
+                    />
+                  </div>
                   <input
                     type="text"
                     required
@@ -466,9 +491,18 @@ export default function ContactForm() {
 
                 {/* Message */}
                 <div>
-                  <label className="block text-xs font-bold text-stone-700 mb-1">
-                    विस्तृत संदेश / खबर या विज्ञापन का विवरण <span className="text-red-500">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-stone-700">
+                      विस्तृत संदेश / खबर या विज्ञापन का विवरण <span className="text-red-500">*</span>
+                    </label>
+                    <VoiceInputButton
+                      mode="append"
+                      onTranscript={(txt) => setFormData((prev) => ({ ...prev, message: txt }))}
+                      currentValue={formData.message}
+                      placeholderHint="संदेश बोलिए..."
+                      size="sm"
+                    />
+                  </div>
                   <textarea
                     required
                     rows={4}

@@ -30,7 +30,7 @@ export default function MobileBreakingNews({ items = [] }: MobileBreakingNewsPro
 
   const current = items[index];
   const targetSlug = current.article?.slug || current.slug;
-  const href = targetSlug ? `/mobile/news/${targetSlug}` : '/mobile';
+  const href = targetSlug ? `/mobile/news/${encodeURIComponent(targetSlug)}` : '/mobile';
 
   return (
     <div className="bg-red-50 border-y border-red-200 px-3 py-1.5 flex items-center gap-2">

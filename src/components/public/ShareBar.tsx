@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Share2, Heart, Copy, Check } from 'lucide-react';
-import { formatCount } from '@/lib/utils';
+import { formatCount, getPublicSiteUrl } from '@/lib/utils';
 
 interface ShareBarProps {
   articleId: string;
@@ -16,8 +16,8 @@ export default function ShareBar({ articleId, title, slug, initialLikeCount = 0 
   const [liked, setLiked] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://dainikmanyawar.in';
-  const articleUrl = `${siteUrl}/news/${slug}`;
+  const siteUrl = getPublicSiteUrl();
+  const articleUrl = `${siteUrl}/news/${encodeURIComponent(slug)}`;
 
   const handleLike = async () => {
     if (liked) return;
@@ -34,8 +34,8 @@ export default function ShareBar({ articleId, title, slug, initialLikeCount = 0 
   };
 
   const handleWhatsAppShare = () => {
-    const text = encodeURIComponent(`*${title}*\n\nपूरी खबर पढ़ें दैनिक मान्यवर पर:\n${articleUrl}`);
-    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+    const text = encodeURIComponent(`*${title}*\n\nपूरी खबर पढ़ें:\n${articleUrl}`);
+    window.open(`https://wa.me/?text=${text}`, '_blank');
   };
 
   const handleFacebookShare = () => {
