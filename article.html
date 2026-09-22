@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="hi" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>समाचार | दैनिक मान्यवर</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top Bar: Date and Social Profile Icons -->
+  <header>
+    <div class="top-bar">
+      <div class="date-time" id="hindi-date-time">
+        लोड हो रहा है...
+      </div>
+      <div class="social-links">
+        <a href="https://facebook.com" target="_blank" class="social-icon facebook" title="Facebook">FB</a>
+        <a href="https://twitter.com" target="_blank" class="social-icon twitter" title="Twitter">X</a>
+        <a href="https://youtube.com" target="_blank" class="social-icon youtube" title="YouTube">YT</a>
+        <a href="https://instagram.com" target="_blank" class="social-icon instagram" title="Instagram">IG</a>
+        <a href="https://whatsapp.com" target="_blank" class="social-icon whatsapp" title="WhatsApp">WA</a>
+        <a href="https://dailyhunt.in" target="_blank" class="social-icon dailyhunt" title="Dailyhunt">DH</a>
+      </div>
+    </div>
+
+    <!-- Main Branding Logo and Ad Space -->
+    <div class="header-brand-container">
+      <div class="logo-area">
+        <a href="index.html">
+          <h1 class="logo-title">दैनिक <span>मान्यवर</span></h1>
+          <span class="logo-subtitle">Dainik Manyawar</span>
+        </a>
+      </div>
+      
+      <!-- Sponsored Top Ad Banner -->
+      <div class="header-ad">
+        <div class="header-ad-badge">विज्ञापन</div>
+        <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=728&h=90" alt="News Portal Development Ad" onclick="alert('7K Network - Leading News Portal Development Company in India')">
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Bar with Search and Theme Toggle -->
+  <nav class="navbar">
+    <ul class="nav-links">
+      <li><a href="index.html" data-cat="home">मुख्य पृष्ठ</a></li>
+      <li><a href="category.html?cat=politics" data-cat="politics">राजनीति</a></li>
+      <li><a href="category.html?cat=national" data-cat="national">देश</a></li>
+      <li><a href="category.html?cat=defense" data-cat="defense">डिफेंस</a></li>
+      <li><a href="category.html?cat=education" data-cat="education">शिक्षा</a></li>
+      <li><a href="category.html?cat=economy" data-cat="economy">अर्थजगत</a></li>
+      <li><a href="category.html?cat=health" data-cat="health">हेल्थ</a></li>
+      <li><a href="category.html?cat=foreign" data-cat="foreign">विदेश</a></li>
+      <li><a href="category.html?cat=opinion" data-cat="opinion">मत-विमत</a></li>
+      <li><a href="category.html?cat=society" data-cat="society">समाज-संस्कृति</a></li>
+      <li><a href="feed.html" style="color:var(--accent); font-weight: bold;">📰 फीड</a></li>
+      <li><a href="epaper.html" style="background:#b91c1c; color:#ffffff; padding:4px 10px; border-radius:4px; font-weight:bold;">📄 ई-पेपर</a></li>
+    </ul>
+
+    <div class="nav-actions">
+      <!-- Search Box Input -->
+      <div style="display: flex; align-items: center; background: rgba(255,255,255,0.1); border-radius: 20px; padding: 2px 10px;">
+        <input type="text" id="search-input" placeholder="खोजें..." style="background:none; border:none; color:white; outline:none; font-size:14px; width:100px;">
+        <button id="search-trigger" class="search-btn" aria-label="Search">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        </button>
+      </div>
+
+      <!-- Theme Toggle -->
+      <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle Theme"></button>
+
+      <!-- Admin trigger -->
+      <a href="admin.html" class="admin-btn" title="समाचार मास्टर CMS">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Live Ticker -->
+  <div class="ticker-wrap">
+    <div class="ticker" id="ticker-tape"></div>
+  </div>
+
+  <!-- Dynamic Container -->
+  <main class="container" id="main-container">
+    <!-- Injected by app.js -->
+  </main>
+
+  <!-- Footer Area -->
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-about">
+        <h3 class="footer-widget-title">दैनिक मान्यवर</h3>
+        <p>दैनिक मान्यवर भारत का एक प्रमुख स्वतंत्र डिजिटल हिंदी समाचार पोर्टल है। हम राजनीति, सामाजिक-सांस्कृतिक मुद्दों, शिक्षा, स्वास्थ्य, और राष्ट्रीय-अंतरराष्ट्रीय समाचारों को सत्यता और निष्पक्षता के साथ आप तक पहुँचाने के लिए प्रतिबद्ध हैं।</p>
+      </div>
+      <div>
+        <h3 class="footer-widget-title">श्रेणियां</h3>
+        <ul class="footer-links-list">
+          <li><a href="category.html?cat=politics">राजनीति समाचार</a></li>
+          <li><a href="category.html?cat=national">देश / राष्ट्रीय</a></li>
+          <li><a href="category.html?cat=defense">रक्षा / डिफेंस समाचार</a></li>
+          <li><a href="category.html?cat=economy">व्यापार और अर्थजगत</a></li>
+          <li><a href="category.html?cat=society">समाज एवं संस्कृति</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="footer-widget-title">हमसे संपर्क करें</h3>
+        <p style="font-size:14px; line-height:1.7;">
+          ईमेल: info@dainikmanyawar.in<br>
+          फोन: +91 12345 67890<br>
+          पता: लखनऊ, उत्तर प्रदेश, भारत
+        </p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>Copyright &copy; 2026 Dainik Manyawar | All Rights Reserved.</div>
+      <div class="footer-bottom-links">
+        <a href="index.html">Home</a>
+        <a href="#" onclick="event.preventDefault(); alert('About...')">About Us</a>
+        <a href="#" onclick="event.preventDefault(); alert('Disclaimer...')">Disclaimer</a>
+        <a href="#" onclick="event.preventDefault(); alert('Contact...')">Contact Us</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

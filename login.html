@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>एडमिन लॉगिन | दैनिक मान्यवर</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="login-body">
+
+  <div class="login-card">
+    <div class="login-logo">दैनिक <span>मान्यवर</span></div>
+    <div class="login-subtitle">CMS ADMIN PORTAL LOGIN</div>
+
+    <!-- Error Alert Box -->
+    <div class="login-error" id="login-err-box"></div>
+
+    <form class="login-form" id="admin-login-form">
+      <div class="form-group">
+        <label for="username">यूज़रनेम (Username) *</label>
+        <input type="text" id="username" class="form-control" placeholder="admin" required>
+      </div>
+
+      <div class="form-group">
+        <label for="password">पासवर्ड (Password) *</label>
+        <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+      </div>
+
+      <button type="submit" class="login-btn">लॉग इन करें</button>
+    </form>
+    
+    <div style="margin-top: 25px; font-size: 12px; color: rgba(255,255,255,0.4); font-family: var(--font-en);">
+      Default: admin / admin123
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Redirect if already logged in
+      if (localStorage.getItem("dm_admin_token")) {
+        window.location.href = "admin.html";
+        return;
+      }
+
+      const form = document.getElementById("admin-login-form");
+      const errBox = document.getElementById("login-err-box");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        errBox.style.display = "none";
+        
+        const username = document.getElementById("username").value.trim();
+        const password = document.getElementById("password").value.trim();
+
+        try {
+          const res = await fetch("/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+          });
+
+          const data = await res.json();
+
+          if (res.status === 200) {
+            localStorage.setItem("dm_admin_token", data.token);
+            window.location.href = "admin.html";
+          } else {
+            errBox.innerText = data.error || "लॉगिन विफल रहा!";
+            errBox.style.display = "block";
+          }
+        } catch (err) {
+          errBox.innerText = "सर्वर से संपर्क करने में त्रुटि हुई।";
+          errBox.style.display = "block";
+          console.error(err);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="hi" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ई-पेपर | दैनिक मान्यवर (Dainik Manyawar E-Paper Viewer)</title>
+  
+  <!-- Google Fonts: Rozha One, Noto Sans Devanagari, Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Rozha+One&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    /* Dedicated E-Paper Reader Design */
+    :root {
+      --ep-red: #b91c1c;
+      --ep-dark-red: #7f1d1d;
+      --ep-bg-dark: #0f172a;
+      --ep-card-bg: #1e293b;
+    }
+
+    .ep-header-container {
+      background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 50%, #991b1b 100%);
+      color: #ffffff;
+      padding: 16px 24px;
+      border-radius: var(--radius-md);
+      margin-bottom: 18px;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .ep-header-left h1 {
+      font-family: var(--font-serif);
+      font-size: 26px;
+      margin: 0;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ep-header-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+      font-size: 13px;
+    }
+
+    .ep-badge {
+      background: rgba(255,255,255,0.18);
+      backdrop-filter: blur(4px);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 500;
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+
+    .ep-header-right {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Archive & Date Selector */
+    .archive-box {
+      display: flex;
+      align-items: center;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 6px;
+      padding: 4px 10px;
+      gap: 8px;
+    }
+    .archive-box label {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .archive-select {
+      background: #ffffff;
+      color: #1e293b;
+      border: none;
+      padding: 5px 8px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+    }
+
+    /* Reading Controls Toolbar */
+    .epaper-toolbar {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 10px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+      position: sticky;
+      top: 60px;
+      z-index: 50;
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .ep-btn {
+      background-color: var(--bg-body);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition);
+      user-select: none;
+    }
+
+    .ep-btn:hover {
+      background-color: #b91c1c;
+      color: white;
+      border-color: #b91c1c;
+    }
+
+    .ep-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      border-color: var(--border-color);
+      background-color: var(--bg-body);
+      color: var(--text-secondary);
+    }
+
+    .ep-btn-active {
+      background-color: #b91c1c !important;
+      color: white !important;
+      border-color: #b91c1c !important;
+    }
+
+    .ep-btn-download {
+      background-color: #ffffff;
+      color: #b91c1c;
+      border: 1px solid #ffffff;
+      font-weight: 700;
+    }
+    .ep-btn-download:hover {
+      background-color: #f8fafc;
+      color: #991b1b;
+    }
+
+    .ep-select {
+      background-color: var(--bg-body);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* Main Reading Canvas Box */
+    .epaper-viewport-container {
+      background-color: #0f172a;
+      background-image: radial-gradient(#1e293b 1px, transparent 1px);
+      background-size: 20px 20px;
+      border-radius: var(--radius-md);
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      overflow: auto;
+      min-height: 700px;
+      max-height: 86vh;
+      border: 1px solid var(--border-color);
+      box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+      position: relative;
+      cursor: default;
+    }
+
+    .epaper-viewport-container.panning {
+      cursor: grab;
+    }
+    .epaper-viewport-container.panning:active {
+      cursor: grabbing;
+    }
+    .epaper-viewport-container.clipping {
+      cursor: crosshair !important;
+    }
+
+    .epaper-page-wrapper {
+      transition: transform 0.15s ease-out;
+      transform-origin: top center;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+      background: white;
+      position: relative;
+      user-select: none;
+    }
+
+    .epaper-page-wrapper img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      pointer-events: none;
+    }
+
+    /* Crop / Clipping Selection Overlay */
+    #crop-selection-box {
+      position: absolute;
+      border: 2px dashed #dc2626;
+      background: rgba(220, 38, 38, 0.2);
+      display: none;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    /* Bottom Page Filmstrip */
+    .filmstrip-container {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-top: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+    .filmstrip-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+    }
+    .filmstrip-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .filmstrip-scroll {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scroll-behavior: smooth;
+    }
+    .filmstrip-item {
+      flex: 0 0 140px;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      cursor: pointer;
+      background: var(--bg-body);
+      text-align: center;
+      transition: var(--transition);
+      box-shadow: var(--shadow-sm);
+    }
+    .filmstrip-item:hover {
+      border-color: #b91c1c;
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+    }
+    .filmstrip-item.active {
+      border-color: #b91c1c;
+      box-shadow: 0 0 0 2px #b91c1c;
+      background: rgba(185, 28, 28, 0.05);
+    }
+    .filmstrip-item img {
+      width: 100%;
+      height: 190px;
+      object-fit: cover;
+      display: block;
+    }
+    .filmstrip-item-label {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 4px;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* Modal for Article Clipping Result */
+    .clip-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .clip-modal.active {
+      display: flex;
+    }
+    .clip-modal-content {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border-radius: var(--radius-md);
+      max-width: 650px;
+      width: 100%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+    .clip-modal-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-body);
+    }
+    .clip-modal-header h3 {
+      margin: 0;
+      font-size: 17px;
+      color: var(--text-primary);
+    }
+    .clip-modal-body {
+      padding: 20px;
+      overflow: auto;
+      text-align: center;
+      background: #334155;
+    }
+    .clip-modal-body img {
+      max-width: 100%;
+      max-height: 55vh;
+      border-radius: 4px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      background: white;
+    }
+    .clip-modal-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px;
+      background: var(--bg-body);
+    }
+
+    /* Toast Notification */
+    .ep-toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e293b;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      display: none;
+      z-index: 10000;
+      border-left: 4px solid #b91c1c;
+      transition: all 0.3s ease;
+    }
+    .ep-toast.show {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Clipping guide alert */
+    .clipping-banner {
+      background: #fef08a;
+      color: #854d0e;
+      border: 1px solid #fde047;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Informational Utility Bar -->
+  <header class="top-bar">
+    <div class="top-bar-inner">
+      <div id="hindi-date-time">गुरुवार, 10 सितंबर 2026</div>
+      <div class="edition-notice">
+        <span>वाराणसी एवं जौनपुर से प्रकाशित</span>
+        <span>•</span>
+        <span>मूल्य: ₹ 3.00 (8 पृष्ठ)</span>
+        <span>•</span>
+        <span>RNI No: 95295</span>
+      </div>
+      <div>
+        <a href="login.html" style="color:white; text-decoration:none; font-weight:600;">एडमिन लॉगिन »</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Masthead Branding -->
+  <div class="masthead">
+    <div class="masthead-main">
+      <h1 class="logo-title" onclick="location.href='index.html'" style="cursor:pointer;">दैनिक मान्यवर</h1>
+      <p class="tagline">निष्पक्ष एवं निर्भीक राष्ट्रीय हिंदी दैनिक समाचार पत्र</p>
+    </div>
+  </div>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <ul class="nav-links">
+      <li><a href="index.html" data-cat="home">मुख्य पृष्ठ</a></li>
+      <li><a href="category.html?cat=politics" data-cat="politics">राजनीति</a></li>
+      <li><a href="category.html?cat=national" data-cat="national">देश</a></li>
+      <li><a href="category.html?cat=defense" data-cat="defense">डिफेंस</a></li>
+      <li><a href="category.html?cat=education" data-cat="education">शिक्षा</a></li>
+      <li><a href="category.html?cat=economy" data-cat="economy">अर्थजगत</a></li>
+      <li><a href="category.html?cat=health" data-cat="health">हेल्थ</a></li>
+      <li><a href="category.html?cat=foreign" data-cat="foreign">विदेश</a></li>
+      <li><a href="category.html?cat=opinion" data-cat="opinion">मत-विमत</a></li>
+      <li><a href="category.html?cat=society" data-cat="society">समाज-संस्कृति</a></li>
+      <li><a href="feed.html" style="color:var(--accent); font-weight: bold;">📰 फीड</a></li>
+      <li class="active"><a href="epaper.html" style="background:#b91c1c; color:#ffffff; padding:4px 10px; border-radius:4px; font-weight:bold;">📄 ई-पेपर</a></li>
+    </ul>
+
+    <div class="nav-actions">
+      <!-- Theme Switcher Toggle -->
+      <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle Theme"></button>
+      <!-- Admin Add News trigger -->
+      <a href="admin.html" class="admin-btn" title="समाचार मास्टर CMS" aria-label="Admin Write Post">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="container" style="margin-top: 20px;">
+
+    <!-- E-Paper Banner Header -->
+    <div class="ep-header-container">
+      <div class="ep-header-left">
+        <h1 id="ep-title">📄 दैनिक मान्यवर - ई-पेपर (E-Paper Reader)</h1>
+        <div class="ep-header-badges">
+          <span class="ep-badge" id="ep-edition">📍 संस्करण: वाराणसी - जौनपुर</span>
+          <span class="ep-badge" id="ep-date">📅 10 सितंबर 2026, गुरुवार</span>
+          <span class="ep-badge" id="ep-issue">📰 वर्ष 20, अंक 43 | ₹ 3.00</span>
+          <span class="ep-badge" id="ep-pages-badge">📄 कुल 8 पृष्ठ</span>
+        </div>
+      </div>
+
+      <div class="ep-header-right">
+        <!-- Date Archive Selector -->
+        <div class="archive-box">
+          <label for="archive-dropdown">📅 पुराने अंक:</label>
+          <select id="archive-dropdown" class="archive-select" onchange="onArchiveSelect(this.value)">
+            <option value="">लोड हो रहा है...</option>
+          </select>
+        </div>
+
+        <!-- Download Full PDF Button -->
+        <a id="btn-download-pdf" href="/uploads/epaper/dainik-manyawar-10-sep-2026.pdf" download class="ep-btn ep-btn-download">
+          📥 डाउनलोड पूरा अखबार (PDF)
+        </a>
+      </div>
+    </div>
+
+    <!-- Active Clipping Banner Notification -->
+    <div id="clipping-banner" class="clipping-banner">
+      <span>✂ <strong>कतरन मोड सक्रिय:</strong> माउस से अखबार की किसी भी खबर या तस्वीर को ड्रैग करके सेलेक्ट करें।</span>
+      <button class="ep-btn" onclick="cancelClipping()" style="padding:2px 8px; font-size:12px;">रद्द करें (Esc)</button>
+    </div>
+
+    <!-- Reading Controls Toolbar -->
+    <div class="epaper-toolbar">
+      <!-- Left: Page Navigator -->
+      <div class="toolbar-group">
+        <button class="ep-btn" id="btn-prev-page" onclick="changePage(-1)">‹ पिछला पेज</button>
+        <select id="select-page" class="ep-select" onchange="jumpToPage(this.value)">
+          <option value="1">पेज 1 - मुख्य पृष्ठ</option>
+          <option value="2">पेज 2 - जौनपुर आसपास</option>
+          <option value="3">पेज 3 - मण्डल समाचार</option>
+          <option value="4">पेज 4 - संपादकीय / विचार</option>
+          <option value="5">पेज 5 - राष्ट्रीय / विदेश / खेल</option>
+          <option value="6">पेज 6 - बलिया / गाजीपुर</option>
+          <option value="7">पेज 7 - सोनभद्र / मऊ</option>
+          <option value="8">पेज 8 - वाराणसी महानगर</option>
+        </select>
+        <button class="ep-btn" id="btn-next-page" onclick="changePage(1)">अगला पेज ›</button>
+      </div>
+
+      <!-- Center / Right: Interactive Tools -->
+      <div class="toolbar-group">
+        <!-- Article Cropping Tool -->
+        <button class="ep-btn" id="btn-clip-tool" onclick="toggleClippingMode()" title="अखबार की किसी खबर को काटकर डाउनलोड या शेयर करें">
+          ✂ कतरन काटें (Clip News)
+        </button>
+
+        <!-- Zoom Controls -->
+        <button class="ep-btn" onclick="zoomPage(-0.15)" title="ज़ूम कम करें (शॉर्टकट: -)">🔍−</button>
+        <span id="zoom-label" style="font-size:13px; font-weight:700; min-width:46px; text-align:center;">100%</span>
+        <button class="ep-btn" onclick="zoomPage(0.15)" title="ज़ूम अधिक करें (शॉर्टकट: +)">🔍+</button>
+        <button class="ep-btn" onclick="resetZoom()" title="सामान्य आकार (100%)">रिसेट</button>
+        <button class="ep-btn" onclick="fitWidth()" title="स्क्रीन चौड़ाई में फिट करें">स्क्रीन फिट</button>
+        <button class="ep-btn" onclick="toggleFullscreen()" title="फुल स्क्रीन टॉगल">⛶ फुल स्क्रीन</button>
+      </div>
+    </div>
+
+    <!-- Main Zoomable Page Canvas Viewport -->
+    <div class="epaper-viewport-container panning" id="viewport-container">
+      <div class="epaper-page-wrapper" id="page-wrapper">
+        <img id="active-page-img" src="/uploads/epaper/edition-10-sep-2026/page-1.jpg" alt="दैनिक मान्यवर ई-पेपर">
+        <!-- Clipping Drag Box Overlay -->
+        <div id="crop-selection-box"></div>
+      </div>
+    </div>
+
+    <!-- Bottom Page Filmstrip Thumbnails -->
+    <div class="filmstrip-container">
+      <div class="filmstrip-header">
+        <span class="filmstrip-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+          सभी पृष्ठ (All Pages) - क्लिक करके सीधे पेज पर जाएं:
+        </span>
+        <span style="font-size: 13px; color: var(--text-secondary); font-weight:600;">
+          वर्तमान: <strong id="current-page-num" style="color:#b91c1c;">1</strong> / <span id="total-pages-num">8</span>
+        </span>
+      </div>
+      <div class="filmstrip-scroll" id="filmstrip-list">
+        <!-- Dynamically populated -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- News Article Clipping Modal -->
+  <div class="clip-modal" id="clip-modal">
+    <div class="clip-modal-content">
+      <div class="clip-modal-header">
+        <h3>✂ अखबार की कतरन (News Article Clip)</h3>
+        <button class="ep-btn" onclick="closeClipModal()" style="padding:4px 8px;">✕</button>
+      </div>
+      <div class="clip-modal-body">
+        <img id="clipped-image-preview" src="" alt="कटी हुई खबर">
+      </div>
+      <div class="clip-modal-footer">
+        <button class="ep-btn" onclick="closeClipModal()">रद्द करें</button>
+        <button class="ep-btn" id="btn-share-whatsapp" onclick="shareClipWhatsApp()" style="background:#16a34a; color:white; border-color:#16a34a;">
+          📲 व्हाट्सएप पर शेयर करें
+        </button>
+        <a id="btn-download-clip" href="#" download="dainik-manyawar-clipping.png" class="ep-btn ep-btn-active">
+          💾 कतरन डाउनलोड करें (PNG)
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification element -->
+  <div id="ep-toast" class="ep-toast"></div>
+
+  <!-- Footer Area -->
+  <footer class="footer" style="margin-top: 50px;">
+    <div class="footer-grid">
+      <div class="footer-about">
+        <h3 class="footer-widget-title">दैनिक मान्यवर ई-पेपर</h3>
+        <p>दैनिक मान्यवर का डिजिटल ई-पेपर संस्करण प्रतिदिन सुबह प्रकाशित किया जाता है। वाराणसी, जौनपुर, चंदौली, गाजीपुर, मऊ, बलिया और आसपास के सभी जिलों की निष्पक्ष और निर्भीक खबरें आप ई-पेपर के माध्यम से पढ़ सकते हैं।</p>
+      </div>
+      <div>
+        <h3 class="footer-widget-title">महत्वपूर्ण लिंक</h3>
+        <ul class="footer-links-list">
+          <li><a href="index.html">मुख्य पृष्ठ</a></li>
+          <li><a href="epaper.html">आज का ई-पेपर</a></li>
+          <li><a href="category.html?cat=politics">राजनीति समाचार</a></li>
+          <li><a href="feed.html">समाचार टाइमलाइन फीड</a></li>
+          <li><a href="login.html">प्रशासक लॉगिन</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="footer-widget-title">प्रकाशन कार्यालय</h3>
+        <p style="font-size:13px; color:var(--text-secondary); line-height:1.6;">
+          <strong>दैनिक मान्यवर</strong><br>
+          स्वात्वाधिकारी, मुद्रक, प्रकाशक: रविकांत यादव<br>
+          मुद्रण: चुरामनपुर, वाराणसी<br>
+          प्रकाशन: ए.14/36 भारद्वाज टोला, राजघाट, वाराणसी<br>
+          फोन: 7905581297, 9125350409<br>
+          ईमेल: dmanyawar@gmail.com
+        </p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 दैनिक मान्यवर (Dainik Manyawar). सर्वाधिकार सुरक्षित।</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    // --- E-Paper Application State ---
+    let currentPage = 1;
+    let totalPages = 8;
+    let currentZoom = 1.0;
+    let epaperData = null;
+    let archiveList = [];
+    let isClippingMode = false;
+    let isSelecting = false;
+    let startX = 0, startY = 0;
+    let isPanning = false;
+    let panStartX = 0, panStartY = 0;
+    let scrollStartX = 0, scrollStartY = 0;
+
+    const defaultPages = [
+      { page: 1, label: "पेज 1: मुख्य पृष्ठ", title: "काशी से 9वां राष्ट्रीय पोषण माह / रेल प्रोजेक्ट", img: "/uploads/epaper/edition-10-sep-2026/page-1.jpg" },
+      { page: 2, label: "पेज 2: जौनपुर", title: "जौनपुर आसपास / विधिक साक्षरता / अस्पताल भीड़", img: "/uploads/epaper/edition-10-sep-2026/page-2.jpg" },
+      { page: 3, label: "पेज 3: मण्डल", title: "जौनपुर / भदोही / मीरजापुर / चंदौली", img: "/uploads/epaper/edition-10-sep-2026/page-3.jpg" },
+      { page: 4, label: "पेज 4: संपादकीय", title: "संपादकीय / सत्य निकेतन हादसा / IAS नौकरी", img: "/uploads/epaper/edition-10-sep-2026/page-4.jpg" },
+      { page: 5, label: "पेज 5: राष्ट्रीय/विदेश", title: "भारत-अमेरिका व्यापार / खेल / दलीप ट्रॉफी", img: "/uploads/epaper/edition-10-sep-2026/page-5.jpg" },
+      { page: 6, label: "पेज 6: बलिया/गाजीपुर", title: "बलिया / महराजगंज / गाजीपुर समाचार", img: "/uploads/epaper/edition-10-sep-2026/page-6.jpg" },
+      { page: 7, label: "पेज 7: सोनभद्र/मऊ", title: "सोनभद्र / मऊ / जनसुनवाई / ट्राई साइकिल", img: "/uploads/epaper/edition-10-sep-2026/page-7.jpg" },
+      { page: 8, label: "पेज 8: वाराणसी", title: "वाराणसी महानगर / मुख्यमंत्री सम्मान / बारिश", img: "/uploads/epaper/edition-10-sep-2026/page-8.jpg" }
+    ];
+
+    async function initEpaper() {
+      // 1. Load Archives
+      await loadArchives();
+
+      // 2. Check for date or id in URL query (?date=2026-09-10 or ?id=epaper-...)
+      const params = new URLSearchParams(window.location.search);
+      const reqDate = params.get('date');
+      const reqId = params.get('id');
+
+      if (reqDate) {
+        await loadEditionByDate(reqDate);
+      } else if (reqId) {
+        await loadEditionById(reqId);
+      } else {
+        await loadLatestEdition();
+      }
+
+      setupPanEvents();
+      setupClippingEvents();
+      setupKeyboardEvents();
+    }
+
+    async function loadArchives() {
+      try {
+        const res = await fetch('/api/epaper/archive-dates');
+        if (res.ok) {
+          archiveList = await res.json();
+          const select = document.getElementById('archive-dropdown');
+          select.innerHTML = '';
+
+          if (archiveList.length === 0) {
+            select.innerHTML = '<option value="">कोई पुराना अंक नहीं</option>';
+            return;
+          }
+
+          archiveList.forEach(arch => {
+            const opt = document.createElement('option');
+            opt.value = arch.date;
+            opt.textContent = `${arch.displayDate || arch.date} (${arch.edition || 'वाराणसी'})`;
+            select.appendChild(opt);
+          });
+        }
+      } catch (err) {
+        console.warn('Archive dates fetch error:', err);
+      }
+    }
+
+    async function loadLatestEdition() {
+      try {
+        const res = await fetch('/api/epaper/latest');
+        if (res.ok) {
+          epaperData = await res.json();
+          renderEditionMetadata();
+        } else {
+          loadFallbackData();
+        }
+      } catch (e) {
+        loadFallbackData();
+      }
+    }
+
+    async function loadEditionByDate(date) {
+      try {
+        showToast(`दिनांक ${date} का ई-पेपर लोड हो रहा है...`);
+        const res = await fetch(`/api/epaper/by-date/${date}`);
+        if (res.ok) {
+          epaperData = await res.json();
+          renderEditionMetadata();
+        } else {
+          showToast(`दिनांक ${date} का ई-पेपर नहीं मिला, आज का अखबार दिखाया जा रहा है।`);
+          await loadLatestEdition();
+        }
+      } catch (e) {
+        await loadLatestEdition();
+      }
+    }
+
+    async function loadEditionById(id) {
+      try {
+        const res = await fetch(`/api/epaper/${id}`);
+        if (res.ok) {
+          epaperData = await res.json();
+          renderEditionMetadata();
+        } else {
+          await loadLatestEdition();
+        }
+      } catch (e) {
+        await loadLatestEdition();
+      }
+    }
+
+    function loadFallbackData() {
+      epaperData = {
+        title: "दैनिक मान्यवर - 10 सितंबर 2026 (वाराणसी एवं जौनपुर)",
+        edition: "वाराणसी - जौनपुर",
+        date: "2026-09-10",
+        displayDate: "10 सितंबर 2026, गुरुवार",
+        year: "20",
+        issue: "43",
+        price: "₹ 3.00",
+        totalPages: 8,
+        pdfUrl: "/uploads/epaper/dainik-manyawar-10-sep-2026.pdf",
+        pages: defaultPages
+      };
+      renderEditionMetadata();
+    }
+
+    function renderEditionMetadata() {
+      if (!epaperData) return;
+
+      totalPages = epaperData.totalPages || (epaperData.pages ? epaperData.pages.length : 8);
+      document.getElementById('total-pages-num').innerText = totalPages;
+      document.getElementById('ep-pages-badge').innerText = `📄 कुल ${totalPages} पृष्ठ`;
+
+      if (epaperData.title) document.getElementById('ep-title').innerText = epaperData.title;
+      if (epaperData.edition) document.getElementById('ep-edition').innerText = `📍 संस्करण: ${epaperData.edition}`;
+      if (epaperData.displayDate) document.getElementById('ep-date').innerText = `📅 ${epaperData.displayDate}`;
+      
+      const year = epaperData.year || "20";
+      const issue = epaperData.issue || "43";
+      const price = epaperData.price || "₹ 3.00";
+      document.getElementById('ep-issue').innerText = `📰 वर्ष ${year}, अंक ${issue} | ${price}`;
+
+      // PDF download link
+      if (epaperData.pdfUrl) {
+        const btn = document.getElementById('btn-download-pdf');
+        btn.href = epaperData.pdfUrl;
+        btn.style.display = 'inline-flex';
+        if (epaperData.pdfSize) {
+          btn.innerText = `📥 डाउनलोड पूरा अखबार (PDF - ${epaperData.pdfSize})`;
+        }
+      }
+
+      // Sync archive dropdown value
+      const select = document.getElementById('archive-dropdown');
+      if (select && epaperData.date) {
+        select.value = epaperData.date;
+      }
+
+      // Populate Page Select Dropdown
+      populatePageDropdown();
+
+      // Render Filmstrip & Page 1
+      renderFilmstrip();
+      loadPage(1);
+    }
+
+    function populatePageDropdown() {
+      const select = document.getElementById('select-page');
+      select.innerHTML = '';
+      const list = (epaperData && epaperData.pages && epaperData.pages.length > 0)
+        ? epaperData.pages
+        : defaultPages;
+
+      list.forEach((item, idx) => {
+        const pNum = item.page || (idx + 1);
+        const opt = document.createElement('option');
+        opt.value = pNum;
+        opt.textContent = `पेज ${pNum} - ${item.title || `पेज ${pNum}`}`;
+        select.appendChild(opt);
+      });
+    }
+
+    function onArchiveSelect(date) {
+      if (!date) return;
+      window.location.search = `?date=${date}`;
+    }
+
+    function renderFilmstrip() {
+      const container = document.getElementById('filmstrip-list');
+      container.innerHTML = '';
+
+      const list = (epaperData && epaperData.pages && epaperData.pages.length > 0)
+        ? epaperData.pages
+        : defaultPages;
+
+      list.forEach((item, idx) => {
+        const pNum = item.page || (idx + 1);
+        const div = document.createElement('div');
+        div.className = `filmstrip-item ${pNum === currentPage ? 'active' : ''}`;
+        div.id = `strip-item-${pNum}`;
+        div.onclick = () => loadPage(pNum);
+
+        const imgSrc = item.image || item.img || `/uploads/epaper/edition-10-sep-2026/page-${pNum}.jpg`;
+
+        div.innerHTML = `
+          <img src="${imgSrc}" alt="पेज ${pNum}" loading="lazy">
+          <div class="filmstrip-item-label">${item.title || `पेज ${pNum}`}</div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function loadPage(pageNum) {
+      if (pageNum < 1) pageNum = 1;
+      if (pageNum > totalPages) pageNum = totalPages;
+      currentPage = pageNum;
+
+      // Update image
+      const img = document.getElementById('active-page-img');
+      let imgSrc = `/uploads/epaper/edition-10-sep-2026/page-${currentPage}.jpg`;
+      if (epaperData && epaperData.pages && epaperData.pages[currentPage - 1]) {
+        imgSrc = epaperData.pages[currentPage - 1].image || epaperData.pages[currentPage - 1].img || imgSrc;
+      }
+      img.src = imgSrc;
+      img.alt = `दैनिक मान्यवर ई-पेपर - पेज ${currentPage}`;
+
+      // Update controls
+      document.getElementById('select-page').value = currentPage;
+      document.getElementById('current-page-num').innerText = currentPage;
+
+      // Update button states
+      document.getElementById('btn-prev-page').disabled = (currentPage === 1);
+      document.getElementById('btn-next-page').disabled = (currentPage === totalPages);
+
+      // Highlight filmstrip
+      document.querySelectorAll('.filmstrip-item').forEach(el => el.classList.remove('active'));
+      const activeStrip = document.getElementById(`strip-item-${currentPage}`);
+      if (activeStrip) {
+        activeStrip.classList.add('active');
+        activeStrip.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+
+      // Reset scroll of viewport to top
+      document.getElementById('viewport-container').scrollTop = 0;
+
+      // Cancel any active crop box
+      if (isClippingMode) cancelClipping();
+    }
+
+    function changePage(delta) {
+      loadPage(currentPage + delta);
+    }
+
+    function jumpToPage(val) {
+      loadPage(parseInt(val));
+    }
+
+    function updateZoomUI() {
+      const wrapper = document.getElementById('page-wrapper');
+      wrapper.style.transform = `scale(${currentZoom})`;
+      document.getElementById('zoom-label').innerText = `${Math.round(currentZoom * 100)}%`;
+    }
+
+    function zoomPage(delta) {
+      currentZoom = Math.min(Math.max(0.5, currentZoom + delta), 2.5);
+      updateZoomUI();
+    }
+
+    function resetZoom() {
+      currentZoom = 1.0;
+      updateZoomUI();
+    }
+
+    function fitWidth() {
+      const container = document.getElementById('viewport-container');
+      const img = document.getElementById('active-page-img');
+      if (container && img && img.naturalWidth) {
+        const scale = (container.clientWidth - 50) / img.naturalWidth;
+        currentZoom = Math.max(0.4, Math.min(scale, 1.8));
+        updateZoomUI();
+        showToast(`स्क्रीन चौड़ाई में फिट किया गया (${Math.round(currentZoom * 100)}%)`);
+      }
+    }
+
+    function toggleFullscreen() {
+      const elem = document.getElementById('viewport-container');
+      if (!document.fullscreenElement) {
+        elem.requestFullscreen().catch(err => alert(err.message));
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
+    // --- Panning (Mouse Drag) Controls ---
+    function setupPanEvents() {
+      const container = document.getElementById('viewport-container');
+      
+      container.addEventListener('mousedown', (e) => {
+        if (isClippingMode || e.button !== 0) return;
+        isPanning = true;
+        panStartX = e.clientX;
+        panStartY = e.clientY;
+        scrollStartX = container.scrollLeft;
+        scrollStartY = container.scrollTop;
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isPanning || isClippingMode) return;
+        const dx = e.clientX - panStartX;
+        const dy = e.clientY - panStartY;
+        container.scrollLeft = scrollStartX - dx;
+        container.scrollTop = scrollStartY - dy;
+      });
+
+      window.addEventListener('mouseup', () => {
+        isPanning = false;
+      });
+    }
+
+    // --- Newspaper Clipping (Article Crop Tool) ---
+    function toggleClippingMode() {
+      isClippingMode = !isClippingMode;
+      const btn = document.getElementById('btn-clip-tool');
+      const banner = document.getElementById('clipping-banner');
+      const viewport = document.getElementById('viewport-container');
+
+      if (isClippingMode) {
+        btn.classList.add('ep-btn-active');
+        btn.innerText = '✕ कतरन बंद करें';
+        banner.style.display = 'flex';
+        viewport.classList.remove('panning');
+        viewport.classList.add('clipping');
+        showToast('कतरन मोड चालू: माउस से खबर के चारों तरफ बॉक्स बनाएं।');
+      } else {
+        cancelClipping();
+      }
+    }
+
+    function cancelClipping() {
+      isClippingMode = false;
+      const btn = document.getElementById('btn-clip-tool');
+      const banner = document.getElementById('clipping-banner');
+      const viewport = document.getElementById('viewport-container');
+      const cropBox = document.getElementById('crop-selection-box');
+
+      btn.classList.remove('ep-btn-active');
+      btn.innerText = '✂ कतरन काटें (Clip News)';
+      banner.style.display = 'none';
+      viewport.classList.remove('clipping');
+      viewport.classList.add('panning');
+      cropBox.style.display = 'none';
+      isSelecting = false;
+    }
+
+    function setupClippingEvents() {
+      const wrapper = document.getElementById('page-wrapper');
+      const cropBox = document.getElementById('crop-selection-box');
+      const img = document.getElementById('active-page-img');
+
+      wrapper.addEventListener('mousedown', (e) => {
+        if (!isClippingMode) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        const rect = wrapper.getBoundingClientRect();
+        // Calculate relative coordinates inside unscaled wrapper
+        startX = (e.clientX - rect.left) / currentZoom;
+        startY = (e.clientY - rect.top) / currentZoom;
+        isSelecting = true;
+
+        cropBox.style.left = `${startX}px`;
+        cropBox.style.top = `${startY}px`;
+        cropBox.style.width = '0px';
+        cropBox.style.height = '0px';
+        cropBox.style.display = 'block';
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isClippingMode || !isSelecting) return;
+        const rect = wrapper.getBoundingClientRect();
+        const curX = (e.clientX - rect.left) / currentZoom;
+        const curY = (e.clientY - rect.top) / currentZoom;
+
+        const left = Math.min(startX, curX);
+        const top = Math.min(startY, curY);
+        const width = Math.abs(curX - startX);
+        const height = Math.abs(curY - startY);
+
+        cropBox.style.left = `${left}px`;
+        cropBox.style.top = `${top}px`;
+        cropBox.style.width = `${width}px`;
+        cropBox.style.height = `${height}px`;
+      });
+
+      window.addEventListener('mouseup', (e) => {
+        if (!isClippingMode || !isSelecting) return;
+        isSelecting = false;
+
+        const width = parseFloat(cropBox.style.width);
+        const height = parseFloat(cropBox.style.height);
+
+        // Require minimum selection size (40x40 px)
+        if (width > 40 && height > 40) {
+          const left = parseFloat(cropBox.style.left);
+          const top = parseFloat(cropBox.style.top);
+          generateArticleClip(left, top, width, height);
+        } else {
+          cropBox.style.display = 'none';
+        }
+      });
+    }
+
+    function generateArticleClip(cropX, cropY, cropW, cropH) {
+      const img = document.getElementById('active-page-img');
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      // Scale factor between natural image and displayed element
+      const scaleX = img.naturalWidth / img.clientWidth;
+      const scaleY = img.naturalHeight / img.clientHeight;
+
+      const sourceX = cropX * scaleX;
+      const sourceY = cropY * scaleY;
+      const sourceW = cropW * scaleX;
+      const sourceH = cropH * scaleY;
+
+      // Add branding header to the clipping
+      const headerHeight = 44;
+      canvas.width = sourceW;
+      canvas.height = sourceH + headerHeight;
+
+      // Draw header banner
+      ctx.fillStyle = '#b91c1c';
+      ctx.fillRect(0, 0, canvas.width, headerHeight);
+
+      // Branding text
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 18px "Noto Sans Devanagari", sans-serif';
+      ctx.fillText('दैनिक मान्यवर', 15, 28);
+
+      ctx.font = '12px "Noto Sans Devanagari", sans-serif';
+      ctx.fillText(`${epaperData?.displayDate || '10 सितंबर 2026'} | पेज ${currentPage}`, canvas.width - 200, 27);
+
+      // Draw cropped newspaper section
+      ctx.drawImage(img, sourceX, sourceY, sourceW, sourceH, 0, headerHeight, sourceW, sourceH);
+
+      // Convert to PNG data URL
+      const dataUrl = canvas.toDataURL('image/png');
+      document.getElementById('clipped-image-preview').src = dataUrl;
+
+      // Setup download button
+      const downloadBtn = document.getElementById('btn-download-clip');
+      downloadBtn.href = dataUrl;
+      downloadBtn.download = `dainik-manyawar-page-${currentPage}-clip.png`;
+
+      // Show modal
+      document.getElementById('clip-modal').classList.add('active');
+      cancelClipping();
+    }
+
+    function closeClipModal() {
+      document.getElementById('clip-modal').classList.remove('active');
+    }
+
+    function shareClipWhatsApp() {
+      const text = `दैनिक मान्यवर (${epaperData?.displayDate || 'ई-पेपर'}) - पेज ${currentPage} की महत्वपूर्ण खबर पढ़ें: ${window.location.href}`;
+      const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+      window.open(url, '_blank');
+    }
+
+    // --- Keyboard Navigation ---
+    function setupKeyboardEvents() {
+      window.addEventListener('keydown', (e) => {
+        // Only if not focused on inputs
+        if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+        if (e.key === 'ArrowLeft') {
+          changePage(-1);
+        } else if (e.key === 'ArrowRight') {
+          changePage(1);
+        } else if (e.key === '+' || e.key === '=') {
+          zoomPage(0.15);
+        } else if (e.key === '-' || e.key === '_') {
+          zoomPage(-0.15);
+        } else if (e.key === '0') {
+          resetZoom();
+        } else if (e.key === 'Escape') {
+          if (isClippingMode) cancelClipping();
+          closeClipModal();
+        }
+      });
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('ep-toast');
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3500);
+    }
+
+    document.addEventListener('DOMContentLoaded', initEpaper);
+  </script>
+</body>
+</html>

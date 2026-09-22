@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>एडमिन पोर्टल | दैनिक मान्यवर</title>
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    // Immediate Redirect check before rendering page
+    if (!localStorage.getItem("dm_admin_token")) {
+      window.location.href = "login.html";
+    }
+  </script>
+</head>
+<body>
+
+  <!-- Top bar header -->
+  <header>
+    <div class="top-bar" style="font-family: var(--font-en);">
+      <div>प्रशासक डैशबोर्ड (Administrator Dashboard)</div>
+      <div style="display: flex; gap: 15px; align-items: center;">
+        <span id="admin-user-display" style="font-weight: 600;">यूज़र: admin</span>
+        <button id="logout-btn" style="background:#ef4444; border:none; color:white; padding:3px 10px; border-radius:4px; font-size:12px; cursor:pointer; font-weight:bold;">लॉग आउट (Logout)</button>
+      </div>
+    </div>
+
+    <div class="header-brand-container" style="padding: 15px 5%;">
+      <div class="logo-area">
+        <a href="index.html">
+          <h1 class="logo-title">दैनिक <span>मान्यवर</span></h1>
+          <span class="logo-subtitle">CMS ADMIN PORTAL</span>
+        </a>
+      </div>
+      <div style="font-size: 14px; font-weight: 500; text-align: right; color: var(--text-secondary);">
+        <a href="index.html" style="color:var(--primary-blue); font-weight: bold;">« वेबसाइट पर वापस जाएं</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Primary Layout -->
+  <div class="container admin-container">
+    
+    <!-- Sidebar Menu Tabs -->
+    <aside class="admin-sidebar">
+      <ul class="admin-menu">
+        <li class="admin-menu-item active" data-tab="list">
+          <span>📰 समाचार मास्टर</span>
+        </li>
+        <li class="admin-menu-item" data-tab="form" id="tab-write-btn">
+          <span>✍️ समाचार लिखें</span>
+        </li>
+        <li class="admin-menu-item" data-tab="epaper" id="tab-epaper-btn">
+          <span>📄 ई-पेपर मास्टर</span>
+        </li>
+        <li class="admin-menu-item" data-tab="comments">
+          <span>💬 टिप्पणियाँ</span>
+        </li>
+        <li class="admin-menu-item" data-tab="logs">
+          <span>📜 ऑडिट लॉग्स</span>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Main Content Panel Area -->
+    <main class="admin-content">
+      
+      <!-- Tab 1: Articles List -->
+      <section id="pane-list" class="admin-pane">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h2 class="section-title">समाचार मास्टर सूची</h2>
+          <button onclick="switchTab('form'); resetForm();" class="submit-btn" style="padding: 6px 14px; font-size: 14px;">+ नया समाचार लिखें</button>
+        </div>
+        <div class="master-table-wrapper">
+          <table class="master-table">
+            <thead>
+              <tr>
+                <th>शीर्षक (Title)</th>
+                <th>श्रेणी (Category)</th>
+                <th>लेखक</th>
+                <th>दिनांक</th>
+                <th>पढ़ा गया (Views)</th>
+                <th>स्थिति (Status)</th>
+                <th>कार्रवाई (Actions)</th>
+              </tr>
+            </thead>
+            <tbody id="articles-table-body">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Tab 2: Create / Edit News Form -->
+      <section id="pane-form" class="admin-pane" style="display: none;">
+        <h2 class="section-title" id="form-panel-title">नया लेख प्रकाशित करें</h2>
+        <form id="cms-news-form" style="margin-top: 20px;">
+          <input type="hidden" id="edit-article-id">
+          
+          <div class="form-group" style="margin-bottom:15px;">
+            <label for="news-title">शीर्षक (Title) *</label>
+            <input type="text" id="news-title" class="form-control" placeholder="लेख का आकर्षक शीर्षक" required>
+          </div>
+
+          <div class="comment-form-row" style="margin-bottom:15px;">
+            <div class="form-group">
+              <label for="news-category">श्रेणी (Category) *</label>
+              <select id="news-category" class="form-control" required>
+                <option value="politics">राजनीति</option>
+                <option value="national">देश</option>
+                <option value="defense">डिफेंस</option>
+                <option value="education">शिक्षा</option>
+                <option value="economy">अर्थजगत</option>
+                <option value="health">हेल्थ</option>
+                <option value="foreign">विदेश</option>
+                <option value="opinion">मत-विमत</option>
+                <option value="society">समाज-संस्कृति</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="news-author">लेखक (Author)</label>
+              <input type="text" id="news-author" class="form-control" placeholder="विशेष संवाददाता / ब्यूरो">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:15px;">
+            <label>मुख्य छवि अपलोड (Cover Image Upload)</label>
+            <div class="file-upload-wrapper">
+              <label class="btn-file-upload">
+                <span id="file-label-text">📂 कंप्यूटर से इमेज चुनें (Choose local file)</span>
+                <input type="file" id="news-image-file" accept="image/*">
+              </label>
+            </div>
+            <p style="font-size:12px; color:var(--text-secondary); margin-top:5px;" id="image-current-path"></p>
+          </div>
+
+          <!-- HTML Embedded Editor -->
+          <div class="form-group" style="margin-bottom:20px;">
+            <label for="news-content">समाचार सामग्री (HTML Formatted Content) *</label>
+            <div class="editor-toolbar">
+              <button type="button" class="toolbar-btn" onclick="insertHTML('p')">Paragraph &lt;p&gt;</button>
+              <button type="button" class="toolbar-btn" onclick="insertHTML('h3')">Heading &lt;h3&gt;</button>
+              <button type="button" class="toolbar-btn" onclick="insertHTML('a')">Link &lt;a&gt;</button>
+              <button type="button" class="toolbar-btn" onclick="insertHTML('strong')">Bold &lt;b&gt;</button>
+              <button type="button" class="toolbar-btn" onclick="insertHTML('iframe')">YouTube Embed &lt;iframe&gt;</button>
+            </div>
+            <textarea id="news-content" class="form-control editor-control" style="min-height:220px;" placeholder="समाचार की विस्तृत सामग्री दर्ज करें। HTML टैग्स का समर्थन किया जाता है..." required></textarea>
+          </div>
+
+          <div style="display: flex; gap: 10px;">
+            <button type="submit" class="submit-btn" id="form-submit-btn" style="flex-grow: 1;">प्रकाशित करें</button>
+            <button type="button" onclick="switchTab('list'); resetForm();" class="submit-btn" style="background:var(--text-secondary); flex-grow: 1;">रद्द करें</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Tab 3: Comments moderation -->
+      <section id="pane-comments" class="admin-pane" style="display: none;">
+        <h2 class="section-title">टिप्पणी नियंत्रण (Moderation)</h2>
+        <div class="master-table-wrapper" style="margin-top:20px;">
+          <table class="master-table">
+            <thead>
+              <tr>
+                <th>लेख (Article ID)</th>
+                <th>लेखक</th>
+                <th>टिप्पणी सामग्री</th>
+                <th>दिनांक</th>
+                <th>कार्रवाई</th>
+              </tr>
+            </thead>
+            <tbody id="comments-table-body">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Tab 4: Audit Logs -->
+      <section id="pane-logs" class="admin-pane" style="display: none;">
+        <h2 class="section-title">सिस्टम ऑडिट लॉग्स (System Logs)</h2>
+        <div class="master-table-wrapper" style="margin-top:20px;">
+          <table class="master-table log-table">
+            <thead>
+              <tr>
+                <th>समय (Timestamp)</th>
+                <th>कार्रवाई (Action)</th>
+                <th>विवरण (Details)</th>
+              </tr>
+            </thead>
+            <tbody id="logs-table-body">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Tab 5: E-Paper Master (ई-पेपर प्रबंधन) -->
+      <section id="pane-epaper" class="admin-pane" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h2 class="section-title">ई-पेपर मास्टर (E-Paper Manager)</h2>
+          <a href="epaper.html" target="_blank" class="submit-btn" style="padding: 6px 14px; font-size: 14px; text-decoration: none;">👁️ ई-पेपर लाइव देखें »</a>
+        </div>
+
+        <!-- Published E-Papers Table -->
+        <div class="master-table-wrapper" style="margin-bottom: 30px;">
+          <h3 style="font-size: 16px; margin-bottom: 12px; font-weight: 600;">प्रकाशित ई-पेपर सूची</h3>
+          <table class="master-table">
+            <thead>
+              <tr>
+                <th>शीर्षक (Title)</th>
+                <th>संस्करण</th>
+                <th>दिनांक</th>
+                <th>कुल पन्ने</th>
+                <th>पीडीएफ</th>
+                <th>स्थिति</th>
+                <th>कार्रवाई</th>
+              </tr>
+            </thead>
+            <tbody id="epapers-table-body">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Upload New E-Paper Form -->
+        <div style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 25px; box-shadow: var(--shadow-sm);">
+          <h3 style="font-size: 18px; margin-bottom: 15px; font-weight: 700; color: var(--accent);">+ आज का नया ई-पेपर अपलोड करें</h3>
+          <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">
+            यहाँ आप आज का 8 या 10 पन्नों का पूरा अखबार (PDF) अपलोड कर सकते हैं। फाइल साइज 50MB तक समर्थित है।
+          </p>
+
+          <form id="cms-epaper-form">
+            <div class="form-group" style="margin-bottom: 15px;">
+              <label for="ep-form-title">ई-पेपर शीर्षक (Title) *</label>
+              <input type="text" id="ep-form-title" class="form-control" placeholder="उदा. दैनिक मान्यवर - 11 सितंबर 2026 (वाराणसी एवं जौनपुर)" required>
+            </div>
+
+            <div class="comment-form-row" style="margin-bottom: 15px;">
+              <div class="form-group">
+                <label for="ep-form-edition">संस्करण (Edition) *</label>
+                <select id="ep-form-edition" class="form-control" required>
+                  <option value="वाराणसी - जौनपुर">वाराणसी - जौनपुर</option>
+                  <option value="वाराणसी महानगर">वाराणसी महानगर</option>
+                  <option value="जौनपुर आसपास">जौनपुर आसपास</option>
+                  <option value="सोनभद्र - मऊ">सोनभद्र - मऊ</option>
+                  <option value="गाजीपुर - बलिया">गाजीपुर - बलिया</option>
+                  <option value="ऑल एडिशन (सभी जिले)">ऑल एडिशन (सभी जिले)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="ep-form-date">अखबार का दिनांक (Date) *</label>
+                <input type="date" id="ep-form-date" class="form-control" required>
+              </div>
+
+              <div class="form-group">
+                <label for="ep-form-pages">कुल पन्ने (Total Pages) *</label>
+                <select id="ep-form-pages" class="form-control">
+                  <option value="8" selected>8 पन्ने</option>
+                  <option value="10">10 पन्ने</option>
+                  <option value="12">12 पन्ने</option>
+                  <option value="14">14 पन्ने</option>
+                  <option value="16">16 पन्ने</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 15px;">
+              <label style="font-weight: 600;">अखबार की मुख्य पीडीएफ फाइल (Select Newspaper PDF) *</label>
+              <div class="file-upload-wrapper">
+                <label class="btn-file-upload">
+                  <span id="ep-file-label">📄 कंप्यूटर से पीडीएफ चुनें (.pdf, 50MB तक)</span>
+                  <input type="file" id="ep-pdf-file" accept=".pdf,application/pdf" required>
+                </label>
+              </div>
+              <p style="font-size:12px; color:var(--text-secondary); margin-top:5px;">
+                PDF फाइल अपलोड होते ही सिस्टम इसके सभी 8-10 पन्नों को ई-पेपर में उपलब्ध करा देगा।
+              </p>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+              <label style="font-weight: 600;">(वैकल्पिक) अलग-अलग पेज इमेज (यदि हों तो एक साथ चुनें)</label>
+              <input type="file" id="ep-pages-images" class="form-control" accept="image/*" multiple>
+              <p style="font-size:12px; color:var(--text-secondary); margin-top:4px;">
+                यदि आपके पास पेज 1 से 8 की अलग-अलग JPG/PNG इमेज हैं, तो आप उन्हें यहाँ चुन सकते हैं (Ctrl दबाकर एक से अधिक चुनें)।
+              </p>
+            </div>
+
+            <button type="submit" id="ep-submit-btn" class="submit-btn" style="padding: 10px 24px; font-size: 15px; font-weight: bold;">
+              🚀 ई-पेपर अपलोड और प्रकाशित करें
+            </button>
+          </form>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    const API_BASE = '/api';
+    let token = localStorage.getItem("dm_admin_token");
+
+    // --- Tab Switching Navigation ---
+    function switchTab(tabId) {
+      document.querySelectorAll(".admin-pane").forEach(pane => {
+        pane.style.display = "none";
+      });
+      document.getElementById("pane-" + tabId).style.display = "block";
+
+      document.querySelectorAll(".admin-menu-item").forEach(item => {
+        item.classList.remove("active");
+        if (item.getAttribute("data-tab") === tabId) {
+          item.classList.add("active");
+        }
+      });
+
+      // Reload appropriate data
+      if (tabId === 'list') loadArticles();
+      if (tabId === 'epaper') loadEpapers();
+      if (tabId === 'comments') loadComments();
+      if (tabId === 'logs') loadLogs();
+    }
+
+    // Bind sidebar tabs clicks
+    document.querySelectorAll(".admin-menu-item").forEach(item => {
+      item.addEventListener("click", () => {
+        const tab = item.getAttribute("data-tab");
+        switchTab(tab);
+      });
+    });
+
+    // --- Load Master Articles list ---
+    async function loadArticles() {
+      const tbody = document.getElementById("articles-table-body");
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">लोड हो रहा है...</td></tr>`;
+
+      try {
+        const res = await fetch(`${API_BASE}/articles?admin=true`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (res.status === 401) {
+          logout();
+          return;
+        }
+
+        const articles = await res.json();
+        tbody.innerHTML = "";
+
+        articles.forEach(art => {
+          const statusClass = art.enabled ? "active" : "inactive";
+          const statusText = art.enabled ? "सक्रिय (Active)" : "निष्क्रिय (Disabled)";
+          const toggleBtnText = art.enabled ? "निष्क्रिय करें" : "सक्रिय करें";
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td style="font-weight:600;">${art.title}</td>
+            <td>${art.category}</td>
+            <td>${art.author}</td>
+            <td>${art.date}</td>
+            <td>${art.views || 0}</td>
+            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+            <td>
+              <div class="action-btn-group">
+                <button class="btn-action edit" onclick="editArticle('${art.id}')">संशोधित</button>
+                <button class="btn-action toggle" onclick="toggleArticle('${art.id}')">${toggleBtnText}</button>
+                <button class="btn-action delete" onclick="deleteArticle('${art.id}')">हटाएं</button>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:red;">डेटा लोड करने में विफल!</td></tr>`;
+        console.error(err);
+      }
+    }
+
+    // --- Load System logs ---
+    async function loadLogs() {
+      const tbody = document.getElementById("logs-table-body");
+      tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">लोड हो रहा है...</td></tr>`;
+
+      try {
+        const res = await fetch(`${API_BASE}/logs`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        
+        const logs = await res.json();
+        tbody.innerHTML = "";
+
+        logs.forEach(log => {
+          const actionClass = log.action.toLowerCase();
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="timestamp">${log.timestamp}</td>
+            <td><span class="log-action-badge ${actionClass}">${log.action}</span></td>
+            <td style="font-weight:500;">${log.details}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red;">लॉग लोड करने में विफल!</td></tr>`;
+        console.error(err);
+      }
+    }
+
+    // --- Load comments for moderation ---
+    async function loadComments() {
+      const tbody = document.getElementById("comments-table-body");
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">लोड हो रहा है...</td></tr>`;
+
+      try {
+        // We retrieve all articles to find which ones have comments
+        const res = await fetch(`${API_BASE}/articles?admin=true`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const articles = await res.json();
+        tbody.innerHTML = "";
+
+        let hasComments = false;
+        
+        for (const art of articles) {
+          const comRes = await fetch(`${API_BASE}/comments/${art.id}`);
+          const comments = await comRes.json();
+
+          comments.forEach(com => {
+            hasComments = true;
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td><a href="article.html?id=${art.id}" target="_blank" style="color:var(--primary-blue); font-weight:600;">${art.title.substring(0, 30)}...</a></td>
+              <td><strong>${com.name}</strong> (${com.email})</td>
+              <td>${com.text}</td>
+              <td>${com.date}</td>
+              <td><button class="btn-action delete" onclick="deleteComment('${art.id}', '${com.id}')">हटाएं</button></td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+
+        if (!hasComments) {
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">कोई प्रतिक्रिया नहीं मिली।</td></tr>`;
+        }
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">प्रतिक्रिया डेटा लोड करने में विफल!</td></tr>`;
+        console.error(err);
+      }
+    }
+
+    // --- Actions ---
+    async function toggleArticle(id) {
+      try {
+        const res = await fetch(`${API_BASE}/articles/${id}/toggle`, {
+          method: 'PUT',
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) loadArticles();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function deleteArticle(id) {
+      if (!confirm("क्या आप सचमुच इस लेख को हटाना चाहते हैं?")) return;
+      try {
+        const res = await fetch(`${API_BASE}/articles/${id}`, {
+          method: 'DELETE',
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) loadArticles();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function deleteComment(articleId, commentId) {
+      if (!confirm("क्या आप सचमुच इस टिप्पणी को हटाना चाहते हैं?")) return;
+      try {
+        const res = await fetch(`${API_BASE}/comments/${articleId}/${commentId}`, {
+          method: 'DELETE',
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) loadComments();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // --- HTML format text inserting helpers ---
+    function insertHTML(tag) {
+      const txtarea = document.getElementById("news-content");
+      const start = txtarea.selectionStart;
+      const end = txtarea.selectionEnd;
+      const text = txtarea.value;
+      const selected = text.substring(start, end);
+      
+      let replacement = "";
+      if (tag === 'p') replacement = `<p>${selected || "पैराग्राफ पाठ"}</p>`;
+      if (tag === 'h3') replacement = `<h3>${selected || "उपशीर्षक"}</h3>`;
+      if (tag === 'a') replacement = `<a href="https://example.com" target="_blank">${selected || "लिंक टेक्स्ट"}</a>`;
+      if (tag === 'strong') replacement = `<strong>${selected || "बोल्ड पाठ"}</strong>`;
+      if (tag === 'iframe') replacement = `<iframe src="https://www.youtube.com/embed/VIDEO_ID" allowfullscreen></iframe>`;
+
+      txtarea.value = text.substring(0, start) + replacement + text.substring(end);
+      txtarea.focus();
+    }
+
+    // --- Form creation/edit logic ---
+    function resetForm() {
+      document.getElementById("edit-article-id").value = "";
+      document.getElementById("news-title").value = "";
+      document.getElementById("news-category").value = "politics";
+      document.getElementById("news-author").value = "";
+      document.getElementById("news-image-file").value = "";
+      document.getElementById("news-content").value = "";
+      document.getElementById("image-current-path").innerText = "";
+      document.getElementById("file-label-text").innerText = "📂 कंप्यूटर से इमेज चुनें (Choose local file)";
+      
+      document.getElementById("form-panel-title").innerText = "नया लेख प्रकाशित करें";
+      document.getElementById("form-submit-btn").innerText = "प्रकाशित करें";
+    }
+
+    async function editArticle(id) {
+      try {
+        const res = await fetch(`${API_BASE}/articles/${id}`);
+        const art = await res.json();
+
+        document.getElementById("edit-article-id").value = art.id;
+        document.getElementById("news-title").value = art.title;
+        document.getElementById("news-category").value = art.categoryKey;
+        document.getElementById("news-author").value = art.author;
+        document.getElementById("news-content").value = art.content;
+        document.getElementById("image-current-path").innerText = `वर्तमान छवि: ${art.image}`;
+        
+        document.getElementById("form-panel-title").innerText = "लेख संशोधित करें";
+        document.getElementById("form-submit-btn").innerText = "संशोधन सुरक्षित करें";
+        
+        switchTab('form');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Submit News Form
+    const form = document.getElementById("cms-news-form");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      const editId = document.getElementById("edit-article-id").value;
+      const title = document.getElementById("news-title").value.trim();
+      const category = document.getElementById("news-category").value;
+      const author = document.getElementById("news-author").value.trim();
+      const content = document.getElementById("news-content").value.trim();
+      const imageFile = document.getElementById("news-image-file").files[0];
+
+      // Assemble Multipart FormData
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("category", category);
+      formData.append("author", author);
+      formData.append("content", content);
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
+
+      let url = `${API_BASE}/articles`;
+      let method = 'POST';
+
+      if (editId) {
+        url = `${API_BASE}/articles/${editId}`;
+        method = 'PUT';
+      }
+
+      try {
+        const res = await fetch(url, {
+          method: method,
+          headers: { "Authorization": `Bearer ${token}` },
+          body: formData
+        });
+
+        if (res.ok) {
+          alert(editId ? "लेख सफलतापूर्वक संशोधित हुआ!" : "नया लेख प्रकाशित किया गया!");
+          resetForm();
+          switchTab('list');
+        } else {
+          const err = await res.json();
+          alert(`त्रुटि: ${err.error}`);
+        }
+      } catch (err) {
+        alert("सर्वर से संचार विफल रहा।");
+        console.error(err);
+      }
+    });
+
+    // Handle file input naming feedback
+    document.getElementById("news-image-file").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      const text = file ? `चयनित फ़ाइल: ${file.name}` : "📂 कंप्यूटर से इमेज चुनें (Choose local file)";
+      document.getElementById("file-label-text").innerText = text;
+    });
+
+    // --- E-Paper Management Logic ---
+    async function loadEpapers() {
+      const tbody = document.getElementById("epapers-table-body");
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">लोड हो रहा है...</td></tr>`;
+
+      try {
+        const res = await fetch(`${API_BASE}/epaper?admin=true`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const epapers = await res.json();
+        tbody.innerHTML = "";
+
+        if (!epapers || epapers.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-secondary);">कोई ई-पेपर प्रकाशित नहीं है।</td></tr>`;
+          return;
+        }
+
+        epapers.forEach(ep => {
+          const statusClass = ep.enabled !== false ? "active" : "inactive";
+          const statusText = ep.enabled !== false ? "सक्रिय" : "निष्क्रिय";
+          const toggleBtnText = ep.enabled !== false ? "निष्क्रिय करें" : "सक्रिय करें";
+          const pdfLink = ep.pdfUrl ? `<a href="${ep.pdfUrl}" target="_blank" style="color:var(--primary-blue); font-weight:bold;">PDF देखें (${ep.pdfSize || ''})</a>` : 'N/A';
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td style="font-weight:600;"><a href="epaper.html" target="_blank" style="color:inherit;">${ep.title}</a></td>
+            <td>${ep.edition || 'वाराणसी - जौनपुर'}</td>
+            <td>${ep.date}</td>
+            <td><strong>${ep.totalPages || 8} पन्ने</strong></td>
+            <td>${pdfLink}</td>
+            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+            <td>
+              <div class="action-btn-group">
+                <a href="epaper.html" target="_blank" class="btn-action" style="background:#0284c7; color:white; text-decoration:none; padding:4px 8px;">देखें</a>
+                <button class="btn-action toggle" onclick="toggleEpaper('${ep.id}')">${toggleBtnText}</button>
+                <button class="btn-action delete" onclick="deleteEpaper('${ep.id}')">हटाएं</button>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:red;">ई-पेपर लोड करने में विफल!</td></tr>`;
+        console.error(err);
+      }
+    }
+
+    async function toggleEpaper(id) {
+      try {
+        const res = await fetch(`${API_BASE}/epaper/${id}/toggle`, {
+          method: 'PUT',
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) loadEpapers();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function deleteEpaper(id) {
+      if (!confirm("क्या आप सचमुच इस ई-पेपर को हटाना चाहते हैं?")) return;
+      try {
+        const res = await fetch(`${API_BASE}/epaper/${id}`, {
+          method: 'DELETE',
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) loadEpapers();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Submit E-Paper Form
+    const epForm = document.getElementById("cms-epaper-form");
+    if (epForm) {
+      epForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const submitBtn = document.getElementById("ep-submit-btn");
+        submitBtn.disabled = true;
+        submitBtn.innerText = "⏳ अपलोड हो रहा है... कृपया प्रतीक्षा करें";
+
+        const title = document.getElementById("ep-form-title").value.trim();
+        const edition = document.getElementById("ep-form-edition").value;
+        const date = document.getElementById("ep-form-date").value;
+        const totalPages = document.getElementById("ep-form-pages").value;
+        const pdfFile = document.getElementById("ep-pdf-file").files[0];
+        const pageFiles = document.getElementById("ep-pages-images").files;
+
+        const formData = new FormData();
+        formData.append("title", title);
+        formData.append("edition", edition);
+        formData.append("date", date);
+        formData.append("totalPages", totalPages);
+
+        if (pdfFile) {
+          formData.append("pdf", pdfFile);
+        }
+
+        if (pageFiles && pageFiles.length > 0) {
+          for (let i = 0; i < pageFiles.length; i++) {
+            formData.append("pages", pageFiles[i]);
+          }
+        }
+
+        try {
+          const res = await fetch(`${API_BASE}/epaper`, {
+            method: 'POST',
+            headers: { "Authorization": `Bearer ${token}` },
+            body: formData
+          });
+
+          if (res.ok) {
+            alert("ई-पेपर सफलतापूर्वक अपलोड और प्रकाशित हो गया!");
+            epForm.reset();
+            document.getElementById("ep-file-label").innerText = "📄 कंप्यूटर से पीडीएफ चुनें (.pdf, 50MB तक)";
+            loadEpapers();
+          } else {
+            const errData = await res.json();
+            alert(`त्रुटि: ${errData.error || 'अपलोड विफल रहा'}`);
+          }
+        } catch (err) {
+          alert("सर्वर से संचार विफल रहा।");
+          console.error(err);
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerText = "🚀 ई-पेपर अपलोड और प्रकाशित करें";
+        }
+      });
+
+      // PDF file label update
+      document.getElementById("ep-pdf-file").addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          document.getElementById("ep-file-label").innerText = `चयनित पीडीएफ: ${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+        }
+      });
+    }
+
+    // --- Auth triggers ---
+    function logout() {
+      localStorage.removeItem("dm_admin_token");
+      window.location.href = "login.html";
+    }
+
+    document.getElementById("logout-btn").addEventListener("click", async () => {
+      try {
+        await fetch(`${API_BASE}/logout`, {
+          method: 'POST',
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+      } catch (err) {
+        console.error(err);
+      }
+      logout();
+    });
+
+    // Initial load
+    loadArticles();
+  </script>
+</body>
+</html>
