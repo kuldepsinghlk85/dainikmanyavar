@@ -33,9 +33,22 @@ export default function MobileFooter() {
         <Link href="/mobile/contact" className="hover:text-white">विज्ञापन दरें</Link>
       </div>
 
-      {/* Copyright */}
-      <div className="text-center text-[10px] text-stone-500 font-mono pt-2 border-t border-stone-800">
-        &copy; {new Date().getFullYear()} दैनिक मान्यवर (Dainik Manyavar). सर्वाधिकार सुरक्षित।
+      {/* Copyright & Technology Partner */}
+      <div className="text-center text-[10px] text-stone-500 font-mono pt-2 border-t border-stone-800 space-y-1">
+        <div>
+          &copy; {new Date().getFullYear()} दैनिक मान्यवर (Dainik Manyavar). सर्वाधिकार सुरक्षित।
+        </div>
+        <div className="text-stone-400">
+          Technology Partner:{' '}
+          <a
+            href="https://easylauncher.net"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-stone-300 hover:text-white underline font-sans font-semibold"
+          >
+            EasyLauncher.net
+          </a>
+        </div>
       </div>
     </footer>
   );

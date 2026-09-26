@@ -136,9 +136,21 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Copyright */}
-        <div className="border-t border-[#FDBA74] pt-3 text-center text-xs text-[#9A5A2E]">
-          © {new Date().getFullYear()} दैनिक मान्यवर. सर्वाधिकार सुरक्षित. | Powered by Dainik Manyawar Digital Network
+        {/* Copyright & Technology Partner */}
+        <div className="border-t border-[#FDBA74] pt-3 text-center text-xs text-[#9A5A2E] flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
+          <span>© {new Date().getFullYear()} दैनिक मान्यवर. सर्वाधिकार सुरक्षित. | Powered by Dainik Manyawar Digital Network</span>
+          <span className="hidden sm:inline text-[#FDBA74]">|</span>
+          <span>
+            Technology Partner:{' '}
+            <a
+              href="https://easylauncher.net"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold underline hover:text-[#C2410C] transition-colors"
+            >
+              EasyLauncher.net
+            </a>
+          </span>
         </div>
       </div>
     </footer>

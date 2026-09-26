@@ -117,8 +117,19 @@ export default function AdminLoginPage() {
           </button>
         </form>
 
-        <div className="mt-6 text-center text-[11px] text-stone-400 border-t border-stone-100 pt-4">
-          दैनिक मान्यवर डिजिटल नेटवर्क • सुरक्षित प्रमाणीकरण
+        <div className="mt-6 text-center text-[11px] text-stone-400 border-t border-stone-100 pt-4 space-y-1">
+          <div>दैनिक मान्यवर डिजिटल नेटवर्क • सुरक्षित प्रमाणीकरण</div>
+          <div>
+            Technology Partner:{' '}
+            <a
+              href="https://easylauncher.net"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#EA580C] hover:underline font-semibold"
+            >
+              EasyLauncher.net
+            </a>
+          </div>
         </div>
       </div>
     </div>

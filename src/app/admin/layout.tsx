@@ -136,6 +136,21 @@ export default function AdminLayout({
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto" suppressHydrationWarning>
           {children}
         </main>
+
+        {/* Admin Footer */}
+        <footer className="py-3 px-6 border-t border-stone-200 text-center text-xs text-stone-500 bg-white">
+          <p>
+            Technology Partner:{' '}
+            <a
+              href="https://easylauncher.net"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#EA580C] hover:underline font-semibold"
+            >
+              EasyLauncher.net
+            </a>
+          </p>
+        </footer>
       </div>
     </div>
   );

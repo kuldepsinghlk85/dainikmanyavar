@@ -66,6 +66,18 @@ npm run db:studio
 - Docker entrypoint reruns all `prisma/seed_*.js` on every container start; they must stay idempotent — guard on a **unique** column, or upsert. Verify with `npm run db:check-seeds`. A P2002 here crash-loops the container, Swarm rolls back, and prod silently keeps serving the old image.
 - `prisma/deduplicate_tags.js` runs last and rewrites tag `name` (it lowercases non-Hindi tags: `#MSP` → `#msp`). Key tag lookups on `slug`, the unique column — never on `name`.
 - SQLite: no concurrent writers. Prod DB is one bind-mounted file.
+- **Technology Partner Footer link**: All pages (desktop public, mobile, and admin) must maintain "Technology Partner: EasyLauncher.net" linking to `https://easylauncher.net` in a new tab (`target="_blank" rel="noopener noreferrer"`) at the bottom.
+
+## Layout & Attribution — rules for any change
+- **All pages (public desktop, mobile, admin) MUST maintain the Technology Partner link at the bottom:**
+  ```html
+  Technology Partner: <a href="https://easylauncher.net" target="_blank" rel="noopener noreferrer">EasyLauncher.net</a>
+  ```
+- The link must always open in a new tab (`target="_blank" rel="noopener noreferrer"`).
+- Components maintaining this:
+  - Desktop public pages: `src/components/public/Footer.tsx` (rendered across public desktop pages).
+  - Mobile pages: `src/components/mobile/MobileFooter.tsx` (rendered across all pages under `src/app/mobile/`).
+  - Admin pages: `src/app/admin/layout.tsx` (wraps all `/admin/*` views) and `src/app/admin/login/page.tsx`.
 
 ## Security — rules for any change
 
