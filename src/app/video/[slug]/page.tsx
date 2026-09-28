@@ -14,10 +14,38 @@ import { Play, Film } from 'lucide-react';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const article = await db.article.findFirst({
-    where: { OR: [{ slug }, { id: slug }] },
+  let decodedSlug = slug;
+  try {
+    decodedSlug = decodeURIComponent(slug);
+  } catch (_) {}
+
+  let article = await db.article.findFirst({
+    where: {
+      OR: [
+        { slug: decodedSlug },
+        { slug },
+        { id: decodedSlug },
+        { id: slug },
+      ],
+    },
     select: { title: true, excerpt: true, featuredImage: true },
   });
+
+  if (!article) {
+    const numMatch = decodedSlug.match(/(\d+)$/);
+    if (numMatch) {
+      const newsIdNum = parseInt(numMatch[1], 10);
+      article = await db.article.findFirst({
+        where: {
+          OR: [
+            { newsId: newsIdNum },
+            { slug: { endsWith: `-${numMatch[1]}` } },
+          ],
+        },
+        select: { title: true, excerpt: true, featuredImage: true },
+      });
+    }
+  }
 
   if (!article) return {};
 
@@ -34,17 +62,46 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function VideoDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  let decodedSlug = slug;
+  try {
+    decodedSlug = decodeURIComponent(slug);
+  } catch (_) {}
 
-  const currentVideo = await db.article.findFirst({
+  let currentVideo = await db.article.findFirst({
     where: {
-      OR: [{ slug }, { id: slug }],
-      status: 'PUBLISHED',
+      OR: [
+        { slug: decodedSlug },
+        { slug },
+        { id: decodedSlug },
+        { id: slug },
+      ],
+      status: { in: ['PUBLISHED', 'ARCHIVED'] },
     },
     include: {
       category: true,
       tags: { include: { tag: true } },
     },
   });
+
+  if (!currentVideo) {
+    const numMatch = decodedSlug.match(/(\d+)$/);
+    if (numMatch) {
+      const newsIdNum = parseInt(numMatch[1], 10);
+      currentVideo = await db.article.findFirst({
+        where: {
+          OR: [
+            { newsId: newsIdNum },
+            { slug: { endsWith: `-${numMatch[1]}` } },
+          ],
+          status: { in: ['PUBLISHED', 'ARCHIVED'] },
+        },
+        include: {
+          category: true,
+          tags: { include: { tag: true } },
+        },
+      });
+    }
+  }
 
   if (!currentVideo) {
     notFound();
@@ -114,7 +171,7 @@ export default async function VideoDetailPage({ params }: { params: Promise<{ sl
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 />
-              ) : currentVideo.videoUrl && currentVideo.videoUrl.endsWith('.mp4') ? (
+              ) : currentVideo.videoUrl ? (
                 <video
                   src={currentVideo.videoUrl}
                   controls
