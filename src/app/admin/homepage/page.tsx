@@ -15,7 +15,8 @@ import {
   ExternalLink,
   Flame,
   LayoutTemplate,
-  Layers
+  Layers,
+  Megaphone
 } from 'lucide-react';
 
 export default function HomepageAdminPage() {
@@ -280,6 +281,78 @@ export default function HomepageAdminPage() {
                     <ExternalLink className="w-3 h-3" />
                   </Link>
                 </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* SECTION: Empty Ad Placeholders On/Off (Requested by User) */}
+      <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-100 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center text-[#EA580C]">
+              <Megaphone className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-black text-stone-900">
+                खाली विज्ञापन स्थान (Empty Ad Placeholders) ऑन/ऑफ
+              </h2>
+              <p className="text-xs text-stone-500">
+                जब किसी स्लॉट में लाइव विज्ञापन सक्रिय न हो, तो खाली बॉक्स दिखाना (Visible) है या पूरी तरह छुपाना (Invisible) है
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => handleToggle('ad_placeholders_enabled', (widgetSettings as any).ad_placeholders_enabled || 'false')}
+            disabled={savingKey === 'ad_placeholders_enabled'}
+            className={`font-black text-xs px-4 py-2 rounded-xl border flex items-center gap-1.5 transition-all cursor-pointer ${
+              (widgetSettings as any).ad_placeholders_enabled === 'true'
+                ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-700 shadow-xs'
+                : 'bg-stone-100 hover:bg-stone-200 text-stone-700 border-stone-300'
+            }`}
+          >
+            {(widgetSettings as any).ad_placeholders_enabled === 'true' ? (
+              <>
+                <CheckCircle2 className="w-4 h-4" />
+                <span>🟢 सभी खाली बॉक्स दृश्यमान (Visible)</span>
+              </>
+            ) : (
+              <>
+                <XCircle className="w-4 h-4 text-stone-500" />
+                <span>🔒 सभी खाली बॉक्स छुपे हुए (Invisible)</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Individual slot controls */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-1">
+          {[
+            { key: 'ad_placeholder_sidebar_tall_enabled', label: 'साइडबार #2 (300×300 विशेष प्रचार)', desc: 'लोकप्रिय टैग के ऊपर वाला खाली स्थान' },
+            { key: 'ad_placeholder_sidebar_box2_enabled', label: 'साइडबार #3 (300×250 विज्ञापन)', desc: 'लोकप्रिय टैग के नीचे वाला खाली स्थान' },
+            { key: 'ad_placeholder_sidebar_box_enabled', label: 'साइडबार #1 (300×250 विज्ञापन)', desc: 'टॉप साइडबार का खाली स्थान' },
+            { key: 'ad_placeholder_header_wide_enabled', label: 'हेडर बैनर (970×90)', desc: 'शीर्ष हेडर का खाली स्थान' },
+          ].map((item) => {
+            const isSlotActive = (widgetSettings as any)[item.key] === 'true';
+            return (
+              <div key={item.key} className="p-3 bg-stone-50 rounded-xl border border-stone-200 space-y-2 flex flex-col justify-between">
+                <div>
+                  <h4 className="font-bold text-xs text-stone-900">{item.label}</h4>
+                  <p className="text-[10px] text-stone-500 leading-tight mt-0.5">{item.desc}</p>
+                </div>
+                <button
+                  onClick={() => handleToggle(item.key, isSlotActive ? 'true' : 'false')}
+                  disabled={savingKey === item.key}
+                  className={`w-full py-1.5 px-2.5 rounded-lg text-[11px] font-bold border transition-colors flex items-center justify-center gap-1 cursor-pointer ${
+                    isSlotActive
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                      : 'bg-white text-stone-600 border-stone-300 hover:bg-stone-100'
+                  }`}
+                >
+                  {isSlotActive ? '🟢 विज़िबल (Visible)' : '🔒 इनविज़िबल (Hidden)'}
+                </button>
               </div>
             );
           })}

@@ -38,6 +38,14 @@ interface Edition {
 }
 
 export default function EpaperPageManagementAdminPage() {
+  return (
+    <React.Suspense fallback={<div className="p-8 text-stone-500">ई-पेपर पृष्ठ प्रबंधन लोड हो रहा है...</div>}>
+      <EpaperPageManagementContent />
+    </React.Suspense>
+  );
+}
+
+function EpaperPageManagementContent() {
   const searchParams = useSearchParams();
   const editionId = searchParams.get('editionId');
 

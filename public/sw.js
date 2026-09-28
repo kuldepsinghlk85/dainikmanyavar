@@ -1,6 +1,13 @@
 const CACHE_NAME = 'dainik-manyavar-v1';
 const OFFLINE_URL = '/offline.html';
 
+// Import background push notification handlers
+try {
+  importScripts('/firebase-messaging-sw.js');
+} catch (e) {
+  console.log('Firebase sw import skipped:', e);
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {

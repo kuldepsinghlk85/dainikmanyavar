@@ -1,16 +1,27 @@
 import { NextResponse } from 'next/server';
+import { liveDataService } from '@/lib/live-data/service';
 import { db } from '@/lib/db';
-import { ensureDailyDataSynced } from '@/lib/autoUpdateService';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    await ensureDailyDataSynced();
-    const matches = await db.cricketMatch.findMany({
+    const live = await liveDataService.getCricketLive();
+
+    // Map normalized data back to legacy format if legacy fields expected
+    const legacyMatches = await db.cricketMatch.findMany({
       where: { status: 'PUBLISHED' },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { updatedAt: 'desc' },
+      take: 10,
     });
-    return NextResponse.json({ success: true, data: matches });
+
+    return NextResponse.json({
+      success: true,
+      data: legacyMatches,
+      liveData: live.data,
+      meta: live.meta,
+    });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'क्रिकेट डेटा अनुपलब्ध है' }, { status: 500 });
   }
 }

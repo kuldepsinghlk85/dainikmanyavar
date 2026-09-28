@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save, Eye, CheckCircle2, Image as ImageIcon, Volume2, Tag as TagIcon, Sparkles, ExternalLink, Plus, MapPin, Upload, X, FolderArchive } from 'lucide-react';
+import { ArrowLeft, Save, Eye, CheckCircle2, Image as ImageIcon, Volume2, Tag as TagIcon, Sparkles, ExternalLink, Plus, MapPin, Upload, X, FolderArchive, Bell } from 'lucide-react';
 import ImageUploadWidget from '@/components/admin/ImageUploadWidget';
 import HtmlContentEditor from '@/components/admin/HtmlContentEditor';
 import AutoTranslateButton from '@/components/admin/AutoTranslateButton';
@@ -49,6 +49,18 @@ export default function EditArticleAdminPage() {
     tagsString: '',
     slug: '',
   });
+
+  const [contentType, setContentType] = useState('news');
+  const [movieTitle, setMovieTitle] = useState('');
+  const [movieTitleHindi, setMovieTitleHindi] = useState('');
+  const [movieDirector, setMovieDirector] = useState('');
+  const [movieCast, setMovieCast] = useState('');
+  const [ottPlatform, setOttPlatform] = useState('');
+  const [rating, setRating] = useState('3.5');
+  const [verdict, setVerdict] = useState('');
+  const [positives, setPositives] = useState('');
+  const [negatives, setNegatives] = useState('');
+  const [spoilersContent, setSpoilersContent] = useState('');
 
   useEffect(() => {
     if (!id) return;
@@ -101,6 +113,21 @@ export default function EditArticleAdminPage() {
             tagsString: Array.isArray(a.tags) ? a.tags.map((t: any) => t.name).join(', ') : '',
             slug: a.slug || '',
           });
+
+          if (a.contentType) setContentType(a.contentType);
+          if (a.movieReview) {
+            const mr = a.movieReview;
+            if (mr.movie?.title) setMovieTitle(mr.movie.title);
+            if (mr.movie?.titleHindi) setMovieTitleHindi(mr.movie.titleHindi);
+            if (mr.movie?.director) setMovieDirector(mr.movie.director);
+            if (mr.movie?.cast) setMovieCast(mr.movie.cast);
+            if (mr.movie?.ottPlatform) setOttPlatform(mr.movie.ottPlatform);
+            if (mr.rating) setRating(mr.rating.toString());
+            if (mr.verdict) setVerdict(mr.verdict);
+            if (mr.positives) setPositives(mr.positives);
+            if (mr.negatives) setNegatives(mr.negatives);
+            if (mr.spoilersContent) setSpoilersContent(mr.spoilersContent);
+          }
         } else {
           setErrorMsg(data.error || 'समाचार प्राप्त नहीं हो सका');
         }
@@ -243,8 +270,7 @@ export default function EditArticleAdminPage() {
     setLocSubmitting(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmitInternal = async (redirectToPush = false) => {
     setSaving(true);
     setMsg('');
     setErrorMsg('');
@@ -262,12 +288,32 @@ export default function EditArticleAdminPage() {
           ...form,
           primaryCategoryId: form.categoryId,
           tags: tagsArray,
+          contentType,
+          movieReview:
+            contentType === 'movie_review' || contentType === 'series_review'
+              ? {
+                  movieTitle: movieTitle || form.title,
+                  movieTitleHindi,
+                  director: movieDirector,
+                  cast: movieCast,
+                  ottPlatform,
+                  rating,
+                  verdict,
+                  positives,
+                  negatives,
+                  spoilersContent,
+                }
+              : undefined,
         }),
       });
 
       const data = await res.json();
       if (data.success) {
-        setMsg('✅ समाचार सफलतापूर्वक अद्यतन (Updated) हो गया!');
+        if (redirectToPush) {
+          router.push(`/admin/notifications?newsId=${id}`);
+        } else {
+          setMsg('✅ समाचार सफलतापूर्वक अद्यतन (Updated) हो गया!');
+        }
       } else {
         setErrorMsg(data.error || 'अद्यतन करने में समस्या आई');
       }
@@ -275,6 +321,16 @@ export default function EditArticleAdminPage() {
       setErrorMsg(err.message);
     }
     setSaving(false);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSubmitInternal(false);
+  };
+
+  const handleSaveAndPush = (e: React.MouseEvent) => {
+    e.preventDefault();
+    handleSubmitInternal(true);
   };
 
   if (loading) {
@@ -327,6 +383,14 @@ export default function EditArticleAdminPage() {
               <span>👁 लाइव साइट पर देखें</span>
             </Link>
           )}
+
+          <Link
+            href={`/admin/notifications?newsId=${id}`}
+            className="text-xs font-extrabold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors shadow-2xs"
+          >
+            <Bell className="w-3.5 h-3.5 text-red-600 animate-pulse" />
+            <span>🔔 पुश नोटिफिकेशन बनाएं</span>
+          </Link>
         </div>
       </div>
 
@@ -394,6 +458,109 @@ export default function EditArticleAdminPage() {
           </div>
 
           <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-extrabold text-stone-900 mb-1.5">
+                सामग्री प्रकार (Content Type)
+              </label>
+              <select
+                value={contentType}
+                onChange={(e) => setContentType(e.target.value)}
+                className="w-full p-2.5 border border-stone-300 rounded-xl text-xs font-bold text-stone-900 bg-white"
+              >
+                <option value="news">📰 सामान्य समाचार (News Article)</option>
+                <option value="breaking_news">⚡ ब्रेकिंग न्यूज़ (Breaking News Flash)</option>
+                <option value="movie_review">🎬 मूवी रिव्यू / फिल्म समीक्षा (Movie Review)</option>
+                <option value="series_review">📺 वेब सीरीज़ रिव्यू (Web Series Review)</option>
+                <option value="editorial">✍️ संपादकीय (Editorial)</option>
+                <option value="opinion">💡 राय व विचार (Opinion / Column)</option>
+                <option value="explainer">🔍 व्याख्या व विश्लेषण (Explainer)</option>
+                <option value="feature">📄 विशेष फीचर लेख (Special Feature)</option>
+                <option value="interview">🎤 साक्षात्कार (Interview)</option>
+              </select>
+            </div>
+
+            {/* Conditional Movie Review Fields in Edit */}
+            {(contentType === 'movie_review' || contentType === 'series_review') && (
+              <div className="p-3 bg-amber-50/80 border border-amber-300 rounded-xl space-y-3">
+                <span className="font-black text-amber-900 text-xs block">🎬 फिल्म समीक्षा व रेटिंग</span>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <label className="block text-[10px] font-bold text-stone-600 mb-0.5">फिल्म (English)</label>
+                    <input
+                      type="text"
+                      value={movieTitle}
+                      onChange={(e) => setMovieTitle(e.target.value)}
+                      placeholder="उदा: Jawan"
+                      className="w-full p-1.5 border border-stone-300 rounded text-xs bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-stone-600 mb-0.5">रेटिंग (Stars / 5)</label>
+                    <select
+                      value={rating}
+                      onChange={(e) => setRating(e.target.value)}
+                      className="w-full p-1.5 border border-stone-300 rounded text-xs font-black text-amber-700 bg-white"
+                    >
+                      <option value="5.0">⭐⭐⭐⭐⭐ 5.0</option>
+                      <option value="4.5">⭐⭐⭐⭐½ 4.5</option>
+                      <option value="4.0">⭐⭐⭐⭐ 4.0</option>
+                      <option value="3.5">⭐⭐⭐½ 3.5</option>
+                      <option value="3.0">⭐⭐⭐ 3.0</option>
+                      <option value="2.5">⭐⭐½ 2.5</option>
+                      <option value="2.0">⭐⭐ 2.0</option>
+                      <option value="1.5">⭐½ 1.5</option>
+                      <option value="1.0">⭐ 1.0</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <label className="block text-[10px] font-bold text-stone-600 mb-0.5">निर्देशक</label>
+                    <input
+                      type="text"
+                      value={movieDirector}
+                      onChange={(e) => setMovieDirector(e.target.value)}
+                      placeholder="Director"
+                      className="w-full p-1.5 border border-stone-300 rounded text-xs bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-stone-600 mb-0.5">निर्णय (Verdict)</label>
+                    <input
+                      type="text"
+                      value={verdict}
+                      onChange={(e) => setVerdict(e.target.value)}
+                      placeholder="उदा: पैसा वसूल"
+                      className="w-full p-1.5 border border-stone-300 rounded text-xs bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-stone-600 mb-0.5">कलाकार (Cast)</label>
+                  <input
+                    type="text"
+                    value={movieCast}
+                    onChange={(e) => setMovieCast(e.target.value)}
+                    placeholder="Actors"
+                    className="w-full p-1.5 border border-stone-300 rounded text-xs bg-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-amber-900 mb-0.5">स्पॉइलर सामग्री (छिपी हुई)</label>
+                  <textarea
+                    rows={2}
+                    value={spoilersContent}
+                    onChange={(e) => setSpoilersContent(e.target.value)}
+                    placeholder="क्लाइमेक्स या मुख्य ट्विस्ट..."
+                    className="w-full p-1.5 border border-stone-300 rounded text-xs bg-white"
+                  />
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-xs font-extrabold text-stone-900 mb-1.5">
                 श्रेणी (Category)
@@ -608,11 +775,20 @@ export default function EditArticleAdminPage() {
         </div>
 
         {/* Submit Action Bar */}
-        <div className="pt-6 border-t border-stone-200 flex justify-end gap-3">
+        <div className="pt-6 border-t border-stone-200 flex flex-wrap items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={handleSaveAndPush}
+            disabled={saving}
+            className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-extrabold text-xs px-6 py-3 rounded-xl shadow-md flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+          >
+            <Bell className="w-4 h-4 animate-bounce" />
+            <span>{saving ? 'अद्यतन हो रहा है...' : '🔔 सेव करें और पुश नोटिफिकेशन में भेजें'}</span>
+          </button>
           <button
             type="submit"
             disabled={saving}
-            className="bg-[#EA580C] hover:bg-orange-700 text-white font-extrabold text-xs px-6 py-3 rounded-xl shadow-md flex items-center gap-2 cursor-pointer transition-colors"
+            className="bg-[#EA580C] hover:bg-orange-700 text-white font-extrabold text-xs px-6 py-3 rounded-xl shadow-md flex items-center gap-2 cursor-pointer transition-colors disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
             <span>{saving ? 'अद्यतन हो रहा है...' : '💾 समाचार अद्यतन करें (Save Changes)'}</span>

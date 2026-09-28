@@ -13,13 +13,52 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || 'NEW';
+    const publisher = searchParams.get('publisher');
+    const clusterId = searchParams.get('clusterId');
+    const category = searchParams.get('category');
+    const city = searchParams.get('city');
+
+    const where: any = {};
+
+    if (status && status !== 'ALL') {
+      where.status = status;
+    }
+
+    if (publisher) {
+      where.publisherName = publisher;
+    }
+
+    if (clusterId) {
+      where.clusterId = clusterId;
+    }
+
+    if (city) {
+      where.city = city;
+    }
+
+    if (category) {
+      where.source = { category };
+    }
 
     const items = await db.newsImportItem.findMany({
-      where: { status },
+      where,
       take: 100,
       orderBy: { importedAt: 'desc' },
       include: {
         source: true,
+        cluster: {
+          include: {
+            items: {
+              select: {
+                id: true,
+                publisherName: true,
+                originalTitle: true,
+                sourceUrl: true,
+                importedAt: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -85,7 +124,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // Bulk Clear All New Items
+    // Bulk Clear Items
     if (action === 'CLEAR_ALL') {
       const deleted = await db.newsImportItem.deleteMany({
         where: { status: 'NEW' },

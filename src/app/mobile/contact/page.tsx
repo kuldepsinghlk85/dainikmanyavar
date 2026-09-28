@@ -2,8 +2,6 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import MobileHeader from '@/components/mobile/MobileHeader';
-import MobileBottomNav from '@/components/mobile/MobileBottomNav';
 import MobileFooter from '@/components/mobile/MobileFooter';
 import { ArrowLeft, Phone, Mail, MapPin, Send, CheckCircle2 } from 'lucide-react';
 import VoiceInputButton from '@/components/public/VoiceInputButton';
@@ -45,9 +43,7 @@ export default function MobileContactPage() {
   };
 
   return (
-    <div className="bg-stone-100 dark:bg-[#0D0D0D] min-h-screen flex flex-col pb-16 transition-colors">
-      <MobileHeader />
-
+    <div className="bg-stone-100 dark:bg-[#0D0D0D] min-h-screen flex flex-col transition-colors">
       {/* Sub-header Navigation */}
       <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-stone-200 dark:border-stone-800 bg-white dark:bg-[#141414]">
         <Link
@@ -191,7 +187,6 @@ export default function MobileContactPage() {
       </main>
 
       <MobileFooter />
-      <MobileBottomNav />
     </div>
   );
 }

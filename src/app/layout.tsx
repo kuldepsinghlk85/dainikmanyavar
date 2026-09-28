@@ -23,6 +23,8 @@ export const metadata: Metadata = {
   },
 };
 
+import NotificationPermissionModal from '@/components/public/NotificationPermissionModal';
+
 export default function RootLayout({
   children,
 }: {
@@ -36,6 +38,18 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
+              try {
+                var observer = new MutationObserver(function(mutations) {
+                  for (var i = 0; i < mutations.length; i++) {
+                    var m = mutations[i];
+                    if (m.type === 'attributes' && m.attributeName === 'bis_skin_checked') {
+                      m.target.removeAttribute('bis_skin_checked');
+                    }
+                  }
+                });
+                observer.observe(document.documentElement, { attributes: true, subtree: true, attributeFilter: ['bis_skin_checked'] });
+              } catch(e) {}
+
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
                   navigator.serviceWorker.register('/sw.js').catch(function(err) {});
@@ -47,6 +61,7 @@ export default function RootLayout({
       </head>
       <body className="bg-white text-[#171717] antialiased" suppressHydrationWarning>
         {children}
+        <NotificationPermissionModal />
       </body>
     </html>
   );

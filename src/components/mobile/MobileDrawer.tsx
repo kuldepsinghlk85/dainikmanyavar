@@ -9,12 +9,10 @@ interface MobileDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   categories?: { name: string; slug: string }[];
+  activeCategories?: { name: string; slug: string }[];
+  activeDistricts?: { name: string; slug: string }[];
   config?: DrawerConfig;
 }
-
-const DISTRICTS = [
-  'जौनपुर', 'वाराणसी', 'प्रयागराज', 'गाजीपुर', 'आजमगढ़', 'मिर्जापुर', 'सोनभद्र', 'चंदौली', 'भदोही', 'बलिया', 'मऊ'
-];
 
 /* Custom crisp SVG icons branded exclusively for Dainik Manyavar */
 function TopNewsIcon() {
@@ -244,6 +242,8 @@ export default function MobileDrawer({
   isOpen,
   onClose,
   config = DEFAULT_MOBILE_MENU_CONFIG.drawer,
+  activeCategories = [],
+  activeDistricts = [],
 }: MobileDrawerProps) {
   if (!isOpen) return null;
 
@@ -333,6 +333,44 @@ export default function MobileDrawer({
     },
   ];
 
+  // Dynamically filter out categories that have zero published data
+  const activeSlugs = new Set(
+    activeCategories.map((c) => c.slug.toLowerCase())
+  );
+  activeCategories.forEach((c) => {
+    activeSlugs.add(c.name.toLowerCase());
+  });
+
+  const visibleMenuItems = activeCategories.length > 0
+    ? menuItems.filter((item) => {
+        if (item.href === '/mobile' || item.href === '/mobile/category/latest') return true;
+        const slug = item.href.replace('/mobile/category/', '').toLowerCase();
+        let decoded = slug;
+        try { decoded = decodeURIComponent(slug).toLowerCase(); } catch (_) {}
+        return activeSlugs.has(slug) || activeSlugs.has(decoded);
+      })
+    : menuItems;
+
+  // Append any active categories that are not in the predefined menuItems (e.g. मनोरंजन, प्रादेशिक)
+  const existingHrefs = new Set(visibleMenuItems.map((i) => i.href));
+  const dynamicExtraItems = activeCategories
+    .filter((c) => !existingHrefs.has(`/mobile/category/${c.slug}`) && c.slug !== 'home' && c.slug !== 'latest')
+    .map((c) => ({
+      id: c.slug,
+      title: c.name,
+      href: `/mobile/category/${c.slug}`,
+      icon: <Sparkles className="w-5 h-5 text-amber-500 shrink-0" />,
+      isFeatured: false,
+      badge: undefined as string | undefined,
+    }));
+
+  const allVisibleItems = [...visibleMenuItems, ...dynamicExtraItems];
+
+  // Active districts with real published articles
+  const visibleDistricts = activeDistricts.length > 0
+    ? activeDistricts.map((d) => d.name)
+    : ['जौनपुर', 'वाराणसी', 'प्रयागराज', 'लखनऊ'];
+
   return (
     <div className="fixed inset-0 z-50 flex">
       {/* Backdrop */}
@@ -382,9 +420,9 @@ export default function MobileDrawer({
           </Link>
         </div>
 
-        {/* Dainik Manyavar Official Menu Items */}
+        {/* Dainik Manyavar Official Menu Items (Only with real data) */}
         <div className="p-2 space-y-0.5">
-          {menuItems.map((item) => (
+          {allVisibleItems.map((item) => (
             <Link
               key={item.id}
               href={item.href}
@@ -411,15 +449,15 @@ export default function MobileDrawer({
           ))}
         </div>
 
-        {/* Regional / Districts Quick Chips */}
-        {config.showDistricts !== false && (
+        {/* Regional / Districts Quick Chips (Only with real data) */}
+        {config.showDistricts !== false && visibleDistricts.length > 0 && (
           <div className="p-3 border-t border-stone-100 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-900/40 space-y-2">
             <h4 className="text-[11px] font-black text-stone-600 dark:text-stone-400 uppercase tracking-wider flex items-center gap-1">
               <MapPin className="w-3.5 h-3.5 text-[#E53935]" />
               <span>उत्तर प्रदेश जनपद समाचार</span>
             </h4>
             <div className="flex flex-wrap gap-1.5">
-              {DISTRICTS.map((d) => (
+              {visibleDistricts.map((d) => (
                 <Link
                   key={d}
                   href={`/mobile/category/${encodeURIComponent(d)}`}

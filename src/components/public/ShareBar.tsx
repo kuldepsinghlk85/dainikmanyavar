@@ -2,10 +2,12 @@
 
 import React, { useState } from 'react';
 import { Share2, Heart, Copy, Check } from 'lucide-react';
-import { formatCount, getPublicSiteUrl } from '@/lib/utils';
+import { formatCount, getShortShareUrl } from '@/lib/utils';
+import SocialShareModal from './SocialShareModal';
 
 interface ShareBarProps {
   articleId: string;
+  newsId?: number | null;
   title: string;
   slug: string;
   initialLikeCount?: number;
@@ -22,6 +24,7 @@ interface ShareBarProps {
 
 export default function ShareBar({
   articleId,
+  newsId,
   title,
   slug,
   initialLikeCount = 0,
@@ -32,9 +35,10 @@ export default function ShareBar({
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [liked, setLiked] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
-  const siteUrl = getPublicSiteUrl();
-  const articleUrl = `${siteUrl}${isMobile ? '/mobile' : ''}/news/${encodeURIComponent(slug)}`;
+  // Clean, short share URL without percent-encoding (e.g. https://dainikmanyavar.com/n/48)
+  const shortUrl = getShortShareUrl({ id: articleId, newsId, slug });
 
   const handleLike = async () => {
     if (liked) return;
@@ -55,51 +59,45 @@ export default function ShareBar({
       const stars = reviewData.rating ? `⭐ ${reviewData.rating}/5 स्टार` : '';
       const verdictText = reviewData.verdict ? `वर्डिक्ट: ${reviewData.verdict}` : '';
       const metaLine = [stars, verdictText].filter(Boolean).join(' | ');
-      return `🎬 *${reviewData.movieName || title}*\n${metaLine ? `${metaLine}\n\n` : ''}*${title}*\n\nदैनिक मान्यवर पर पूरा रिव्यू पढ़ें:\n${articleUrl}`;
+      return `🎬 *${reviewData.movieName || title}*\n${metaLine ? `${metaLine}\n\n` : ''}*${title}*\n\nदैनिक मान्यवर पर पूरा रिव्यू पढ़ें:\n${shortUrl}`;
     }
     if (categoryName === 'मनोरंजन') {
-      return `🎬 *${title}*\n\nदैनिक मान्यवर पर सिनेमा व मनोरंजन की खास खबर पढ़ें:\n${articleUrl}`;
+      return `🎬 *${title}*\n\nदैनिक मान्यवर पर सिनेमा व मनोरंजन की खास खबर पढ़ें:\n${shortUrl}`;
     }
-    return `*${title}*\n\nदैनिक मान्यवर पर पूरी खबर पढ़ें:\n${articleUrl}`;
+    return `*${title}*\n\nदैनिक मान्यवर पर पूरी खबर पढ़ें:\n${shortUrl}`;
   };
 
   const handleWhatsAppShare = () => {
     const text = encodeURIComponent(getWhatsAppShareText());
-    window.open(`https://wa.me/?text=${text}`, '_blank');
+    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
 
   const handleFacebookShare = () => {
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`, '_blank');
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shortUrl)}`, '_blank');
   };
 
   const handleTwitterShare = () => {
     const text = encodeURIComponent(`${title} | @dainikmanyawar`);
-    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(articleUrl)}`, '_blank');
+    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(shortUrl)}`, '_blank');
   };
 
   const handleTelegramShare = () => {
     const text = encodeURIComponent(title);
-    window.open(`https://t.me/share/url?url=${encodeURIComponent(articleUrl)}&text=${text}`, '_blank');
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(shortUrl)}&text=${text}`, '_blank');
   };
 
   const handleNativeShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title,
-          text: getWhatsAppShareText(),
-          url: articleUrl,
-        });
-      } catch (err) {}
-    } else {
-      handleCopyLink();
-    }
+    setShowShareModal(true);
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(articleUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(shortUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+    // Also open modal so user has app choice
+    setShowShareModal(true);
   };
 
   return (
@@ -168,6 +166,20 @@ export default function ShareBar({
           <Share2 className="w-4 h-4" />
         </button>
       </div>
+
+      {/* Social Share App Chooser Modal */}
+      <SocialShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        article={{
+          id: articleId,
+          newsId,
+          title,
+          slug,
+        }}
+        categoryName={categoryName}
+        reviewData={reviewData}
+      />
     </div>
   );
 }

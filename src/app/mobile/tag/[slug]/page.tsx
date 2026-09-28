@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import { ArrowLeft, Tag as TagIcon } from 'lucide-react';
 import MobileNewsList from '@/components/mobile/MobileNewsList';
@@ -78,10 +78,18 @@ export default async function MobileTagPage({ params }: { params: Promise<{ slug
     .map((at) => at.article)
     .filter((a) => a.status === 'PUBLISHED');
 
+  if (articles.length === 0) {
+    redirect('/mobile');
+  }
+
   const allCategories = await db.category.findMany({
-    where: { isHeaderMenu: true },
+    where: {
+      isHeaderMenu: true,
+      articles: { some: { status: 'PUBLISHED' } },
+    },
     orderBy: { order: 'asc' },
     select: { id: true, name: true, slug: true },
+    take: 15,
   });
 
   return (

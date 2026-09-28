@@ -9,23 +9,27 @@ import AdBanner from '@/components/public/AdBanner';
 import AudioPlayer from '@/components/public/AudioPlayer';
 import { db } from '@/lib/db';
 import { Trophy, Calendar, MapPin, Play, Radio } from 'lucide-react';
+import { liveDataService } from '@/lib/live-data/service';
+import LiveDataStatusBadge from '@/components/public/LiveDataStatus';
+
+export const revalidate = 60;
 
 export const metadata = {
   title: 'क्रिकेट समाचार व लाइव स्कोरकार्ड | दैनिक मान्यवर',
   description: 'भारत व अंतरराष्ट्रीय क्रिकेट मैच स्कोर, शेड्यूल, नतीजे व क्रिकेट ताज़ा ख़बरें दैनिक मान्यवर पर।',
 };
 
-import { ensureDailyDataSynced } from '@/lib/autoUpdateService';
-
 export default async function CricketPage() {
-  await ensureDailyDataSynced();
+  const { data: liveMatches, meta } = await liveDataService.getCricketLive(false);
+
   const matches = await db.cricketMatch.findMany({
     where: { status: 'PUBLISHED' },
     orderBy: { createdAt: 'desc' },
+    take: 40,
   });
 
-  const liveMatches = matches.filter((m) => m.matchStatus === 'LIVE');
-  const otherMatches = matches.filter((m) => m.matchStatus !== 'LIVE');
+  const activeLiveMatches = liveMatches.filter((m) => m.matchStatus === 'LIVE');
+  const pastOrUpcoming = liveMatches.filter((m) => m.matchStatus !== 'LIVE');
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -45,13 +49,13 @@ export default async function CricketPage() {
               लाइव मैच स्कोरकार्ड, परिणाम, आगामी मुकाबले एवं विशेष मैच रिपोर्ट
             </p>
           </div>
-          <span className="bg-white/20 text-white text-xs font-mono font-bold px-3 py-1 rounded-full">
-            {matches.length} रिकॉर्ड्स
-          </span>
+          <div className="flex items-center gap-2">
+            <LiveDataStatusBadge status={meta.status} />
+          </div>
         </div>
 
         {/* LIVE Matches Ticker Card */}
-        {liveMatches.length > 0 && (
+        {activeLiveMatches.length > 0 && (
           <div className="space-y-3">
             <h2 className="text-lg font-black text-stone-900 flex items-center gap-2">
               <Radio className="w-5 h-5 text-red-600 animate-pulse" />
@@ -59,7 +63,7 @@ export default async function CricketPage() {
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {liveMatches.map((m) => (
+              {activeLiveMatches.map((m) => (
                 <div key={m.id} className="bg-stone-900 text-white p-5 rounded-2xl border border-red-600/40 shadow-lg space-y-3">
                   <div className="flex justify-between items-center text-xs">
                     <span className="bg-red-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded animate-pulse">LIVE</span>
@@ -68,15 +72,15 @@ export default async function CricketPage() {
 
                   <div className="flex justify-between items-center py-2">
                     <div className="space-y-1">
-                      <p className="font-extrabold text-base text-amber-400">{m.teamA}</p>
-                      <p className="text-sm font-mono text-stone-200">{m.scoreA || 'बल्लेबाजी जारी'}</p>
+                      <p className="font-extrabold text-base text-amber-400">{m.teamA.name}</p>
+                      <p className="text-sm font-mono text-stone-200">{m.teamA.score || 'बल्लेबाजी जारी'} {m.teamA.overs ? `(${m.teamA.overs} ov)` : ''}</p>
                     </div>
 
                     <div className="text-stone-500 font-black text-sm">VS</div>
 
                     <div className="space-y-1 text-right">
-                      <p className="font-extrabold text-base text-amber-400">{m.teamB}</p>
-                      <p className="text-sm font-mono text-stone-200">{m.scoreB || 'अभी शुरुआत'}</p>
+                      <p className="font-extrabold text-base text-amber-400">{m.teamB.name}</p>
+                      <p className="text-sm font-mono text-stone-200">{m.teamB.score || 'तैयारी'} {m.teamB.overs ? `(${m.teamB.overs} ov)` : ''}</p>
                     </div>
                   </div>
 
@@ -148,15 +152,25 @@ export default async function CricketPage() {
 
             <div className="bg-stone-50 p-5 rounded-2xl border border-stone-200 space-y-3">
               <h3 className="font-extrabold text-stone-900 text-sm border-b border-stone-200 pb-2">
-                📊 मैच परिणाम व शेड्यूल
+                📊 मैच परिणाम व हालिया मुकाबले
               </h3>
               <div className="space-y-3 text-xs">
-                {otherMatches.map((m) => (
-                  <div key={m.id} className="p-3 bg-white rounded-xl border border-stone-200 space-y-1">
-                    <p className="font-bold text-stone-800">{m.matchTitle}</p>
-                    <p className="text-[11px] text-green-700 font-bold">{m.resultText || 'शेड्यूल तय'}</p>
-                  </div>
-                ))}
+                {pastOrUpcoming.length > 0 ? (
+                  pastOrUpcoming.map((m) => (
+                    <div key={m.id} className="p-3 bg-white rounded-xl border border-stone-200 space-y-1">
+                      <div className="flex justify-between items-center text-stone-500 text-[11px]">
+                        <span>{m.tournament}</span>
+                        <span className="font-semibold text-stone-700">{m.matchStatus}</span>
+                      </div>
+                      <p className="font-bold text-stone-800">
+                        {m.teamA.name} {m.teamA.score ? `(${m.teamA.score})` : ''} vs {m.teamB.name} {m.teamB.score ? `(${m.teamB.score})` : ''}
+                      </p>
+                      <p className="text-[11px] text-green-700 font-bold">{m.resultText || 'शेड्यूल तय'}</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-stone-400 text-center py-4">कोई अन्य मैच रिकॉर्ड उपलब्ध नहीं है</div>
+                )}
               </div>
             </div>
           </aside>

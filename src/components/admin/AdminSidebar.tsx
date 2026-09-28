@@ -38,6 +38,7 @@ import {
   Smartphone,
   Users,
   UploadCloud,
+  Bell,
   DownloadCloud,
   Activity,
   MessageSquare,
@@ -75,6 +76,7 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
         { label: 'नया समाचार जोड़ें', href: '/admin/news/new', icon: PlusCircle },
         { label: '🔥 ब्रेकिंग न्यूज़ टिकर (Breaking Ticker)', href: '/admin/breaking', icon: Flame },
         { label: '🌟 मुख्य स्लाइडर व टॉप न्यूज़ (Hero Slider)', href: '/admin/slider', icon: Sliders },
+        { label: '🔔 पुश नोटिफिकेशन (Push System)', href: '/admin/notifications', icon: Bell },
         { label: '📱 मोबाइल ऐप मेनू (Mobile Menu)', href: '/admin/mobile-menu', icon: Smartphone },
         { label: '📥 न्यूज़ इम्पोर्ट इनबॉक्स', href: '/admin/importer/inbox', icon: Inbox },
         { label: '📥 विशेष फ़ीड इनबॉक्स', href: '/admin/external-content/inbox', icon: Radio },
@@ -133,6 +135,7 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
       title: '🏆 विशेष मॉड्यूल्स (Special Modules)',
       icon: Trophy,
       items: [
+        { label: '📡 लाइव डेटा सेंटर (Live Engine)', href: '/admin/live-data', icon: Activity },
         { label: '🏏 क्रिकेट (Cricket Matches)', href: '/admin/cricket', icon: Trophy },
         { label: '🔮 राशिफल (Horoscope)', href: '/admin/horoscope', icon: Sparkles },
         { label: '📈 शेयर बाजार (Stock Market)', href: '/admin/stock-market', icon: TrendingUp },

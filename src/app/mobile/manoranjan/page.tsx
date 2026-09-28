@@ -1,8 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import MobileHeader from '@/components/mobile/MobileHeader';
-import MobileBottomNav from '@/components/mobile/MobileBottomNav';
 import MobileFooter from '@/components/mobile/MobileFooter';
 import { db } from '@/lib/db';
 import {
@@ -82,9 +80,7 @@ export default async function MobileManoranjanPage({
   const currentTab = subtype || '';
 
   return (
-    <div className="bg-stone-100 dark:bg-[#0D0D0D] min-h-screen pb-16 transition-colors font-sans">
-      <MobileHeader />
-
+    <div className="bg-stone-100 dark:bg-[#0D0D0D] min-h-screen transition-colors font-sans">
       {/* Top Heading */}
       <div className="bg-white dark:bg-[#121212] px-3.5 py-3 border-b border-stone-200 dark:border-stone-800 transition-colors">
         <div className="flex items-center gap-2 mb-2">
@@ -209,7 +205,6 @@ export default async function MobileManoranjanPage({
       </div>
 
       <MobileFooter />
-      <MobileBottomNav />
     </div>
   );
 }

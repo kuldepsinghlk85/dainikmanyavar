@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import MobileCategoryChips from '@/components/mobile/MobileCategoryChips';
 import MobileNewsList from '@/components/mobile/MobileNewsList';
@@ -144,10 +144,19 @@ export default async function MobileCategoryPage({
     }
   }
 
+  // If this category/section has zero published data, hide it completely by redirecting to /mobile
+  if (articles.length === 0) {
+    redirect('/mobile');
+  }
+
   const allCategories = await db.category.findMany({
-    where: { isHeaderMenu: true },
+    where: {
+      isHeaderMenu: true,
+      articles: { some: { status: 'PUBLISHED' } },
+    },
     orderBy: { order: 'asc' },
     select: { id: true, name: true, slug: true },
+    take: 15,
   });
 
   return (

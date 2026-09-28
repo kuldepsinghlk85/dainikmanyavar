@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { getPublicSiteUrl } from '@/lib/utils';
 
 export interface InquiryData {
   id: string;
@@ -24,7 +25,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
 export const EDITOR_EMAIL = 'editor.dainikmanyavar@gmail.com';
 export const EDITOR_PHONE = '919336181297';
 export const SITE_NAME = 'दैनिक मान्यवर';
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3015';
+export const SITE_URL = getPublicSiteUrl();
 
 /**
  * Builds a direct pre-filled WhatsApp link for the editor

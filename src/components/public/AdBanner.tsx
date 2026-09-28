@@ -13,21 +13,25 @@ interface AdBannerProps {
 
 export default function AdBanner({ position = 'header_wide', label, sizeText, className }: AdBannerProps) {
   const [adSlot, setAdSlot] = useState<any>(null);
+  const [showPlaceholder, setShowPlaceholder] = useState<boolean>(false);
+  const [loaded, setLoaded] = useState<boolean>(false);
 
   useEffect(() => {
     fetch(`/api/ads?position=${position}`)
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && data.data) {
-          setAdSlot(data.data);
+        if (data.success) {
+          if (data.data) setAdSlot(data.data);
+          setShowPlaceholder(data.showPlaceholder === true);
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoaded(true));
   }, [position]);
 
   const isHeaderAd = position === 'header_wide';
 
-  // If real active ad creative exists, render dynamic creative image!
+  // 1. If real active ad creative exists, render dynamic creative image!
   if (adSlot && adSlot.active && adSlot.desktopCreative) {
     const targetLink = adSlot.targetUrl;
     const isExternal = targetLink && targetLink.startsWith('http');
@@ -69,7 +73,12 @@ export default function AdBanner({ position = 'header_wide', label, sizeText, cl
     return <div className={marginStyle}>{content}</div>;
   }
 
-  // Otherwise, render styled placeholder without 404 links
+  // 2. If no active ad and admin has turned placeholders OFF, return nothing (Invisible)!
+  if (!loaded || !showPlaceholder) {
+    return null;
+  }
+
+  // 3. Otherwise, if admin has turned placeholder visibility ON, render placeholder
   if (position === 'sidebar_box') {
     return (
       <div className="bg-[#FAF9F6] border border-dashed border-stone-300 rounded-2xl flex flex-col items-center justify-center text-center p-4 text-stone-500 min-h-[220px]">

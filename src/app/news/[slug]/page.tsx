@@ -84,6 +84,7 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
       category: true,
       author: true,
       location: true,
+      movieReview: { include: { movie: true } },
       tags: { include: { tag: true } },
     },
   });
@@ -103,6 +104,7 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
           category: true,
           author: true,
           location: true,
+          movieReview: { include: { movie: true } },
           tags: { include: { tag: true } },
         },
       });
@@ -209,7 +211,39 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
             </nav>
 
             {/* Category & Tag Chips */}
-            <div className="flex flex-wrap gap-2 mb-3">
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              {article.contentType === 'movie_review' && (
+                <Link
+                  href={`/movie-review/${article.slug}`}
+                  className="bg-purple-900 hover:bg-purple-800 text-purple-100 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm"
+                >
+                  🎬 मूवी रिव्यू स्कोरकार्ड ➔
+                </Link>
+              )}
+              {article.contentType === 'editorial' && (
+                <Link
+                  href="/editorial"
+                  className="bg-stone-900 hover:bg-stone-800 text-stone-100 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5"
+                >
+                  ✍️ संपादकीय
+                </Link>
+              )}
+              {article.contentType === 'opinion' && (
+                <Link
+                  href="/editorial"
+                  className="bg-blue-900 hover:bg-blue-800 text-blue-100 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5"
+                >
+                  💡 राय व विचार
+                </Link>
+              )}
+              {article.contentType === 'explainer' && (
+                <Link
+                  href="/editorial"
+                  className="bg-emerald-900 hover:bg-emerald-800 text-emerald-100 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5"
+                >
+                  🔍 व्याख्या व विश्लेषण
+                </Link>
+              )}
               {article.category && (
                 <Link
                   href={`/category/${article.category.slug}`}
@@ -329,6 +363,7 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
             {/* Social Share & Reaction Bar */}
             <ShareBar
               articleId={article.id}
+              newsId={article.newsId}
               title={article.title}
               slug={article.slug}
               initialLikeCount={article.likeCount}
@@ -339,6 +374,7 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
             {/* User Activity & Bookmark Tracker */}
             <UserActivityTracker
               newsId={article.id}
+              numericNewsId={article.newsId}
               newsTitle={article.title}
               newsSlug={article.slug}
             />
@@ -371,6 +407,7 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
             {/* Bottom Social Share */}
             <ShareBar
               articleId={article.id}
+              newsId={article.newsId}
               title={article.title}
               slug={article.slug}
               initialLikeCount={article.likeCount}

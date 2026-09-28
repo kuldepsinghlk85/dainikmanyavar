@@ -36,9 +36,13 @@ export default async function MobileSearchPage({
     : [];
 
   const categories = await db.category.findMany({
-    where: { isHeaderMenu: true },
+    where: {
+      isHeaderMenu: true,
+      articles: { some: { status: 'PUBLISHED' } },
+    },
     orderBy: { order: 'asc' },
     select: { id: true, name: true, slug: true },
+    take: 15,
   });
 
   return (

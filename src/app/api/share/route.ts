@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getPortalUserSession } from '@/lib/auth';
+import { getPublicSiteUrl } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,11 +51,7 @@ export async function POST(req: NextRequest) {
         data: { shareCount: { increment: 1 } },
       });
     } catch (_) {}
-
-    let origin = process.env.NEXT_PUBLIC_SITE_URL || 'https://dainikmanyavar.com';
-    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
-      origin = 'https://dainikmanyavar.com';
-    }
+    const origin = getPublicSiteUrl(req);
     const shareUrl = `${origin}/share/${code}`;
 
     return NextResponse.json({

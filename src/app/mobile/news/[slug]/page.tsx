@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
-import { formatHindiTimeAgo, getPublicSiteUrl } from '@/lib/utils';
+import { formatHindiTimeAgo, getPublicSiteUrl, getShortShareUrl } from '@/lib/utils';
 import { ArrowLeft, Clock, Eye, Share2, MessageCircle, Volume2 } from 'lucide-react';
 import MobileNewsList from '@/components/mobile/MobileNewsList';
 import MobileFooter from '@/components/mobile/MobileFooter';
@@ -141,9 +141,9 @@ export default async function MobileNewsDetailPage({
   }
 
   const siteUrl = getPublicSiteUrl();
-  const shareUrl = `${siteUrl}/mobile/news/${encodeURIComponent(article.slug)}`;
-  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(
-    article.title + '\n\nपूरा समाचार मोबाइल पर पढ़ें: ' + shareUrl
+  const shortShareUrl = getShortShareUrl(article, siteUrl);
+  const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(
+    `*${article.title}*\n\nदैनिक मान्यवर पर पूरी खबर पढ़ें:\n${shortShareUrl}`
   )}`;
 
   return (
@@ -157,14 +157,32 @@ export default async function MobileNewsDetailPage({
           <ArrowLeft className="w-4 h-4" />
           <span>मुख्य पृष्ठ</span>
         </Link>
-        {article.category && (
-          <Link
-            href={`/mobile/category/${article.category.slug}`}
-            className="text-[11px] font-black bg-orange-100 text-[#C2410C] px-2.5 py-0.5 rounded-full"
-          >
-            {article.category.name}
-          </Link>
-        )}
+        <div className="flex items-center gap-1.5">
+          {article.contentType === 'movie_review' && (
+            <Link
+              href={`/movie-review/${article.slug}`}
+              className="text-[10px] font-black bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full"
+            >
+              🎬 रिव्यू
+            </Link>
+          )}
+          {article.contentType === 'editorial' && (
+            <Link
+              href="/editorial"
+              className="text-[10px] font-black bg-stone-800 text-stone-100 px-2 py-0.5 rounded-full"
+            >
+              ✍️ संपादकीय
+            </Link>
+          )}
+          {article.category && (
+            <Link
+              href={`/mobile/category/${article.category.slug}`}
+              className="text-[11px] font-black bg-orange-100 text-[#C2410C] px-2.5 py-0.5 rounded-full"
+            >
+              {article.category.name}
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="p-4 space-y-3.5">
@@ -270,6 +288,7 @@ export default async function MobileNewsDetailPage({
         {/* Social Share Bar */}
         <ShareBar
           articleId={article.id}
+          newsId={article.newsId}
           title={article.title}
           slug={article.slug}
           initialLikeCount={article.likeCount}
@@ -281,6 +300,7 @@ export default async function MobileNewsDetailPage({
         {/* User Activity & Bookmark Tracker */}
         <UserActivityTracker
           newsId={article.id}
+          numericNewsId={article.newsId}
           newsTitle={article.title}
           newsSlug={article.slug}
           isMobile={true}
@@ -310,6 +330,7 @@ export default async function MobileNewsDetailPage({
         {/* Bottom Social Share Bar */}
         <ShareBar
           articleId={article.id}
+          newsId={article.newsId}
           title={article.title}
           slug={article.slug}
           initialLikeCount={article.likeCount}

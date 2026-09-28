@@ -4,10 +4,12 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Bookmark, Share2, Check } from 'lucide-react';
-import { formatHindiTimeAgo, getPublicSiteUrl } from '@/lib/utils';
+import { formatHindiTimeAgo } from '@/lib/utils';
+import SocialShareModal from '@/components/public/SocialShareModal';
 
 interface ArticleData {
   id: string;
+  newsId?: number | null;
   title: string;
   slug: string;
   excerpt?: string | null;
@@ -19,7 +21,7 @@ interface ArticleData {
 
 export default function MobileHeroCard({ article }: { article: ArticleData }) {
   const [bookmarked, setBookmarked] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   useEffect(() => {
     try {
@@ -50,17 +52,7 @@ export default function MobileHeroCard({ article }: { article: ArticleData }) {
   const handleShare = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const url = `${getPublicSiteUrl()}/mobile/news/${encodeURIComponent(article.slug)}`;
-    if (navigator.share) {
-      navigator.share({ title: article.title, url }).catch(() => {});
-    } else {
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(url).then(() => {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
-        }).catch(() => {});
-      }
-    }
+    setShowShareModal(true);
   };
 
   const fallback = 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=800&q=80';
@@ -139,10 +131,23 @@ export default function MobileHeroCard({ article }: { article: ArticleData }) {
             className="p-1 text-stone-500 dark:text-stone-400 hover:text-[#E53935] active:scale-90 transition-transform cursor-pointer"
             title="शेयर करें"
           >
-            {copied ? <Check className="w-4 h-4 text-green-500" /> : <Share2 className="w-4 h-4" />}
+            <Share2 className="w-4 h-4" />
           </button>
         </div>
       </div>
+
+      {/* Social Share App Chooser Modal */}
+      <SocialShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        article={{
+          id: article.id,
+          newsId: article.newsId,
+          title: article.title,
+          slug: article.slug,
+        }}
+        categoryName={article.category?.name}
+      />
     </article>
   );
 }

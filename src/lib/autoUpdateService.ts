@@ -35,18 +35,10 @@ export async function syncGoldSilver(force = false) {
   const todayStr = getTodayString();
   const seed = getDaySeed();
 
-  // Check if today's prices already exist
-  if (!force) {
-    const todayCount = await db.commodityPrice.count({
-      where: {
-        updatedAt: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)),
-        },
-      },
-    });
-    if (todayCount >= 5) {
-      return { status: 'ALREADY_SYNCED', date: todayStr };
-    }
+  // Always preserve existing prices entered by editor or verified feed
+  const existingCount = await db.commodityPrice.count();
+  if (existingCount >= 5 && !force) {
+    return { status: 'PRESERVED_EXISTING', date: todayStr };
   }
 
   // Base calculation with daily market delta
@@ -455,21 +447,6 @@ export async function syncCricketAndSports(force = false) {
   }
 
   const matches = [
-    {
-      matchTitle: 'भारत बनाम इंग्लैंड - T20 अंतरराष्ट्रीय सीरीज',
-      tournament: 'T20 अंतरराष्ट्रीय सीरीज 2026',
-      teamA: 'भारत (IND)',
-      teamB: 'इंग्लैंड (ENG)',
-      scoreA: '185/4 (20.0 ओवर)',
-      scoreB: '142/3 (15.4 ओवर)',
-      matchStatus: 'LIVE',
-      resultText: 'इंग्लैंड को जीत के लिए 26 गेंदों में 44 रनों की आवश्यकता',
-      venue: 'वानखेड़े स्टेडियम, मुंबई',
-      newsHeadline: 'LIVE T20 Match: मुंबई टी-20 में भारतीय गेंदबाजों का शानदार प्रदर्शन, इंग्लैंड पर कसा शिकंजा',
-      newsSummary: 'मुंबई में खेले जा रहे रोमांचक टी-20 मुकाबले में भारतीय टीम ने 185 रनों का विशाल लक्ष्य रखा है। जसप्रीत बुमराह और कुलदीप यादव की फिरकी के सामने इंग्लैंड के बल्लेबाज संघर्ष कर रहे हैं।',
-      featuredImage: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=800&q=80',
-      status: 'PUBLISHED',
-    },
     {
       matchTitle: 'भारत बनाम ऑस्ट्रेलिया - एशिया कप फाइनल',
       tournament: 'एशिया कप 2026',

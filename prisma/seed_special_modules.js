@@ -59,22 +59,6 @@ async function seedSpecialModules() {
       featuredImage: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=800&q=80',
       tagsJson: JSON.stringify(['#क्रिकेट', '#भारत', '#एशिया_कप', '#विराट_कोहली']),
       status: 'PUBLISHED'
-    },
-    {
-      matchTitle: 'भारत बनाम इंग्लैंड - T20 सीरीज पहला मुकाबला',
-      tournament: 'T20 अंतरराष्ट्रीय सीरीज',
-      teamA: 'भारत (IND)',
-      teamB: 'इंग्लैंड (ENG)',
-      scoreA: '185/4 (20 ओवर)',
-      scoreB: '142/3 (15.4 ओवर)',
-      matchStatus: 'LIVE',
-      resultText: 'इंग्लैंड को 26 गेंदों में 44 रनों की आवश्यकता',
-      venue: 'वानखेड़े स्टेडियम, मुंबई',
-      newsHeadline: 'LIVE T20 Match: मुंबई टी-20 में भारतीय गेंदबाजों का शानदार प्रदर्शन, इंग्लैंड पर कसा शिकंजा',
-      newsSummary: 'मुंबई में खेले जा रहे रोमांचक टी-20 मुकाबले में भारतीय टीम ने 185 रनों का विशाल लक्ष्य रखा है।',
-      featuredImage: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=800&q=80',
-      tagsJson: JSON.stringify(['#क्रिकेट', '#LIVE_Score', '#भारत_इंग्लैंड']),
-      status: 'PUBLISHED'
     }
   ];
 

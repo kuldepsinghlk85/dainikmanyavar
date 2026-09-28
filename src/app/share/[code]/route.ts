@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { NextRequest } from 'next/server';
+import { resolveArticleByCode, handleShortLinkRedirect } from '@/lib/shortLinks';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,49 +9,11 @@ export async function GET(
 ) {
   try {
     const { code } = await params;
-    if (!code) {
-      return NextResponse.redirect(new URL('/', request.url));
-    }
-
-    const share = await db.shareTracking.findUnique({
-      where: { trackingCode: code },
-    });
-
-    if (!share) {
-      return NextResponse.redirect(new URL('/', request.url));
-    }
-
-    // Increment click count & log activity asynchronously
-    await Promise.all([
-      db.shareTracking.update({
-        where: { id: share.id },
-        data: { clickCount: { increment: 1 } },
-      }),
-      db.userActivityLog.create({
-        data: {
-          userId: share.userId,
-          newsId: share.newsId,
-          activityType: 'VIEW',
-          device: request.headers.get('user-agent')?.toLowerCase().includes('mobile') ? 'mobile' : 'web',
-        },
-      }),
-    ]);
-
-    const article = await db.article.findUnique({
-      where: { id: share.newsId },
-      select: { slug: true },
-    });
-
-    if (!article || !article.slug) {
-      return NextResponse.redirect(new URL('/', request.url));
-    }
-
-    const isMobile = request.headers.get('user-agent')?.toLowerCase().includes('mobile');
-    const targetPath = isMobile ? `/mobile/news/${encodeURIComponent(article.slug)}` : `/news/${encodeURIComponent(article.slug)}`;
-
-    return NextResponse.redirect(new URL(targetPath, request.url));
+    const article = await resolveArticleByCode(code, request);
+    return handleShortLinkRedirect(request, article);
   } catch (error) {
     console.error('Share redirect error:', error);
-    return NextResponse.redirect(new URL('/', request.url));
+    return handleShortLinkRedirect(request, null);
   }
 }
+

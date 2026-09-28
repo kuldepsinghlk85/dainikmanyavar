@@ -119,10 +119,11 @@ export default async function MobileHomePage() {
     },
   });
 
-  const worldArticles = await db.article.findMany({
+  // National News (देश)
+  const deshArticles = await db.article.findMany({
     where: {
       status: 'PUBLISHED',
-      category: { slug: { in: ['videsh', 'world', 'desh', 'international'] } },
+      category: { slug: 'desh' },
     },
     orderBy: [{ newsId: 'desc' }, { publishedAt: 'desc' }],
     take: 4,
@@ -131,12 +132,47 @@ export default async function MobileHomePage() {
     },
   });
 
-  // 5. Fetch categories for chips
+  // World / International News (विदेश)
+  const worldArticles = await db.article.findMany({
+    where: {
+      status: 'PUBLISHED',
+      category: { slug: { in: ['videsh', 'world', 'international'] } },
+    },
+    orderBy: [{ newsId: 'desc' }, { publishedAt: 'desc' }],
+    take: 4,
+    include: {
+      category: { select: { name: true } },
+    },
+  });
+
+  // 5. Fetch categories for chips (ONLY categories with published articles)
   const categories = await db.category.findMany({
-    where: { isHeaderMenu: true },
+    where: {
+      isHeaderMenu: true,
+      articles: { some: { status: 'PUBLISHED' } },
+    },
     orderBy: { order: 'asc' },
     select: { id: true, name: true, slug: true },
+    take: 15,
   });
+
+  // 5b. Fetch real active trending tags with articles
+  const activeTags = await db.tag.findMany({
+    where: {
+      articleTags: { some: { article: { status: 'PUBLISHED' } } },
+    },
+    include: {
+      _count: { select: { articleTags: true } },
+    },
+    orderBy: {
+      articleTags: { _count: 'desc' },
+    },
+    take: 8,
+  });
+  const trendingTopics = activeTags.map((t) => ({
+    name: t.name.startsWith('#') ? t.name : `#${t.name}`,
+    url: `/mobile/tag/${encodeURIComponent(t.slug)}`,
+  }));
 
   // 6. Section toggle settings
   const shabdkhojSetting = await db.siteSetting.findUnique({
@@ -199,8 +235,8 @@ export default async function MobileHomePage() {
       {/* 1. Category Chips Bar (Amar Ujala style with filter button) */}
       <MobileCategoryChips categories={categories} activeSlug="home" />
 
-      {/* 2. Trending Topics Strip (Dainik Bhaskar style) */}
-      <MobileTrendingBar />
+      {/* 2. Trending Topics Strip (Dainik Bhaskar style with real articles) */}
+      <MobileTrendingBar topics={trendingTopics} />
 
       {/* 3. Interactive Engagement Banner: 'शब्दखोज' (disabled by default) */}
       {showShabdkhoj && <MobileInteractiveBanner />}
@@ -208,10 +244,10 @@ export default async function MobileHomePage() {
       {/* 4. 'आज के अहम घटनाक्रम' (Amar Ujala style) */}
       <MobileKeyEvents article={leadArticle} />
 
-      {/* 5. 2-Column Split: 'बड़ी खबरें' & 'देश-दुनिया' (Amar Ujala style) */}
+      {/* 5. 2-Column Split: 'बड़ी खबरें' & 'देश' (Amar Ujala style) */}
       <MobileTwoColGrid
         topStories={latestArticles.slice(0, 2)}
-        worldStories={worldArticles.length >= 2 ? worldArticles.slice(0, 2) : latestArticles.slice(2, 4)}
+        worldStories={deshArticles.length >= 2 ? deshArticles.slice(0, 2) : (worldArticles.length >= 2 ? worldArticles.slice(0, 2) : latestArticles.slice(2, 4))}
       />
 
       {/* 6. Main Lead Story Card with Bookmark & Share */}
@@ -274,8 +310,22 @@ export default async function MobileHomePage() {
         </>
       )}
 
-      {/* 10. Foreign / World Feed */}
-      {worldArticles.length > 0 ? (
+      {/* 10. National News Feed (देश) */}
+      {deshArticles.length > 0 && (
+        <>
+          <MobileNewsList
+            articles={deshArticles}
+            sectionTitle="देश"
+            viewAllLink="/mobile/category/desh"
+            buttonText="सभी खबरें"
+            icon={<Globe className="w-3.5 h-3.5 text-[#E53935]" />}
+          />
+          <div className="h-2 bg-stone-100 dark:bg-[#0D0D0D] border-y border-stone-200/80 dark:border-stone-800/80" />
+        </>
+      )}
+
+      {/* 10b. Foreign / World Feed (ONLY when articles exist) */}
+      {worldArticles.length > 0 && (
         <>
           <MobileNewsList
             articles={worldArticles}
@@ -286,7 +336,7 @@ export default async function MobileHomePage() {
           />
           <div className="h-2 bg-stone-100 dark:bg-[#0D0D0D] border-y border-stone-200/80 dark:border-stone-800/80" />
         </>
-      ) : null}
+      )}
 
       {/* 11. Jaunpur Local Feed */}
       {jaunpurArticles.length > 0 && (

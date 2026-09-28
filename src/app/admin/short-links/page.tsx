@@ -1,7 +1,7 @@
 import React from 'react';
 import { db } from '@/lib/db';
 import { Link as LinkIcon, ExternalLink } from 'lucide-react';
-import { formatCount } from '@/lib/utils';
+import { formatCount, getPublicSiteUrl } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +11,8 @@ export default async function ShortLinksAdminPage() {
     take: 50,
     include: { article: true },
   });
+
+  const siteUrl = getPublicSiteUrl();
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -36,7 +38,15 @@ export default async function ShortLinksAdminPage() {
                 <td className="p-3 font-semibold text-stone-900 max-w-xs truncate">{link.article.title}</td>
                 <td className="p-3 font-mono font-bold">{formatCount(link.clickCount)}</td>
                 <td className="p-3 text-[#F97316] font-mono text-[11px]">
-                  http://localhost:3015/s/{link.shortCode}
+                  <a
+                    href={`${siteUrl}/s/${link.shortCode}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 hover:underline"
+                  >
+                    {`${siteUrl}/s/${link.shortCode}`}
+                    <ExternalLink className="w-3 h-3 inline opacity-70" />
+                  </a>
                 </td>
               </tr>
             ))}

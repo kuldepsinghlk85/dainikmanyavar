@@ -22,15 +22,40 @@ export default function AdsAdminPage() {
   const [savingAll, setSavingAll] = useState(false);
   const [message, setMessage] = useState('');
   const [dirtyIds, setDirtyIds] = useState<Set<string>>(new Set());
+  const [placeholdersEnabled, setPlaceholdersEnabled] = useState(false);
 
   const fetchSlots = async () => {
     try {
-      const res = await fetch('/api/admin/ads');
-      const data = await res.json();
-      if (data.success) {
-        setSlots(data.data);
+      const [resAds, resSettings] = await Promise.all([
+        fetch('/api/admin/ads'),
+        fetch('/api/admin/settings'),
+      ]);
+      const dataAds = await resAds.json();
+      if (dataAds.success) setSlots(dataAds.data);
+
+      const dataSettings = await resSettings.json();
+      if (dataSettings.success && dataSettings.data) {
+        setPlaceholdersEnabled(dataSettings.data.ad_placeholders_enabled === 'true');
       }
     } catch (err) {}
+  };
+
+  const handleTogglePlaceholders = async () => {
+    const nextVal = !placeholdersEnabled;
+    setPlaceholdersEnabled(nextVal);
+    try {
+      await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ad_placeholders_enabled: nextVal ? 'true' : 'false' }),
+      });
+      setMessage(
+        nextVal
+          ? '✅ खाली विज्ञापन स्थान अब दृश्यमान (Visible) हैं।'
+          : '🔒 खाली विज्ञापन स्थान अब पूरी तरह छुपे हुए (Invisible) हैं।'
+      );
+      setTimeout(() => setMessage(''), 4000);
+    } catch (_) {}
   };
 
   useEffect(() => {
@@ -151,6 +176,34 @@ export default function AdsAdminPage() {
             <span>{savingAll ? 'सभी सेव हो रहे हैं...' : 'सभी विज्ञापन सुरक्षित करें'}</span>
           </button>
         </div>
+      </div>
+
+      {/* Empty Ad Placeholder Master Switch Banner */}
+      <div className="bg-amber-50/80 border border-amber-200 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-300 flex items-center justify-center text-amber-700 flex-shrink-0">
+            <Eye className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-extrabold text-sm text-stone-900">
+              खाली विज्ञापन स्थान की विजिबिलिटी (Empty Ad Placeholder Visibility)
+            </h3>
+            <p className="text-xs text-stone-600">
+              जब किसी स्लॉट में विज्ञापन सक्रिय न हो, तो खाली 'विज्ञापन स्थान उपलब्ध' बॉक्स होमपेज पर दिखना चाहिए या पूरी तरह गायब होना चाहिए
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={handleTogglePlaceholders}
+          className={`font-black text-xs px-4 py-2.5 rounded-xl border flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shadow-xs ${
+            placeholdersEnabled
+              ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-700'
+              : 'bg-white hover:bg-stone-100 text-stone-700 border-stone-300'
+          }`}
+        >
+          {placeholdersEnabled ? '🟢 खाली बॉक्स चालू (Visible)' : '🔒 खाली बॉक्स बंद / गायब (Invisible)'}
+        </button>
       </div>
 
       {/* Ad Slots Editor Grid */}

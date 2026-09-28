@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getAdminSession } from '@/lib/auth';
+import { getPublicSiteUrl } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -100,7 +101,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Generate short URL code
-    const origin = req.nextUrl.origin || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3015';
+    const origin = getPublicSiteUrl(req);
     const code = generateShortCode(6);
     const shortUrl = `${origin}/n/${code}`;
 

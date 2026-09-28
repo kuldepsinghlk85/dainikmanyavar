@@ -7,7 +7,7 @@ import ImageUploader from '@/components/admin/ImageUploader';
 import HtmlContentEditor from '@/components/admin/HtmlContentEditor';
 import VoiceInputButton from '@/components/public/VoiceInputButton';
 import AutoTranslateButton from '@/components/admin/AutoTranslateButton';
-import { ArrowLeft, Save, ExternalLink, Plus, MapPin, Upload, X, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Save, ExternalLink, Plus, MapPin, Upload, X, CheckCircle2, Bell } from 'lucide-react';
 
 interface Category {
   id: string;
@@ -41,6 +41,20 @@ export default function AddNewsPage() {
   const [isMainStory, setIsMainStory] = useState(false);
   const [status, setStatus] = useState('PUBLISHED');
   const [allowAudio, setAllowAudio] = useState(true);
+
+  // Content Type, Movie Review & Push states
+  const [contentType, setContentType] = useState('news');
+  const [sendPushNotification, setSendPushNotification] = useState(false);
+  const [movieTitle, setMovieTitle] = useState('');
+  const [movieTitleHindi, setMovieTitleHindi] = useState('');
+  const [movieDirector, setMovieDirector] = useState('');
+  const [movieCast, setMovieCast] = useState('');
+  const [ottPlatform, setOttPlatform] = useState('');
+  const [rating, setRating] = useState('3.5');
+  const [verdict, setVerdict] = useState('');
+  const [positives, setPositives] = useState('');
+  const [negatives, setNegatives] = useState('');
+  const [spoilersContent, setSpoilersContent] = useState('');
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [locations, setLocations] = useState<LocationItem[]>([]);
@@ -199,8 +213,7 @@ export default function AddNewsPage() {
     setLocSubmitting(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmitInternal = async (redirectToPush = false) => {
     setError('');
 
     if (!title || !content || !primaryCategoryId) {
@@ -228,12 +241,33 @@ export default function AddNewsPage() {
           isMainStory,
           status,
           allowAudio,
+          contentType,
+          sendPushNotification: redirectToPush ? false : sendPushNotification,
+          movieReview:
+            contentType === 'movie_review' || contentType === 'series_review'
+              ? {
+                  movieTitle: movieTitle || title,
+                  movieTitleHindi,
+                  director: movieDirector,
+                  cast: movieCast,
+                  ottPlatform,
+                  rating,
+                  verdict,
+                  positives,
+                  negatives,
+                  spoilersContent,
+                }
+              : undefined,
         }),
       });
 
       const data = await res.json();
       if (data.success) {
-        router.push('/admin/news');
+        if (redirectToPush && data.data?.id) {
+          router.push(`/admin/notifications?newsId=${data.data.id}`);
+        } else {
+          router.push('/admin/news');
+        }
         router.refresh();
       } else {
         setError(data.error || 'समाचार पोस्ट करने में त्रुटि हुई।');
@@ -243,6 +277,16 @@ export default function AddNewsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSubmitInternal(false);
+  };
+
+  const handleSaveAndPush = (e: React.MouseEvent) => {
+    e.preventDefault();
+    handleSubmitInternal(true);
   };
 
   return (
@@ -320,6 +364,149 @@ export default function AddNewsPage() {
             placeholder="उप-शीर्षक / महत्वपूर्ण बिंदु..."
             className="w-full p-2.5 border border-stone-300 rounded-lg text-sm focus:outline-none focus:border-[#F97316]"
           />
+        </div>
+
+        {/* Content Type Selector */}
+        <div className="p-4 bg-stone-50 rounded-xl border border-stone-200 space-y-3">
+          <div>
+            <label className="block text-xs font-bold text-stone-800 mb-1">
+              सामग्री प्रकार (Content Type / Format) *
+            </label>
+            <select
+              value={contentType}
+              onChange={(e) => setContentType(e.target.value)}
+              className="w-full p-2.5 border border-stone-300 rounded-lg text-sm font-bold bg-white focus:outline-none focus:border-[#F97316]"
+            >
+              <option value="news">📰 सामान्य समाचार (News Article)</option>
+              <option value="breaking_news">⚡ ब्रेकिंग न्यूज़ (Breaking News Flash)</option>
+              <option value="movie_review">🎬 मूवी रिव्यू / फिल्म समीक्षा (Movie Review)</option>
+              <option value="series_review">📺 वेब सीरीज़ रिव्यू (Web Series Review)</option>
+              <option value="editorial">✍️ संपादकीय (Editorial)</option>
+              <option value="opinion">💡 राय व विचार (Opinion / Column)</option>
+              <option value="explainer">🔍 व्याख्या व विश्लेषण (Explainer)</option>
+              <option value="feature">📄 विशेष फीचर लेख (Special Feature)</option>
+              <option value="interview">🎤 साक्षात्कार (Interview)</option>
+            </select>
+          </div>
+
+          {/* Conditional Movie Review Fields */}
+          {(contentType === 'movie_review' || contentType === 'series_review') && (
+            <div className="p-4 bg-amber-50/70 border border-amber-300 rounded-xl space-y-4 animate-in fade-in duration-200">
+              <div className="flex items-center gap-2 text-amber-900 font-black text-sm">
+                <span>🎬 फिल्म समीक्षा व रेटिंग विवरण (Movie Scorecard Details)</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-stone-700 mb-1">फिल्म का नाम (English) *</label>
+                  <input
+                    type="text"
+                    value={movieTitle}
+                    onChange={(e) => setMovieTitle(e.target.value)}
+                    placeholder="उदा: Jawan, Stree 2..."
+                    className="w-full p-2 border border-stone-300 rounded-lg text-xs bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-stone-700 mb-1">फिल्म का नाम (हिंदी)</label>
+                  <input
+                    type="text"
+                    value={movieTitleHindi}
+                    onChange={(e) => setMovieTitleHindi(e.target.value)}
+                    placeholder="उदा: जवान, स्त्री 2..."
+                    className="w-full p-2 border border-stone-300 rounded-lg text-xs bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-stone-700 mb-1">रेटिंग (Stars out of 5) *</label>
+                  <select
+                    value={rating}
+                    onChange={(e) => setRating(e.target.value)}
+                    className="w-full p-2 border border-stone-300 rounded-lg text-xs font-black text-amber-700 bg-white"
+                  >
+                    <option value="5.0">⭐⭐⭐⭐⭐ (5.0 / 5) - ऑल टाइम क्लासिक</option>
+                    <option value="4.5">⭐⭐⭐⭐½ (4.5 / 5) - शानदार / ब्लॉकबस्टर</option>
+                    <option value="4.0">⭐⭐⭐⭐ (4.0 / 5) - बेहतरीन</option>
+                    <option value="3.5">⭐⭐⭐½ (3.5 / 5) - पैसा वसूल</option>
+                    <option value="3.0">⭐⭐⭐ (3.0 / 5) - एक बार देखने लायक</option>
+                    <option value="2.5">⭐⭐½ (2.5 / 5) - औसत</option>
+                    <option value="2.0">⭐⭐ (2.0 / 5) - कमज़ोर</option>
+                    <option value="1.5">⭐½ (1.5 / 5) - निराशाजनक</option>
+                    <option value="1.0">⭐ (1.0 / 5) - मत देखिए</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-stone-700 mb-1">निर्देशक (Director)</label>
+                  <input
+                    type="text"
+                    value={movieDirector}
+                    onChange={(e) => setMovieDirector(e.target.value)}
+                    placeholder="उदा: Atlee..."
+                    className="w-full p-2 border border-stone-300 rounded-lg text-xs bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-stone-700 mb-1">मुख्य कलाकार (Cast)</label>
+                  <input
+                    type="text"
+                    value={movieCast}
+                    onChange={(e) => setMovieCast(e.target.value)}
+                    placeholder="उदा: Shah Rukh Khan, Nayanthara..."
+                    className="w-full p-2 border border-stone-300 rounded-lg text-xs bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-stone-700 mb-1">प्लेटफ़ॉर्म / रिलीज़ (Platform)</label>
+                  <input
+                    type="text"
+                    value={ottPlatform}
+                    onChange={(e) => setOttPlatform(e.target.value)}
+                    placeholder="उदा: सिनेमाघर / Netflix / Prime..."
+                    className="w-full p-2 border border-stone-300 rounded-lg text-xs bg-white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-emerald-800 mb-1">खूबियां (Positives)</label>
+                  <textarea
+                    rows={2}
+                    value={positives}
+                    onChange={(e) => setPositives(e.target.value)}
+                    placeholder="• शानदार एक्शन सीन्स&#10;• कलाकारों का अभिनय..."
+                    className="w-full p-2 border border-stone-300 rounded-lg text-xs bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-red-800 mb-1">कमियां (Negatives)</label>
+                  <textarea
+                    rows={2}
+                    value={negatives}
+                    onChange={(e) => setNegatives(e.target.value)}
+                    placeholder="• स्क्रीनप्ले दूसरे हाफ में धीमा&#10;• गानों की गैरजरूरी भरमार..."
+                    className="w-full p-2 border border-stone-300 rounded-lg text-xs bg-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-amber-900 mb-1">
+                  ⚠️ स्पॉइलर कंटेंट (Spoiler Details - Hidden behind user click)
+                </label>
+                <textarea
+                  rows={2}
+                  value={spoilersContent}
+                  onChange={(e) => setSpoilersContent(e.target.value)}
+                  placeholder="कहानी के ट्विस्ट्स या क्लाइमेक्स (यह पाठक के क्लिक करने पर ही दिखेगा)..."
+                  className="w-full p-2 border border-stone-300 rounded-lg text-xs bg-white"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Category, Location & Status */}
@@ -518,8 +705,29 @@ export default function AddNewsPage() {
           </label>
         </div>
 
+        {/* Instant Push Notification Trigger */}
+        <div className="p-3.5 bg-red-50/80 rounded-xl border border-red-200 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="p-1.5 bg-red-100 text-red-600 rounded-lg">🔔</span>
+            <div>
+              <div className="text-xs font-bold text-red-950">
+                वेब व मोबाइल पुश नोटिफिकेशन भेजें (Send Push Broadcast)
+              </div>
+              <div className="text-[11px] text-red-700">
+                समाचार प्रकाशित होते ही सभी सक्रिय पाठकों के फोन/स्क्रीन पर नोटिफिकेशन जाएगा
+              </div>
+            </div>
+          </div>
+          <input
+            type="checkbox"
+            checked={sendPushNotification}
+            onChange={(e) => setSendPushNotification(e.target.checked)}
+            className="w-4 h-4 text-red-600 rounded cursor-pointer"
+          />
+        </div>
+
         {/* Submit Buttons */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-stone-100">
+        <div className="flex flex-wrap items-center justify-end gap-3 pt-4 border-t border-stone-100">
           <button
             type="button"
             onClick={() => router.back()}
@@ -528,9 +736,18 @@ export default function AddNewsPage() {
             रद्द करें
           </button>
           <button
+            type="button"
+            onClick={handleSaveAndPush}
+            disabled={loading}
+            className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white px-5 py-2 rounded-lg text-xs font-black flex items-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50"
+          >
+            <Bell className="w-4 h-4 animate-bounce" />
+            <span>{loading ? 'सहेजा जा रहा है...' : '🔔 प्रकाशित करें और पुश नोटिफिकेशन में भेजें'}</span>
+          </button>
+          <button
             type="submit"
             disabled={loading}
-            className="bg-[#F97316] hover:bg-[#EA580C] text-white px-6 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm transition-colors cursor-pointer"
+            className="bg-[#F97316] hover:bg-[#EA580C] text-white px-6 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm transition-colors cursor-pointer disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
             <span>{loading ? 'प्रकाशित हो रहा है...' : 'समाचार प्रकाशित करें'}</span>

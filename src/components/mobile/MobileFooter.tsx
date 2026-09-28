@@ -25,10 +25,12 @@ export default function MobileFooter() {
       </div>
 
       {/* Links */}
-      <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-[11px] font-bold text-stone-400 pt-2 border-t border-stone-800">
+      <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-[11px] font-bold text-stone-400 pt-2 border-t border-stone-800">
         <Link href="/mobile" className="hover:text-white">होम</Link>
         <Link href="/mobile/epaper" className="hover:text-white">ई-पेपर</Link>
+        <Link href="/mobile/manoranjan" className="hover:text-white text-orange-400">मनोरंजन</Link>
         <Link href="/mobile/category/video" className="hover:text-white">वीडियो</Link>
+        <Link href="/mobile/category/latest" className="hover:text-white">ताज़ा ख़बरें</Link>
         <Link href="/mobile/contact" className="hover:text-white">संपर्क करें</Link>
         <Link href="/mobile/contact" className="hover:text-white">विज्ञापन दरें</Link>
       </div>

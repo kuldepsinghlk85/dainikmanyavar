@@ -92,6 +92,11 @@ export async function GET(request: Request) {
       ];
     }
 
+    const contentType = searchParams.get('contentType');
+    if (contentType) {
+      where.contentType = contentType;
+    }
+
     const [articles, total] = await Promise.all([
       db.article.findMany({
         where,
@@ -102,6 +107,11 @@ export async function GET(request: Request) {
           category: true,
           author: true,
           location: true,
+          movieReview: {
+            include: {
+              movie: true,
+            },
+          },
           tags: {
             include: {
               tag: true,
@@ -155,6 +165,12 @@ export async function POST(request: Request) {
       seoTitle,
       seoDescription,
       sourceType,
+      contentType = 'news',
+      isPromoted = false,
+      priority = 0,
+      seriesId,
+      movieReview,
+      sendPushNotification = false,
     } = body;
 
     if (!title || !content || !primaryCategoryId) {
@@ -187,11 +203,103 @@ export async function POST(request: Request) {
         isMainStory,
         status,
         allowAudio,
+        contentType,
+        isPromoted,
+        priority,
+        seriesId: seriesId || null,
         seoTitle: seoTitle || `${title} | दैनिक मान्यवर`,
         seoDescription: seoDescription || excerpt,
         publishedAt: status === 'PUBLISHED' ? new Date() : new Date(),
       },
     });
+
+    // Create Movie Review if provided
+    if (contentType === 'movie_review' && movieReview) {
+      const movieSlug = slugify(movieReview.movieTitle || title);
+      const movie = await db.movie.upsert({
+        where: { slug: movieSlug },
+        update: {
+          titleHindi: movieReview.movieTitleHindi || undefined,
+          director: movieReview.director || undefined,
+          cast: movieReview.cast || undefined,
+          ottPlatform: movieReview.ottPlatform || undefined,
+          poster: movieReview.poster || featuredImage || undefined,
+        },
+        create: {
+          title: movieReview.movieTitle || title,
+          titleHindi: movieReview.movieTitleHindi || null,
+          slug: movieSlug,
+          poster: movieReview.poster || featuredImage || null,
+          director: movieReview.director || null,
+          cast: movieReview.cast || null,
+          ottPlatform: movieReview.ottPlatform || null,
+          genre: movieReview.genre || 'Action, Drama',
+        },
+      });
+
+      await db.movieReview.create({
+        data: {
+          movieId: movie.id,
+          articleId: article.id,
+          rating: parseFloat(movieReview.rating) || 3.0,
+          directionRating: movieReview.directionRating ? parseFloat(movieReview.directionRating) : null,
+          actingRating: movieReview.actingRating ? parseFloat(movieReview.actingRating) : null,
+          storyRating: movieReview.storyRating ? parseFloat(movieReview.storyRating) : null,
+          musicRating: movieReview.musicRating ? parseFloat(movieReview.musicRating) : null,
+          technicalRating: movieReview.technicalRating ? parseFloat(movieReview.technicalRating) : null,
+          verdict: movieReview.verdict || null,
+          positives: movieReview.positives || null,
+          negatives: movieReview.negatives || null,
+          spoilersContent: movieReview.spoilersContent || null,
+          isFeaturedReview: Boolean(movieReview.isFeaturedReview),
+        },
+      });
+    }
+
+    // Optional automated push notification
+    if (sendPushNotification && status === 'PUBLISHED') {
+      try {
+        const { sendPushNotification: dispatchPush } = await import('@/lib/push/firebaseAdmin');
+        const subscribers = await db.pushSubscriber.findMany({
+          where: { active: true },
+          select: { token: true },
+          take: 5000,
+        });
+        if (subscribers.length > 0) {
+          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://dainikmanyavar.com';
+          const targetUrl = contentType === 'movie_review'
+            ? `${siteUrl}/movie-review/${article.slug}`
+            : `${siteUrl}/news/${article.slug}`;
+
+          const campaign = await db.notificationCampaign.create({
+            data: {
+              title: isBreaking ? `⚡ ब्रेकिंग: ${title}` : title,
+              body: excerpt || subtitle || 'विस्तार से पढ़ने के लिए टैप करें...',
+              image: featuredImage || null,
+              url: targetUrl,
+              articleId: article.id,
+              targetType: 'all',
+              status: 'SENDING',
+              createdBy: 'article_publish',
+            },
+          });
+
+          await dispatchPush(
+            subscribers.map((s) => s.token),
+            {
+              title: isBreaking ? `⚡ ब्रेकिंग: ${title}` : title,
+              body: excerpt || subtitle || 'विस्तार से पढ़ने के लिए टैप करें...',
+              image: featuredImage || undefined,
+              url: targetUrl,
+              isBreaking,
+            },
+            campaign.id
+          );
+        }
+      } catch (pushErr) {
+        console.error('Auto push failed:', pushErr);
+      }
+    }
 
     if (Array.isArray(tagIds) && tagIds.length > 0) {
       const uniqueTagIds = Array.from(new Set(tagIds));

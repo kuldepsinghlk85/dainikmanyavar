@@ -2,10 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { Bookmark, BookmarkCheck, Share2, Heart, MessageCircle } from 'lucide-react';
-import { getPublicSiteUrl } from '@/lib/utils';
+import { getPublicSiteUrl, getShortShareUrl } from '@/lib/utils';
 
 interface UserActivityTrackerProps {
   newsId: string;
+  numericNewsId?: number | null;
   newsTitle: string;
   newsSlug: string;
   isMobile?: boolean;
@@ -13,6 +14,7 @@ interface UserActivityTrackerProps {
 
 export default function UserActivityTracker({
   newsId,
+  numericNewsId,
   newsTitle,
   newsSlug,
   isMobile = false,
@@ -97,8 +99,7 @@ export default function UserActivityTracker({
   // Handle Tracked WhatsApp Share
   const handleWhatsAppShare = async () => {
     const publicBase = getPublicSiteUrl();
-    const fallbackPath = isMobile ? `/mobile/news/${encodeURIComponent(newsSlug)}` : `/news/${encodeURIComponent(newsSlug)}`;
-    const fallbackUrl = `${publicBase}${fallbackPath}`;
+    const fallbackUrl = getShortShareUrl({ id: newsId, newsId: numericNewsId, slug: newsSlug }, publicBase);
 
     try {
       const res = await fetch('/api/share', {
@@ -108,16 +109,17 @@ export default function UserActivityTracker({
       });
       const data = await res.json();
       let targetShareUrl = data.success && data.shareUrl ? data.shareUrl : fallbackUrl;
-      if (targetShareUrl.includes('localhost') || targetShareUrl.includes('127.0.0.1')) {
+      // In production, ensure no localhost leaks
+      if (process.env.NODE_ENV === 'production' && (targetShareUrl.includes('localhost') || targetShareUrl.includes('127.0.0.1'))) {
         targetShareUrl = targetShareUrl.replace(/^https?:\/\/[^/]+/, publicBase);
       }
       setShareUrl(targetShareUrl);
 
-      const shareText = `*दैनिक मान्यवर*\n${newsTitle}\n\nपूरी खबर पढ़ें:\n${targetShareUrl}`;
+      const shareText = `*${newsTitle}*\n\nदैनिक मान्यवर पर पूरी खबर पढ़ें:\n${targetShareUrl}`;
       const waLink = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
       window.open(waLink, '_blank');
     } catch (_) {
-      const shareText = `*दैनिक मान्यवर*\n${newsTitle}\n\nपूरी खबर पढ़ें:\n${fallbackUrl}`;
+      const shareText = `*${newsTitle}*\n\nदैनिक मान्यवर पर पूरी खबर पढ़ें:\n${fallbackUrl}`;
       const waLink = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
       window.open(waLink, '_blank');
     }

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import MobileHeader from '@/components/mobile/MobileHeader';
@@ -10,13 +10,17 @@ import { MobileMenuConfig, DEFAULT_MOBILE_MENU_CONFIG } from '@/lib/mobileMenuDe
 export default function MobileLayout({ children }: { children: React.ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [menuConfig, setMenuConfig] = useState<MobileMenuConfig>(DEFAULT_MOBILE_MENU_CONFIG);
+  const [activeCategories, setActiveCategories] = useState<{ name: string; slug: string }[]>([]);
+  const [activeDistricts, setActiveDistricts] = useState<{ name: string; slug: string }[]>([]);
 
   useEffect(() => {
     fetch('/api/mobile/menu')
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && data.data) {
-          setMenuConfig(data.data);
+        if (data.success) {
+          if (data.data) setMenuConfig(data.data);
+          if (data.activeCategories) setActiveCategories(data.activeCategories);
+          if (data.activeDistricts) setActiveDistricts(data.activeDistricts);
         }
       })
       .catch(() => {});
@@ -43,6 +47,8 @@ export default function MobileLayout({ children }: { children: React.ReactNode }
           isOpen={drawerOpen}
           onClose={() => setDrawerOpen(false)}
           config={menuConfig.drawer}
+          activeCategories={activeCategories}
+          activeDistricts={activeDistricts}
         />
       </div>
     </MobileThemeProvider>

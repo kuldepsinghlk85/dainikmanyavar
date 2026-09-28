@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, X, Bell, Sun, Moon } from 'lucide-react';
+import { Search, X, Bell, Sun, Moon, Menu } from 'lucide-react';
 import { HeaderButtonsConfig, DEFAULT_MOBILE_MENU_CONFIG } from '@/lib/mobileMenuDefaults';
 import { useMobileTheme } from './MobileThemeProvider';
 import MobileBrandLogo from './MobileBrandLogo';
@@ -15,6 +15,7 @@ interface MobileHeaderProps {
 }
 
 export default function MobileHeader({
+  onOpenDrawer,
   config = DEFAULT_MOBILE_MENU_CONFIG.header,
 }: MobileHeaderProps) {
   const [showSearch, setShowSearch] = useState(false);
@@ -92,6 +93,17 @@ export default function MobileHeader({
               <Moon className="w-5 h-5 text-stone-700" />
             )}
           </button>
+
+          {/* 5. Menu Drawer Trigger */}
+          {config.menuButton !== false && onOpenDrawer && (
+            <button
+              onClick={onOpenDrawer}
+              className="p-1.5 text-stone-700 dark:text-stone-300 hover:text-red-600 dark:hover:text-red-400 rounded-full transition-colors cursor-pointer"
+              aria-label="मेन्यू खोलें"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </div>
 

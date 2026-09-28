@@ -11,14 +11,12 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [activeUser, setActiveUser] = useState({
     name: 'एडमिन यूजर',
     role: 'SUPER_ADMIN',
   });
 
   useEffect(() => {
-    setMounted(true);
     fetch('/api/admin/me')
       .then((res) => res.json())
       .then((data) => {
@@ -32,21 +30,13 @@ export default function AdminLayout({
       .catch(() => {});
   }, []);
 
-  if (!mounted) {
-    return (
-      <div className="min-h-screen flex bg-stone-100 font-sans" suppressHydrationWarning>
-        <div className="flex-1 flex items-center justify-center p-8 text-xs font-bold text-stone-400">
-          दैनिक मान्यवर एडमिन कंसोल लोड हो रहा है...
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex bg-stone-100 font-sans" suppressHydrationWarning>
       {/* Desktop Sidebar (Sticky Left) */}
       <div className="hidden md:block sticky top-0 h-screen flex-shrink-0 z-30" suppressHydrationWarning>
-        <AdminSidebar userName={activeUser.name} userRole={activeUser.role} />
+        <React.Suspense fallback={<div className="w-64 bg-[#0F172A] h-full" />}>
+          <AdminSidebar userName={activeUser.name} userRole={activeUser.role} />
+        </React.Suspense>
       </div>
 
       {/* Mobile Drawer Sidebar */}
@@ -63,7 +53,9 @@ export default function AdminLayout({
             >
               <X className="w-6 h-6" />
             </button>
-            <AdminSidebar userName={activeUser.name} userRole={activeUser.role} />
+            <React.Suspense fallback={<div className="w-64 bg-[#0F172A] h-full" />}>
+              <AdminSidebar userName={activeUser.name} userRole={activeUser.role} />
+            </React.Suspense>
           </div>
         </div>
       )}

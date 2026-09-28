@@ -85,6 +85,14 @@ interface RssImportItem {
 }
 
 export default function AdminManoranjanPage() {
+  return (
+    <React.Suspense fallback={<div className="p-8 text-stone-500">मनोरंजन हब लोड हो रहा है...</div>}>
+      <ManoranjanContent />
+    </React.Suspense>
+  );
+}
+
+function ManoranjanContent() {
   const searchParams = useSearchParams();
   const initialDesk = searchParams.get('tab') === 'rss' ? 'rss_desk' : 'articles';
 

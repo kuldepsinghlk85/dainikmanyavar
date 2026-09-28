@@ -1,8 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { db } from '@/lib/db';
-import MobileHeader from '@/components/mobile/MobileHeader';
-import MobileBottomNav from '@/components/mobile/MobileBottomNav';
 import MobileFooter from '@/components/mobile/MobileFooter';
 import EpaperFlipbookViewer from '@/components/public/EpaperFlipbookViewer';
 import EpaperDateSelector from '@/components/public/EpaperDateSelector';
@@ -74,9 +72,7 @@ export default async function MobileEpaperPage({
   });
 
   return (
-    <div className="bg-stone-100 dark:bg-[#0D0D0D] min-h-screen flex flex-col pb-16 transition-colors">
-      <MobileHeader />
-
+    <div className="bg-stone-100 dark:bg-[#0D0D0D] min-h-screen flex flex-col transition-colors">
       {/* Sub-header Navigation */}
       <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-stone-200 dark:border-stone-800 bg-white dark:bg-[#141414]">
         <Link
@@ -173,7 +169,6 @@ export default async function MobileEpaperPage({
       </main>
 
       <MobileFooter />
-      <MobileBottomNav />
     </div>
   );
 }

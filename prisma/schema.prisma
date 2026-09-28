@@ -103,6 +103,9 @@ model Author {
   bio         String?
   designation String?
   city        String?
+  authorType  String    @default("reporter") // reporter, editor, columnist, reviewer, guest_author
+  socialLinks String?
+  isVerified  Boolean   @default(false)
   createdAt   DateTime  @default(now())
   articles    Article[]
 }
@@ -131,6 +134,10 @@ model Article {
   isFeatured        Boolean         @default(false)
   isMainStory       Boolean         @default(false)
   forceTrending     Boolean         @default(false)
+  contentType       String          @default("news") // news, breaking_news, movie_review, series_review, editorial, opinion, explainer, feature, interview, photo_story, video_story
+  isPromoted        Boolean         @default(false)
+  priority          Int             @default(0)
+  seriesId          String?
   allowAudio        Boolean         @default(true)
   audioStatus       String?         @default("ready")
   videoEnabled      Boolean         @default(false)
@@ -162,13 +169,17 @@ model Article {
   category          Category        @relation(fields: [primaryCategoryId], references: [id])
   author            Author?         @relation(fields: [authorId], references: [id])
   location          Location?       @relation(fields: [locationId], references: [id])
+  series            ArticleSeries?  @relation(fields: [seriesId], references: [id], onDelete: SetNull)
+  movieReview       MovieReview?
   tags              ArticleTag[]
   revisions         ArticleRevision[]
   audios            ArticleAudio[]
   shortLinks        ShortLink[]
   breakingNews      BreakingNews[]
+  campaigns         NotificationCampaign[]
 
   @@index([newsId])
+  @@index([contentType])
 }
 
 model ArticleRevision {
@@ -328,37 +339,46 @@ model MediaItem {
 // ==========================================================
 
 model NewsSource {
-  id                String            @id @default(uuid())
-  name              String
-  publisherName     String
-  logoUrl           String?
-  sourceType        String            @default("RSS") // RSS, ATOM, JSON_API, REST_API, WEBHOOK, CSV, XML, LICENSED_CONNECTOR
-  category          String            @default("NEWS") // CRICKET, HOROSCOPE, STOCK_MARKET, GOLD_SILVER, NEWS
-  region            String            @default("NORTH_INDIA") // UP, VARANASI, BIHAR, DELHI, NORTH_INDIA
-  feedUrl           String?
-  websiteUrl        String?
-  apiEndpoint       String?
-  apiKeyEncrypted   String?
-  authType          String?           @default("NONE")
-  defaultCategoryId String?
-  defaultLocationId String?
-  language          String            @default("hi")
-  permissionMode    String            @default("METADATA_ONLY") // METADATA_ONLY, RSS_ALLOWED, SUMMARY_ALLOWED, FULL_CONTENT_LICENSED, CUSTOM_PERMISSION
-  autoSync          Boolean           @default(true)
-  syncInterval      Int               @default(15) // in minutes
-  fetchInterval     String            @default("15m") // 10m, 15m, 30m, 1h, MANUAL
-  lastFetchAt       DateTime?
-  isActive          Boolean           @default(true)
-  healthStatus      String            @default("Healthy") // Healthy, Warning, Failed
-  lastError         String?
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  id                  String            @id @default(uuid())
+  name                String
+  publisherName       String
+  logoUrl             String?
+  sourceType          String            @default("RSS") // RSS, ATOM, JSON_API, REST_API, WEBHOOK, CSV, XML, LICENSED_CONNECTOR
+  category            String            @default("NEWS") // CRICKET, HOROSCOPE, STOCK_MARKET, GOLD_SILVER, NEWS
+  region              String            @default("NORTH_INDIA") // UP, VARANASI, BIHAR, DELHI, NORTH_INDIA
+  feedUrl             String?
+  websiteUrl          String?
+  apiEndpoint         String?
+  apiKeyEncrypted     String?
+  authType            String?           @default("NONE")
+  defaultCategoryId   String?
+  defaultLocationId   String?
+  language            String            @default("hi")
+  country             String?           @default("India")
+  state               String?
+  city                String?
+  permissionMode      String            @default("METADATA_ONLY") // METADATA_ONLY, RSS_ALLOWED, SUMMARY_ALLOWED, FULL_CONTENT_LICENSED, CUSTOM_PERMISSION
+  autoSync            Boolean           @default(true)
+  syncInterval        Int               @default(15) // in minutes
+  fetchInterval       String            @default("15m") // 10m, 15m, 30m, 1h, MANUAL
+  lastFetchAt         DateTime?
+  lastSuccessfulFetch DateTime?
+  lastItemDate        DateTime?
+  itemsReceived       Int               @default(0)
+  isActive            Boolean           @default(true)
+  verificationStatus  String            @default("UNVERIFIED") // VERIFIED, UNVERIFIED, FAILED, DISABLED
+  healthStatus        String            @default("Healthy") // Healthy, Warning, Failed
+  lastError           String?
+  etag                String?
+  lastModifiedHeader  String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
 
-  defaultCategory   Category?         @relation(fields: [defaultCategoryId], references: [id])
-  defaultLocation   Location?         @relation(fields: [defaultLocationId], references: [id])
-  items             NewsImportItem[]
-  logs              NewsImportLog[]
-  categoryMaps      SourceCategoryMap[]
+  defaultCategory     Category?         @relation(fields: [defaultCategoryId], references: [id])
+  defaultLocation     Location?         @relation(fields: [defaultLocationId], references: [id])
+  items               NewsImportItem[]
+  logs                NewsImportLog[]
+  categoryMaps        SourceCategoryMap[]
 }
 
 model NewsImportItem {
@@ -376,20 +396,44 @@ model NewsImportItem {
   originalAuthor       String?
   sourcePublishedAt    DateTime?
   importedAt           DateTime          @default(now())
+  firstSeenAt          DateTime          @default(now())
+  lastSeenAt           DateTime          @default(now())
   suggestedCategoryId  String?
   suggestedLocationId  String?
   suggestedTagsJson    String?           @default("[]")
   contentHash          String?
   similarityHash       String?
+  fingerprint          String?
+  guid                 String?
   language             String            @default("hi")
+  country              String?           @default("India")
+  state                String?
+  city                 String?
   copyrightMode        String            @default("METADATA_ONLY")
+  editorialStatus      String            @default("PENDING_REVIEW") // PENDING_REVIEW, DRAFT_CREATED, IGNORED, ARCHIVED
   status               String            @default("NEW") // NEW, DUPLICATE, REVIEW, EDITING, READY, APPROVED, PUBLISHED, REJECTED, ERROR
   duplicateOfId        String?
   similarityPercentage Float?            @default(0)
+  clusterId            String?
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
 
   source               NewsSource        @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  cluster              StoryCluster?     @relation(fields: [clusterId], references: [id])
+}
+
+model StoryCluster {
+  id           String           @id @default(uuid())
+  title        String
+  summary      String?
+  keywords     String?
+  firstSeenAt  DateTime         @default(now())
+  lastSeenAt   DateTime         @default(now())
+  itemCount    Int              @default(1)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  items        NewsImportItem[]
 }
 
 model SourceCategoryMap {
@@ -410,6 +454,8 @@ model NewsImportLog {
   itemsImported    Int         @default(0)
   duplicatesFound  Int         @default(0)
   failedItems      Int         @default(0)
+  httpStatus       Int?        @default(200)
+  responseTimeMs   Int?        @default(0)
   status           String      @default("SUCCESS") // SUCCESS, PARTIAL, FAILED
   errorMessage     String?
 
@@ -699,4 +745,150 @@ model UserSavedArticle {
   @@unique([userId, articleId])
   @@index([userId])
   @@index([articleId])
+}
+
+// ==========================================================
+// WEB & MOBILE PUSH NOTIFICATION SYSTEM
+// ==========================================================
+
+model PushSubscriber {
+  id           String                  @id @default(uuid())
+  token        String                  @unique
+  platform     String                  @default("web") // web, android, ios
+  deviceType   String?                 @default("desktop") // mobile, tablet, desktop
+  language     String                  @default("hi") // hi, en
+  state        String?
+  district     String?
+  active       Boolean                 @default(true)
+  userAgent    String?
+  ipAddress    String?
+  lastActiveAt DateTime                @default(now())
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+  preferences  NotificationPreference?
+  events       NotificationEvent[]
+
+  @@index([active])
+  @@index([platform])
+  @@index([district])
+}
+
+model NotificationPreference {
+  id                      String         @id @default(uuid())
+  subscriberId            String         @unique
+  subscriber              PushSubscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  breakingNews            Boolean        @default(true)
+  trendingNews            Boolean        @default(true)
+  dailyDigest             Boolean        @default(true)
+  editorialOpinions       Boolean        @default(true)
+  entertainmentBollywood Boolean        @default(true)
+  topics                  String?        // JSON array: ["cricket", "politics", "crime"]
+  districts               String?        // JSON array: ["varanasi", "lucknow", "gorakhpur"]
+  quietHoursEnabled       Boolean        @default(false)
+  quietHoursStart         String?        @default("22:00")
+  quietHoursEnd           String?        @default("07:00")
+  updatedAt               DateTime       @updatedAt
+}
+
+model NotificationCampaign {
+  id           String              @id @default(uuid())
+  title        String
+  body         String
+  image        String?
+  url          String
+  targetType   String              @default("all") // all, topic, category, district, platform
+  targetValue  String?             // e.g. "varanasi" or "entertainment"
+  status       String              @default("DRAFT") // DRAFT, SCHEDULED, SENDING, SENT, FAILED, CANCELLED
+  scheduledAt  DateTime?
+  sentAt       DateTime?
+  successCount Int                 @default(0)
+  failureCount Int                 @default(0)
+  openCount    Int                 @default(0)
+  articleId    String?
+  article      Article?            @relation(fields: [articleId], references: [id], onDelete: SetNull)
+  createdBy    String?             @default("admin")
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  events       NotificationEvent[]
+
+  @@index([status])
+  @@index([scheduledAt])
+}
+
+model NotificationEvent {
+  id           String               @id @default(uuid())
+  campaignId   String
+  campaign     NotificationCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  subscriberId String?
+  subscriber   PushSubscriber?      @relation(fields: [subscriberId], references: [id], onDelete: SetNull)
+  eventType    String               // SENT, DELIVERED, OPENED, FAILED
+  errorMessage String?
+  createdAt    DateTime             @default(now())
+
+  @@index([campaignId, eventType])
+  @@index([subscriberId])
+}
+
+// ==========================================================
+// BOLLYWOOD, MOVIES, REVIEWS & EDITORIAL MODULE
+// ==========================================================
+
+model ArticleSeries {
+  id          String    @id @default(uuid())
+  name        String
+  slug        String    @unique
+  description String?
+  coverImage  String?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  articles    Article[]
+}
+
+model Movie {
+  id            String        @id @default(uuid())
+  title         String
+  titleHindi    String?
+  slug          String        @unique
+  poster        String?
+  backdropImage String?
+  releaseDate   DateTime?
+  language      String        @default("Hindi")
+  runtime       String?       // e.g. "2h 35m"
+  genre         String?       // Action, Drama
+  director      String?
+  cast          String?       // Comma separated actor names
+  synopsis      String?
+  ottPlatform   String?       // Netflix, Prime Video, Hotstar, Zee5, Cinema
+  trailerUrl    String?
+  cbfcRating    String?       @default("U/A") // U, U/A, A, S
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  reviews       MovieReview[]
+
+  @@index([slug])
+  @@index([releaseDate])
+}
+
+model MovieReview {
+  id               String   @id @default(uuid())
+  movieId          String
+  movie            Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  articleId        String   @unique
+  article          Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  rating           Float    @default(3.0) // 0 to 5, step 0.5
+  directionRating  Float?
+  actingRating     Float?
+  storyRating      Float?
+  musicRating      Float?
+  technicalRating  Float?
+  verdict          String?  // Must Watch, One Time Watch, Paisa Vasool, Disappointing
+  positives        String?  // Text / bullet points
+  negatives        String?  // Text / bullet points
+  spoilersContent  String?  // Hidden behind toggle
+  isFeaturedReview Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([rating])
 }

@@ -300,13 +300,26 @@ export class NewsImportService {
     // Default Primary Category
     let categoryId: string | null = item.suggestedCategoryId || item.source.defaultCategoryId || null;
     if (!categoryId) {
-      if (item.source.category === 'Entertainment' || ['Bollywood', 'Hollywood', 'Box Office', 'OTT', 'Viral'].includes(item.source.region)) {
-        const manoranjanCat = await db.category.findUnique({ where: { slug: 'manoranjan' } });
-        if (manoranjanCat) categoryId = manoranjanCat.id;
+      const catRaw = item.source.category || '';
+      const title = item.originalTitle || '';
+      let targetSlug = '';
+      if (/gold|silver|सोना|चांदी/i.test(catRaw) || /सोना|चांदी/i.test(title)) {
+        targetSlug = 'gold-silver';
+      } else if (/cricket|क्रिकेट/i.test(catRaw) || /क्रिकेट/i.test(title)) {
+        targetSlug = 'cricket';
+      } else if (/stock|market|शेयर|बाजार/i.test(catRaw) || /शेयर बाजार|sensex|nifty/i.test(title)) {
+        targetSlug = 'arthjagat';
+      } else if (catRaw === 'Entertainment' || ['Bollywood', 'Hollywood', 'Box Office', 'OTT', 'Viral'].includes(item.source.region)) {
+        targetSlug = 'manoranjan';
+      }
+
+      if (targetSlug) {
+        const found = await db.category.findUnique({ where: { slug: targetSlug } });
+        if (found) categoryId = found.id;
       }
     }
     if (!categoryId) {
-      const fallbackCat = await db.category.findFirst();
+      const fallbackCat = await db.category.findUnique({ where: { slug: 'latest' } }) || await db.category.findFirst();
       categoryId = fallbackCat ? fallbackCat.id : null;
     }
     if (!categoryId) throw new Error('श्रेणी उपलब्ध नहीं है');

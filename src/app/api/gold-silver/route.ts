@@ -1,15 +1,24 @@
 import { NextResponse } from 'next/server';
+import { liveDataService } from '@/lib/live-data/service';
 import { db } from '@/lib/db';
-import { ensureDailyDataSynced } from '@/lib/autoUpdateService';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    await ensureDailyDataSynced();
+    const rates = await liveDataService.getBullionRates();
     const prices = await db.commodityPrice.findMany({
-      orderBy: { createdAt: 'desc' },
+      orderBy: { updatedAt: 'desc' },
+      take: 10,
     });
-    return NextResponse.json({ success: true, data: prices });
+
+    return NextResponse.json({
+      success: true,
+      data: prices,
+      liveRates: rates,
+      meta: rates?.meta,
+    });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'सर्राफा भाव अनुपलब्ध हैं' }, { status: 500 });
   }
 }

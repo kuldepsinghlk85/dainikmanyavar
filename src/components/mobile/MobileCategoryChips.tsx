@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -18,15 +18,8 @@ interface MobileCategoryChipsProps {
 }
 
 const DEFAULT_CATEGORIES: CategoryItem[] = [
-  { name: 'आपके लिए', slug: 'home' },
-  { name: 'जौनपुर', slug: 'jaunpur' },
-  { name: 'उत्तर प्रदेश', slug: 'uttar-pradesh' },
-  { name: 'देश', slug: 'desh' },
-  { name: 'मनोरंजन', slug: 'entertainment' },
-  { name: 'क्रिकेट', slug: 'cricket' },
-  { name: 'विदेश', slug: 'videsh' },
-  { name: 'शिक्षा', slug: 'shiksha' },
-  { name: 'बिजनेस', slug: 'business' },
+  { name: 'होम', slug: 'home' },
+  { name: 'ताज़ा ख़बरें', slug: 'latest' },
 ];
 
 export default function MobileCategoryChips({
@@ -35,7 +28,10 @@ export default function MobileCategoryChips({
   onOpenFilter,
 }: MobileCategoryChipsProps) {
   const pathname = usePathname();
-  const list = categories && categories.length > 0 ? categories : DEFAULT_CATEGORIES;
+  const rawList = categories && categories.length > 0 ? categories : DEFAULT_CATEGORIES;
+  const list = rawList.some((c) => c.slug === 'home' || c.slug === '')
+    ? rawList
+    : [{ name: 'होम', slug: 'home' }, ...rawList];
 
   return (
     <div className="bg-white dark:bg-[#121212] border-b border-stone-200 dark:border-stone-800 sticky top-[54px] z-30 shadow-2xs transition-colors">

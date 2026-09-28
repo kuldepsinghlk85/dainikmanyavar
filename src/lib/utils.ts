@@ -100,8 +100,41 @@ export function generateShortCode(length = 6): string {
 }
 
 // Canonical public site URL for clean social sharing.
-// Guarantees localhost / 127.0.0.1 / internal IPs are never leaked in shared links.
-export function getPublicSiteUrl(): string {
+// Guarantees localhost / 127.0.0.1 / internal IPs are never leaked in production shared links,
+// while allowing local testing when explicitly developing locally on localhost.
+export function getPublicSiteUrl(request?: { headers?: Headers | { get: (name: string) => string | null } }): string {
+  // 1. If a server request object is passed, inspect headers
+  if (request && typeof request.headers?.get === 'function') {
+    const forwardedHost = request.headers.get('x-forwarded-host');
+    const host = forwardedHost || request.headers.get('host');
+    const proto = request.headers.get('x-forwarded-proto') || 'https';
+
+    if (host) {
+      const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
+      // In development mode, if request came from localhost, allow localhost URL for testing
+      if (isLocal && process.env.NODE_ENV !== 'production') {
+        return `http://${host}`;
+      }
+      // If host is a real domain (e.g. dainikmanyavar.com)
+      if (!isLocal) {
+        return `${proto}://${host}`;
+      }
+    }
+  }
+
+  // 2. Client-side execution in browser
+  if (typeof window !== 'undefined' && window.location) {
+    const { hostname, origin } = window.location;
+    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+    if (isLocal && process.env.NODE_ENV !== 'production') {
+      return origin;
+    }
+    if (!isLocal) {
+      return origin;
+    }
+  }
+
+  // 3. Environment variable fallback
   const envUrl = process.env.NEXT_PUBLIC_SITE_URL;
   if (
     envUrl &&
@@ -113,17 +146,23 @@ export function getPublicSiteUrl(): string {
     return envUrl.replace(/\/+$/, '');
   }
 
-  if (typeof window !== 'undefined' && window.location.origin) {
-    const origin = window.location.origin;
-    if (
-      !origin.includes('localhost') &&
-      !origin.includes('127.0.0.1') &&
-      !origin.includes('192.168.') &&
-      !origin.includes('10.0.')
-    ) {
-      return origin.replace(/\/+$/, '');
-    }
-  }
-
+  // 4. Default production fallback
   return 'https://dainikmanyavar.com';
 }
+
+// Clean, short share URL format (e.g. https://dainikmanyavar.com/n/48)
+// Eliminates ugly percent-encoding characters in WhatsApp and social messaging.
+export function getShortShareUrl(
+  article: { id?: string; newsId?: number | null; slug?: string },
+  baseUrl?: string
+): string {
+  const siteUrl = (baseUrl || getPublicSiteUrl()).replace(/\/+$/, '');
+  if (article.newsId && article.newsId > 0) {
+    return `${siteUrl}/n/${article.newsId}`;
+  }
+  if (article.id) {
+    return `${siteUrl}/n/${article.id}`;
+  }
+  return `${siteUrl}/n/${article.slug ? encodeURIComponent(article.slug) : ''}`;
+}
+

@@ -4,10 +4,12 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Bookmark, Share2, Check, Crown, Play } from 'lucide-react';
-import { formatHindiTimeAgo, getPublicSiteUrl } from '@/lib/utils';
+import { formatHindiTimeAgo } from '@/lib/utils';
+import SocialShareModal from '@/components/public/SocialShareModal';
 
 interface ArticleItem {
   id: string;
+  newsId?: number | null;
   title: string;
   slug: string;
   featuredImage?: string | null;
@@ -35,7 +37,7 @@ export default function MobileNewsList({
   icon,
 }: MobileNewsListProps) {
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectedShareArticle, setSelectedShareArticle] = useState<ArticleItem | null>(null);
 
   useEffect(() => {
     try {
@@ -64,20 +66,7 @@ export default function MobileNewsList({
   const handleShareSocial = (e: React.MouseEvent, art: ArticleItem) => {
     e.preventDefault();
     e.stopPropagation();
-
-    const url = `${getPublicSiteUrl()}/mobile/news/${encodeURIComponent(art.slug)}`;
-    const text = art.title;
-
-    if (navigator.share) {
-      navigator.share({ title: text, url }).catch(() => {});
-    } else {
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(url).then(() => {
-          setCopiedId(art.id);
-          setTimeout(() => setCopiedId(null), 2000);
-        }).catch(() => {});
-      }
-    }
+    setSelectedShareArticle(art);
   };
 
   return (
@@ -193,11 +182,7 @@ export default function MobileNewsList({
                     className="p-1 hover:text-[#E53935] active:scale-90 transition-transform cursor-pointer"
                     title="शेयर करें"
                   >
-                    {copiedId === art.id ? (
-                      <Check className="w-4 h-4 text-green-500" />
-                    ) : (
-                      <Share2 className="w-4 h-4" />
-                    )}
+                    <Share2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -205,6 +190,21 @@ export default function MobileNewsList({
           );
         })}
       </div>
+
+      {/* Social Share App Chooser Modal */}
+      {selectedShareArticle && (
+        <SocialShareModal
+          isOpen={!!selectedShareArticle}
+          onClose={() => setSelectedShareArticle(null)}
+          article={{
+            id: selectedShareArticle.id,
+            newsId: selectedShareArticle.newsId,
+            title: selectedShareArticle.title,
+            slug: selectedShareArticle.slug,
+          }}
+          categoryName={selectedShareArticle.category?.name}
+        />
+      )}
     </section>
   );
 }

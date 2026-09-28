@@ -1,7 +1,12 @@
 import React from 'react';
 import { Globe, CheckCircle2 } from 'lucide-react';
+import { getPublicSiteUrl } from '@/lib/utils';
+
+export const dynamic = 'force-dynamic';
 
 export default async function SEOAdminPage() {
+  const siteUrl = getPublicSiteUrl();
+
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
@@ -25,7 +30,7 @@ export default async function SEOAdminPage() {
             <CheckCircle2 className="w-4 h-4 text-green-600" />
             <div>
               <p className="font-bold text-stone-900">Dynamic XML Sitemap</p>
-              <p className="text-[10px] text-stone-500">http://localhost:3015/sitemap.xml</p>
+              <p className="text-[10px] text-stone-500">{siteUrl}/sitemap.xml</p>
             </div>
           </div>
 
@@ -33,7 +38,7 @@ export default async function SEOAdminPage() {
             <CheckCircle2 className="w-4 h-4 text-green-600" />
             <div>
               <p className="font-bold text-stone-900">Dynamic RSS Feed</p>
-              <p className="text-[10px] text-stone-500">http://localhost:3015/rss.xml</p>
+              <p className="text-[10px] text-stone-500">{siteUrl}/rss.xml</p>
             </div>
           </div>
 
