@@ -24,6 +24,7 @@ export const metadata: Metadata = {
 };
 
 import NotificationPermissionModal from '@/components/public/NotificationPermissionModal';
+import GoogleAnalytics from '@/components/GoogleAnalytics';
 
 export default function RootLayout({
   children,
@@ -58,6 +59,7 @@ export default function RootLayout({
             `,
           }}
         />
+        <GoogleAnalytics />
       </head>
       <body className="bg-white text-[#171717] antialiased" suppressHydrationWarning>
         {children}
