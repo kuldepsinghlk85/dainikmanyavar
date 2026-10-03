@@ -34,14 +34,14 @@ export default function MobileHeader({
   return (
     <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#121212]/95 backdrop-blur-md border-b border-stone-200 dark:border-stone-800 transition-colors shadow-xs">
       {/* Top Main Bar matching Amar Ujala */}
-      <div className="flex items-center justify-between px-3 py-2 min-h-[54px]">
+      <div className="flex items-center justify-between px-3 py-1.5 min-h-[54px]">
         {/* Left: Restructured Vector Brand Logo */}
         <div className="shrink-0 flex items-center pr-2">
           <MobileBrandLogo />
         </div>
 
         {/* Right Action Icons matching Amar Ujala */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* 1. Amar Ujala Style Rich Gold & Red Coin Badge */}
           <Link
             href="/mobile/epaper"

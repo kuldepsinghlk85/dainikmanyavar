@@ -5,20 +5,15 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 export default function MobileBrandLogo() {
-  const [siteLogo, setSiteLogo] = useState<string>('/uploads/1788514240911_adlogomain.jpg');
-  const [siteTagline, setSiteTagline] = useState<string>('सब पर नजर  सबकी खबर');
+  const [mobileLogo, setMobileLogo] = useState<string>('/mobile-brand-logo.jpg');
 
   useEffect(() => {
     fetch('/api/settings')
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.data) {
-          if (data.data.site_logo) {
-            setSiteLogo(data.data.site_logo);
-          }
-          const tagline = data.data.site_tagline || data.data.site_subtitle;
-          if (tagline !== undefined && tagline !== null) {
-            setSiteTagline(tagline);
+          if (data.data.mobile_logo) {
+            setMobileLogo(data.data.mobile_logo);
           }
         }
       })
@@ -28,25 +23,20 @@ export default function MobileBrandLogo() {
   return (
     <Link
       href="/mobile"
-      className="inline-flex flex-col items-center group select-none py-0.5"
-      title="दैनिक मान्यवर"
+      className="inline-flex items-center group select-none py-0.5 active:scale-95 transition-transform"
+      title="दैनिक मान्यवर - मुख्य पृष्ठ"
     >
-      <div className="relative h-8 sm:h-9 w-auto flex items-center justify-center dark:bg-white/95 dark:rounded-md dark:px-1 dark:py-0.5 transition-colors">
+      <div className="relative h-11 w-11 sm:h-12 sm:w-12 shrink-0 flex items-center justify-center rounded-xl overflow-hidden bg-white shadow-xs border border-stone-200/90 dark:border-stone-700 transition-colors">
         <Image
-          src={siteLogo || '/logo.png'}
+          src={mobileLogo || '/mobile-brand-logo.jpg'}
           alt="दैनिक मान्यवर"
-          width={280}
-          height={70}
+          width={120}
+          height={120}
           priority
           unoptimized
-          className="h-8 sm:h-9 w-auto object-contain"
+          className="w-full h-full object-contain p-0.5"
         />
       </div>
-      {siteTagline && (
-        <p className="text-[9px] sm:text-[10px] font-bold text-stone-700 dark:text-stone-300 tracking-wider text-center mt-0.5 font-serif border-t border-stone-200/80 dark:border-stone-700 pt-0.5 w-full whitespace-nowrap">
-          {siteTagline}
-        </p>
-      )}
     </Link>
   );
 }
