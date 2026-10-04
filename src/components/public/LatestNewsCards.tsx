@@ -14,6 +14,7 @@ interface Article {
   id: string;
   title: string;
   slug: string;
+  newsId?: number;
   featuredImage?: string | null;
   publishedAt: Date | string;
   viewCount: number;
@@ -78,7 +79,7 @@ export default function LatestNewsCards({ articles }: LatestNewsCardsProps) {
 
                 {/* Body Content */}
                 <div className="p-3">
-                  <Link href={`/news/${art.slug}`}>
+                  <Link href={`/news/${art.newsId || art.slug}`}>
                     <h4 className="text-sm font-bold text-stone-900 leading-snug line-clamp-2 hover:text-[#F97316] transition-colors mb-2">
                       {art.title}
                     </h4>

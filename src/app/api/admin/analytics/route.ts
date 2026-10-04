@@ -14,6 +14,15 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const statusFilter = searchParams.get('status') || 'published'; // 'published' | 'all'
     const period = searchParams.get('period') || 'all'; // 'all' | 'week' | 'today'
+    const limitParam = searchParams.get('limit') || '10'; // '10' | '50' | 'all'
+    const sortParam = searchParams.get('sort') || 'views'; // 'views' | 'latest'
+    const targetLimit = limitParam === 'all' ? Infinity : parseInt(limitParam, 10) || 10;
+    const queryTake = limitParam === 'all' ? 500 : targetLimit === 50 ? 120 : 30;
+
+    const orderByClause =
+      sortParam === 'latest'
+        ? [{ publishedAt: 'desc' as const }, { createdAt: 'desc' as const }]
+        : [{ viewCount: 'desc' as const }, { publishedAt: 'desc' as const }];
 
     // Build article where clause
     const articleWhere: any = {};
@@ -57,8 +66,8 @@ export async function GET(req: NextRequest) {
       db.article.count({ where: { status: 'ARCHIVED' } }),
       db.article.findMany({
         where: articleWhere,
-        orderBy: { viewCount: 'desc' },
-        take: 30, // take extra for deduplication
+        orderBy: orderByClause,
+        take: queryTake, // dynamic take based on limit
         select: {
           id: true,
           newsId: true,
@@ -113,7 +122,7 @@ export async function GET(req: NextRequest) {
         seenTitles.add(normalizedTitle);
         topArticles.push(art);
       }
-      if (topArticles.length >= 10) break;
+      if (topArticles.length >= targetLimit) break;
     }
 
     // Category breakdown
@@ -156,6 +165,8 @@ export async function GET(req: NextRequest) {
         filter: {
           status: statusFilter,
           period,
+          limit: limitParam,
+          sort: sortParam,
         },
         summary: {
           totalViews: aggregateStats._sum.viewCount || 0,

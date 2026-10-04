@@ -8,6 +8,7 @@ interface TrendingItem {
   id: string;
   title: string;
   slug: string;
+  newsId?: number;
   viewCount: number;
 }
 
@@ -17,7 +18,7 @@ interface TrendingSectionProps {
 }
 
 export default function TrendingSection({ items, articles }: TrendingSectionProps) {
-  const defaultItems = [
+  const defaultItems: TrendingItem[] = [
     { id: '1', title: 'यूपी में नई शिक्षा नीति लागू, स्कूलों में स्मार्ट बोर्ड', slug: 'up-schools-digital-education-smart-boards-2026', viewCount: 24100 },
     { id: '2', title: 'जौनपुर में पुलिस की बड़ी कार्रवाई, गिरोह गिरफ्तार', slug: 'jaunpur-police-action-gang-busted', viewCount: 18700 },
     { id: '3', title: 'मानसून का कहर, कई गांव जलमग्न हुए', slug: 'monsoon-heavy-rainfall-up-districts-alert', viewCount: 16300 },
@@ -40,7 +41,7 @@ export default function TrendingSection({ items, articles }: TrendingSectionProp
         {trendingList.slice(0, 5).map((item, index) => (
           <Link
             key={item.id || item.slug}
-            href={`/news/${item.slug}`}
+            href={`/news/${item.newsId || item.slug}`}
             className="grid grid-cols-[30px_1fr_auto] gap-2.5 items-center border-b border-stone-100 pb-2.5 last:border-0 hover:bg-orange-50/50 p-1.5 rounded transition-colors group"
           >
             <span className="w-7 h-7 bg-[#F97316] text-white font-extrabold text-xs rounded flex items-center justify-center">

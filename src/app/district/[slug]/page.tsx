@@ -62,11 +62,32 @@ export default async function DistrictNewsPage({ params }: { params: Promise<{ s
   // Fetch published articles for this district
   const articles = await db.article.findMany({
     where: {
-      locationId: location.id,
       status: 'PUBLISHED',
+      OR: [
+        { locationId: location.id },
+        { location: { slug: location.slug } },
+        {
+          tags: {
+            some: {
+              tag: {
+                OR: [
+                  { name: location.name },
+                  { name: `#${location.name}` },
+                  { slug: location.slug },
+                ],
+              },
+            },
+          },
+        },
+        { title: { contains: location.name } },
+      ],
     },
-    orderBy: { publishedAt: 'desc' },
-    take: 40,
+    orderBy: [
+      { newsId: 'desc' },
+      { publishedAt: 'desc' },
+      { createdAt: 'desc' },
+    ],
+    take: 50,
     include: {
       category: true,
       tags: { include: { tag: true } },

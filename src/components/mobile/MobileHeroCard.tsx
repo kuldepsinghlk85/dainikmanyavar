@@ -66,7 +66,7 @@ export default function MobileHeroCard({ article }: { article: ArticleData }) {
 
   return (
     <article className="bg-white dark:bg-[#141414] border-b border-stone-200 dark:border-stone-800 overflow-hidden transition-colors">
-      <Link href={`/mobile/news/${encodeURIComponent(article.slug)}`} className="block group">
+      <Link href={`/mobile/news/${article.newsId || encodeURIComponent(article.slug)}`} className="block group">
         {/* Headline at Top matching Amar Ujala Image 2 */}
         <div className="px-3.5 pt-3 pb-2">
           <h2 className="text-[17px] sm:text-[19px] font-black text-stone-900 dark:text-stone-50 leading-snug tracking-tight group-hover:text-[#E53935] transition-colors">
@@ -101,7 +101,7 @@ export default function MobileHeroCard({ article }: { article: ArticleData }) {
       {/* Bottom Meta Row matching Amar Ujala: Category • Date | Bookmark + Share */}
       <div className="px-3.5 py-2.5 flex items-center justify-between text-xs text-stone-500 dark:text-stone-400 border-t border-stone-100 dark:border-stone-800/80">
         <Link
-          href={`/mobile/news/${encodeURIComponent(article.slug)}`}
+          href={`/mobile/news/${article.newsId || encodeURIComponent(article.slug)}`}
           className="flex items-center gap-1.5 font-bold hover:text-stone-900 dark:hover:text-stone-200"
         >
           <span className="text-stone-800 dark:text-stone-200">

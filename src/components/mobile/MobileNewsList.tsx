@@ -108,7 +108,7 @@ export default function MobileNewsList({
 
           return (
             <article key={art.id} className="py-3">
-              <Link href={`/mobile/news/${encodeURIComponent(art.slug)}`} className="block group">
+              <Link href={`/mobile/news/${art.newsId || encodeURIComponent(art.slug)}`} className="block group">
                 {/* Top Content Row: Left Headline + Right 4:3 Thumbnail */}
                 <div className="flex gap-3 items-start justify-between">
                   {/* Left: Headline */}
@@ -151,7 +151,7 @@ export default function MobileNewsList({
               <div className="flex items-center justify-between pt-2 text-stone-500 dark:text-stone-400">
                 {/* Meta: Category • Date */}
                 <Link
-                  href={`/mobile/news/${encodeURIComponent(art.slug)}`}
+                  href={`/mobile/news/${art.newsId || encodeURIComponent(art.slug)}`}
                   className="text-[11px] font-bold flex items-center gap-1.5 hover:text-stone-900 dark:hover:text-stone-200"
                 >
                   <span className="text-stone-800 dark:text-stone-300">

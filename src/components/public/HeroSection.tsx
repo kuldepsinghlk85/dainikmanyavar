@@ -23,6 +23,7 @@ interface Article {
   publishedAt: Date | string;
   viewCount: number;
   likeCount: number;
+  newsId?: number;
   tags?: Tag[];
 }
 
@@ -155,7 +156,7 @@ export default function HeroSection({ articles = [], mainStory }: HeroSectionPro
             </div>
 
             {/* Title & Summary */}
-            <Link href={`/news/${currentArticle.slug}`}>
+            <Link href={`/news/${currentArticle.newsId || currentArticle.slug}`}>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-[#171717] leading-tight mb-3 hover:text-[#F97316] transition-colors">
                 {currentArticle.title}
               </h2>

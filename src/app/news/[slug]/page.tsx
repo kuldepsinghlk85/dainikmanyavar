@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import TopBar from '@/components/public/TopBar';
 import Header from '@/components/public/Header';
 import Navigation from '@/components/public/Navigation';
@@ -23,16 +23,20 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     decodedSlug = decodeURIComponent(slug);
   } catch (_) {}
 
+  const isNumeric = /^\d+$/.test(decodedSlug);
+  const numericId = isNumeric ? parseInt(decodedSlug, 10) : undefined;
+
   let article = await db.article.findFirst({
     where: {
       OR: [
+        ...(numericId ? [{ newsId: numericId }] : []),
         { slug: decodedSlug },
         { slug },
         { id: decodedSlug },
         { id: slug },
       ],
     },
-    select: { title: true, excerpt: true, featuredImage: true },
+    select: { title: true, excerpt: true, featuredImage: true, newsId: true },
   });
 
   if (!article) {
@@ -46,7 +50,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
             { slug: { endsWith: `-${numMatch[1]}` } },
           ],
         },
-        select: { title: true, excerpt: true, featuredImage: true },
+        select: { title: true, excerpt: true, featuredImage: true, newsId: true },
       });
     }
   }
@@ -56,6 +60,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${article.title} | दैनिक मान्यवर`,
     description: article.excerpt || article.title,
+    alternates: {
+      canonical: article.newsId ? `/news/${article.newsId}` : `/news/${slug}`,
+    },
     openGraph: {
       title: article.title,
       description: article.excerpt || article.title,
@@ -71,9 +78,13 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
     decodedSlug = decodeURIComponent(slug);
   } catch (_) {}
 
+  const isNumeric = /^\d+$/.test(decodedSlug);
+  const numericId = isNumeric ? parseInt(decodedSlug, 10) : undefined;
+
   let article = await db.article.findFirst({
     where: {
       OR: [
+        ...(numericId ? [{ newsId: numericId }] : []),
         { slug: decodedSlug },
         { slug },
         { id: decodedSlug },
@@ -114,6 +125,11 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
   // Allow both PUBLISHED and ARCHIVED articles to be viewed (prevents 404 on archived or older news)
   if (!article || (article.status !== 'PUBLISHED' && article.status !== 'ARCHIVED')) {
     notFound();
+  }
+
+  // Canonical short URL redirect: if accessed via long slug or old URL, redirect to clean /news/<newsId>
+  if (article.newsId && article.newsId > 0 && slug !== String(article.newsId)) {
+    redirect(`/news/${article.newsId}`);
   }
 
   // Increment view count asynchronously

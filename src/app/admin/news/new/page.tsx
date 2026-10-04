@@ -22,6 +22,7 @@ interface Tag {
 interface LocationItem {
   id: string;
   name: string;
+  slug?: string;
   type?: string;
   image?: string;
 }
@@ -101,9 +102,24 @@ export default function AddNewsPage() {
   }, []);
 
   const handleToggleTag = (tagId: string) => {
-    setSelectedTagIds((prev) =>
-      prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]
-    );
+    setSelectedTagIds((prev) => {
+      const isSelecting = !prev.includes(tagId);
+      const next = isSelecting ? [...prev, tagId] : prev.filter((id) => id !== tagId);
+
+      if (isSelecting && !locationId) {
+        const tag = availableTags.find((t) => t.id === tagId);
+        if (tag) {
+          const cleanName = tag.name.replace(/^#+/, '').trim().toLowerCase();
+          const matchedLoc = locations.find(
+            (l) => l.name.trim().toLowerCase() === cleanName || (l.slug && l.slug.trim().toLowerCase() === cleanName)
+          );
+          if (matchedLoc) {
+            setLocationId(matchedLoc.id);
+          }
+        }
+      }
+      return next;
+    });
   };
 
   const handleCreateNewTag = async () => {
@@ -553,7 +569,22 @@ export default function AddNewsPage() {
             </div>
             <select
               value={locationId}
-              onChange={(e) => setLocationId(e.target.value)}
+              onChange={(e) => {
+                const newLocId = e.target.value;
+                setLocationId(newLocId);
+                if (newLocId) {
+                  const loc = locations.find((l) => l.id === newLocId);
+                  if (loc) {
+                    const cleanLocName = loc.name.replace(/^#+/, '').trim().toLowerCase();
+                    const matchedTag = availableTags.find(
+                      (t) => t.name.replace(/^#+/, '').trim().toLowerCase() === cleanLocName
+                    );
+                    if (matchedTag && !selectedTagIds.includes(matchedTag.id)) {
+                      setSelectedTagIds((prev) => [...prev, matchedTag.id]);
+                    }
+                  }
+                }
+              }}
               className="w-full p-2.5 border border-stone-300 rounded-lg text-sm bg-white focus:outline-none focus:border-[#F97316]"
             >
               <option value="">-- स्थान / जिला चुनें (Optional) --</option>

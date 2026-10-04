@@ -176,9 +176,10 @@ export function handleShortLinkRedirect(
   }
 
   const isMobile = request.headers.get('user-agent')?.toLowerCase().includes('mobile');
+  const shortIdentifier = article.newsId && article.newsId > 0 ? article.newsId : encodeURIComponent(article.slug);
   const targetPath = isMobile
-    ? `/mobile/news/${encodeURIComponent(article.slug)}`
-    : `/news/${encodeURIComponent(article.slug)}`;
+    ? `/mobile/news/${shortIdentifier}`
+    : `/news/${shortIdentifier}`;
 
   return NextResponse.redirect(new URL(targetPath, base), 307);
 }

@@ -120,13 +120,33 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
       if (location) {
         categoryName = `${location.name} जिला समाचार`;
         articles = await db.article.findMany({
-          where: { locationId: location.id, status: 'PUBLISHED' },
+          where: {
+            status: 'PUBLISHED',
+            OR: [
+              { locationId: location.id },
+              { location: { slug: location.slug } },
+              {
+                tags: {
+                  some: {
+                    tag: {
+                      OR: [
+                        { name: location.name },
+                        { name: `#${location.name}` },
+                        { slug: location.slug },
+                      ],
+                    },
+                  },
+                },
+              },
+              { title: { contains: location.name } },
+            ],
+          },
           orderBy: [
             { newsId: 'desc' },
             { publishedAt: 'desc' },
             { createdAt: 'desc' },
           ],
-          take: 40,
+          take: 50,
           include: {
             category: true,
             tags: { include: { tag: true } },

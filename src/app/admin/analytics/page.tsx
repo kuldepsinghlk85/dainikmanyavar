@@ -18,8 +18,9 @@ import {
   Clock,
   Sparkles,
   Radio,
+  Zap,
 } from 'lucide-react';
-import { formatCount, formatHindiDate } from '@/lib/utils';
+import { formatCount, formatHindiDate, formatHindiTimeAgo } from '@/lib/utils';
 
 interface TopArticle {
   id: string;
@@ -81,12 +82,21 @@ export default function AnalyticsAdminPage() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<'published' | 'all'>('published');
   const [periodFilter, setPeriodFilter] = useState<'all' | 'week' | 'today'>('all');
+  const [limitFilter, setLimitFilter] = useState<'10' | '50' | 'all'>('10');
+  const [sortFilter, setSortFilter] = useState<'views' | 'latest'>('views');
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
 
-  const fetchAnalytics = async (status = statusFilter, period = periodFilter) => {
+  const fetchAnalytics = async (
+    status = statusFilter,
+    period = periodFilter,
+    limit = limitFilter,
+    sort = sortFilter
+  ) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/analytics?status=${status}&period=${period}`);
+      const res = await fetch(
+        `/api/admin/analytics?status=${status}&period=${period}&limit=${limit}&sort=${sort}`
+      );
       const json = await res.json();
       if (json.success && json.data) {
         setData(json.data);
@@ -100,8 +110,8 @@ export default function AnalyticsAdminPage() {
   };
 
   useEffect(() => {
-    fetchAnalytics(statusFilter, periodFilter);
-  }, [statusFilter, periodFilter]);
+    fetchAnalytics(statusFilter, periodFilter, limitFilter, sortFilter);
+  }, [statusFilter, periodFilter, limitFilter, sortFilter]);
 
   const getActivityLabel = (type: string) => {
     switch (type) {
@@ -209,7 +219,7 @@ export default function AnalyticsAdminPage() {
 
           {/* Refresh Button */}
           <button
-            onClick={() => fetchAnalytics(statusFilter, periodFilter)}
+            onClick={() => fetchAnalytics(statusFilter, periodFilter, limitFilter, sortFilter)}
             disabled={loading}
             className="p-2 bg-stone-100 hover:bg-stone-200 active:scale-95 text-stone-700 rounded-xl border border-stone-200 transition-all cursor-pointer"
             title="डेटा रीफ्रेश करें"
@@ -292,22 +302,114 @@ export default function AnalyticsAdminPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left 2 Cols: Top Viewed Articles Table */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-stone-200 shadow-sm p-5 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-100 pb-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-100 pb-3">
             <div>
               <h3 className="text-base font-extrabold text-stone-900 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-[#EA580C]" />
-                <span>सर्वाधिक पढ़े गए समाचार (Top 10 Most Viewed)</span>
+                {sortFilter === 'latest' ? (
+                  <>
+                    <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
+                    <span>
+                      ताज़ा समाचार एनालिटिक्स (
+                      {limitFilter === '10' && 'Top 10'}
+                      {limitFilter === '50' && 'Top 50'}
+                      {limitFilter === 'all' && 'सभी All'}
+                      {' '}Latest News)
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <TrendingUp className="w-4 h-4 text-[#EA580C]" />
+                    <span>
+                      सर्वाधिक पढ़े गए समाचार (
+                      {limitFilter === '10' && 'Top 10'}
+                      {limitFilter === '50' && 'Top 50'}
+                      {limitFilter === 'all' && 'सभी All'}
+                      {' '}Most Viewed)
+                    </span>
+                  </>
+                )}
               </h3>
               <p className="text-xs text-stone-500 mt-0.5">
-                {statusFilter === 'published'
+                {sortFilter === 'latest'
+                  ? 'हाल ही में प्रकाशित ताज़ा समाचारों के व्यूज़, लाइक्स और ऑडियो लिसन का रियल-टाइम एनालिटिक्स'
+                  : statusFilter === 'published'
                   ? 'लाइव वेबसाइट पर वर्तमान में सबसे अधिक पढ़े जा रहे समाचार (डुप्लीकेट मुक्त)'
                   : 'सभी प्रकाशित व आर्काइव ऐतिहासिक समाचारों की व्यूज़ रैंकिंग'}
               </p>
             </div>
 
-            <span className="text-[11px] font-bold text-stone-500 bg-stone-100 px-2.5 py-1 rounded-full font-mono">
-              कुल {data?.topArticles.length ?? 0} समाचार
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Sort Toggle: Views vs Latest */}
+              <div className="inline-flex p-1 bg-stone-100 rounded-xl border border-stone-200 text-xs font-bold">
+                <button
+                  type="button"
+                  onClick={() => setSortFilter('views')}
+                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                    sortFilter === 'views'
+                      ? 'bg-white text-stone-900 shadow-xs'
+                      : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                  title="सर्वाधिक व्यूज अनुसार"
+                >
+                  <TrendingUp className="w-3.5 h-3.5 text-[#EA580C]" />
+                  सर्वाधिक पढ़े गए
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSortFilter('latest')}
+                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                    sortFilter === 'latest'
+                      ? 'bg-white text-stone-900 shadow-xs'
+                      : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                  title="नवीनतम / ताज़ा समाचार"
+                >
+                  <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                  ताज़ा समाचार (Latest)
+                </button>
+              </div>
+
+              {/* Limit Segmented Control: Top 10, Top 50, All */}
+              <div className="inline-flex p-1 bg-stone-100 rounded-xl border border-stone-200 text-xs font-bold">
+                <button
+                  type="button"
+                  onClick={() => setLimitFilter('10')}
+                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                    limitFilter === '10'
+                      ? 'bg-white text-stone-900 shadow-xs'
+                      : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                >
+                  टॉप 10
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLimitFilter('50')}
+                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                    limitFilter === '50'
+                      ? 'bg-white text-stone-900 shadow-xs'
+                      : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                >
+                  टॉप 50
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLimitFilter('all')}
+                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                    limitFilter === 'all'
+                      ? 'bg-white text-stone-900 shadow-xs'
+                      : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                >
+                  सभी (All)
+                </button>
+              </div>
+
+              <span className="text-[11px] font-bold text-stone-500 bg-stone-100 px-2.5 py-1.5 rounded-xl border border-stone-200 font-mono">
+                कुल {data?.topArticles.length ?? 0} समाचार
+              </span>
+            </div>
           </div>
 
           {loading ? (
@@ -320,7 +422,7 @@ export default function AnalyticsAdminPage() {
               कोई समाचार डेटा उपलब्ध नहीं है।
             </div>
           ) : (
-            <div className="divide-y divide-stone-100">
+            <div className="divide-y divide-stone-100 max-h-[850px] overflow-y-auto pr-1">
               {data.topArticles.map((art, index) => (
                 <div
                   key={art.id}
@@ -354,8 +456,13 @@ export default function AnalyticsAdminPage() {
                         </span>
                         <span className="text-[10px] text-stone-400 font-mono">#{art.newsId}</span>
                         {art.publishedAt && (
-                          <span className="text-[10px] text-stone-400 font-sans">
+                          <span className="text-[10px] text-stone-500 font-sans font-medium flex items-center gap-1">
                             • {formatHindiDate(art.publishedAt)}
+                            {sortFilter === 'latest' && (
+                              <span className="text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded font-semibold border border-amber-200/60">
+                                {formatHindiTimeAgo(art.publishedAt)}
+                              </span>
+                            )}
                           </span>
                         )}
                       </div>

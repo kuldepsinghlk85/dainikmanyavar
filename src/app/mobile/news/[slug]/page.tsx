@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import { formatHindiTimeAgo, getPublicSiteUrl, getShortShareUrl } from '@/lib/utils';
 import { ArrowLeft, Clock, Eye, Share2, MessageCircle, Volume2 } from 'lucide-react';
@@ -20,16 +20,20 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     decodedSlug = decodeURIComponent(slug);
   } catch (_) {}
 
+  const isNumeric = /^\d+$/.test(decodedSlug);
+  const numericId = isNumeric ? parseInt(decodedSlug, 10) : undefined;
+
   let article = await db.article.findFirst({
     where: {
       OR: [
+        ...(numericId ? [{ newsId: numericId }] : []),
         { slug: decodedSlug },
         { slug },
         { id: decodedSlug },
         { id: slug },
       ],
     },
-    select: { title: true, excerpt: true, featuredImage: true },
+    select: { title: true, excerpt: true, featuredImage: true, newsId: true },
   });
   if (!article) {
     const numMatch = decodedSlug.match(/(\d+)$/);
@@ -42,7 +46,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
             { slug: { endsWith: `-${numMatch[1]}` } },
           ],
         },
-        select: { title: true, excerpt: true, featuredImage: true },
+        select: { title: true, excerpt: true, featuredImage: true, newsId: true },
       });
     }
   }
@@ -50,6 +54,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${article.title} | दैनिक मान्यवर मोबाइल`,
     description: article.excerpt || article.title,
+    alternates: {
+      canonical: article.newsId ? `/mobile/news/${article.newsId}` : `/mobile/news/${slug}`,
+    },
     openGraph: {
       title: article.title,
       description: article.excerpt || article.title,
@@ -69,9 +76,13 @@ export default async function MobileNewsDetailPage({
     decodedSlug = decodeURIComponent(slug);
   } catch (_) {}
 
+  const isNumeric = /^\d+$/.test(decodedSlug);
+  const numericId = isNumeric ? parseInt(decodedSlug, 10) : undefined;
+
   let article = await db.article.findFirst({
     where: {
       OR: [
+        ...(numericId ? [{ newsId: numericId }] : []),
         { slug: decodedSlug },
         { slug },
         { id: decodedSlug },
@@ -109,6 +120,11 @@ export default async function MobileNewsDetailPage({
 
   if (!article || (article.status !== 'PUBLISHED' && article.status !== 'ARCHIVED')) {
     notFound();
+  }
+
+  // Canonical short URL redirect: if accessed via long slug or old URL, redirect to clean /mobile/news/<newsId>
+  if (article.newsId && article.newsId > 0 && slug !== String(article.newsId)) {
+    redirect(`/mobile/news/${article.newsId}`);
   }
 
   // Increment view count asynchronously

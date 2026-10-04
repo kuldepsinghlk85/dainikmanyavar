@@ -150,7 +150,7 @@ export function getPublicSiteUrl(request?: { headers?: Headers | { get: (name: s
   return 'https://dainikmanyavar.com';
 }
 
-// Clean, short share URL format (e.g. https://dainikmanyavar.com/n/48)
+// Clean, short share URL format (e.g. https://dainikmanyavar.com/n/48 or /news/48)
 // Eliminates ugly percent-encoding characters in WhatsApp and social messaging.
 export function getShortShareUrl(
   article: { id?: string; newsId?: number | null; slug?: string },
@@ -164,5 +164,20 @@ export function getShortShareUrl(
     return `${siteUrl}/n/${article.id}`;
   }
   return `${siteUrl}/n/${article.slug ? encodeURIComponent(article.slug) : ''}`;
+}
+
+// Canonical short news path for website navigation and clean browser address bar
+export function getArticleUrl(
+  article: { newsId?: number | null; slug?: string; id?: string },
+  isMobile: boolean = false
+): string {
+  const prefix = isMobile ? '/mobile/news' : '/news';
+  if (article.newsId && article.newsId > 0) {
+    return `${prefix}/${article.newsId}`;
+  }
+  if (article.slug) {
+    return `${prefix}/${encodeURIComponent(article.slug)}`;
+  }
+  return `${prefix}/${article.id || ''}`;
 }
 

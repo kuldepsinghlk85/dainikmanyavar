@@ -12,60 +12,115 @@ import { formatHindiTimeAgo, formatCount } from '@/lib/utils';
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug);
+  const cleanSlug = decodedSlug.replace(/^#+/, '').trim();
   const tag = await db.tag.findFirst({
     where: {
       OR: [
         { slug: decodedSlug },
+        { slug: cleanSlug },
         { slug: slug },
         { name: decodedSlug },
-        { name: '#' + decodedSlug },
+        { name: cleanSlug },
+        { name: '#' + cleanSlug },
       ],
     },
   });
-  if (!tag) return {};
+  const loc = !tag ? await db.location.findFirst({
+    where: {
+      OR: [
+        { slug: decodedSlug },
+        { slug: cleanSlug },
+        { name: cleanSlug },
+      ],
+    },
+  }) : null;
+
+  const displayName = tag?.name || (loc ? `#${loc.name}` : cleanSlug);
 
   return {
-    title: tag.seoTitle || `${tag.name} की ताज़ा ख़बरें | दैनिक मान्यवर`,
-    description: tag.seoDescription || `${tag.name} से जुड़ी दैनिक मान्यवर की सभी खबरें।`,
+    title: tag?.seoTitle || `${displayName} की ताज़ा ख़बरें | दैनिक मान्यवर`,
+    description: tag?.seoDescription || `${displayName} से जुड़ी दैनिक मान्यवर की सभी खबरें।`,
   };
 }
 
 export default async function TagPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug);
+  const cleanSlug = decodedSlug.replace(/^#+/, '').trim();
 
-  const tag = await db.tag.findFirst({
+  // Find all matching tags
+  const matchingTags = await db.tag.findMany({
     where: {
       OR: [
         { slug: decodedSlug },
+        { slug: cleanSlug },
         { slug: slug },
         { name: decodedSlug },
+        { name: cleanSlug },
+        { name: '#' + cleanSlug },
         { name: '#' + decodedSlug },
       ],
     },
-    include: {
-      articleTags: {
-        include: {
-          article: {
-            include: {
-              category: true,
-              tags: { include: { tag: true } },
-            },
-          },
-        },
-        orderBy: { article: { publishedAt: 'desc' } },
-        take: 30,
-      },
+  });
+
+  // Find matching location (if this tag is a district or city)
+  const matchingLocation = await db.location.findFirst({
+    where: {
+      OR: [
+        { slug: decodedSlug },
+        { slug: cleanSlug },
+        { slug: slug },
+        { name: decodedSlug },
+        { name: cleanSlug },
+      ],
     },
   });
 
-  if (!tag) {
+  const primaryTag = matchingTags[0] || (matchingLocation ? {
+    id: matchingLocation.id,
+    name: `#${matchingLocation.name}`,
+    slug: matchingLocation.slug,
+    description: `${matchingLocation.name} जिले से जुड़ी ताज़ा ख़बरें और अपडेट।`,
+  } : null);
+
+  if (!primaryTag && !matchingLocation) {
     notFound();
   }
 
-  const articles = tag.articleTags.map((at) => ({
-    ...at.article,
-    tags: at.article.tags.map((t) => t.tag),
+  const tagIds = matchingTags.map((t) => t.id);
+
+  const orConditions: any[] = [];
+  if (tagIds.length > 0) {
+    orConditions.push({ tags: { some: { tagId: { in: tagIds } } } });
+  }
+  if (matchingLocation) {
+    orConditions.push(
+      { locationId: matchingLocation.id },
+      { location: { slug: matchingLocation.slug } },
+      { title: { contains: matchingLocation.name } }
+    );
+  }
+
+  const articles = await db.article.findMany({
+    where: {
+      status: 'PUBLISHED',
+      OR: orConditions.length > 0 ? orConditions : [{ id: '__none__' }],
+    },
+    orderBy: [
+      { newsId: 'desc' },
+      { publishedAt: 'desc' },
+      { createdAt: 'desc' },
+    ],
+    take: 50,
+    include: {
+      category: true,
+      tags: { include: { tag: true } },
+    },
+  });
+
+  const formattedArticles = articles.map((art) => ({
+    ...art,
+    tags: art.tags.map((t) => t.tag),
   }));
 
   return (
@@ -78,21 +133,21 @@ export default async function TagPage({ params }: { params: Promise<{ slug: stri
         {/* Tag Header Banner */}
         <div className="bg-[#FFF1E6] border border-[#FDBA74] p-5 rounded-xl mb-6">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#C2410C]">
-            {tag.name.startsWith('#') ? tag.name : `#${tag.name}`}
+            {primaryTag?.name.startsWith('#') ? primaryTag.name : `#${primaryTag?.name}`}
           </h1>
           <p className="text-stone-600 text-sm mt-1">
-            {tag.description || `कुल ${articles.length} समाचार इस टैग से जुड़े हैं।`}
+            {primaryTag?.description || `कुल ${formattedArticles.length} समाचार इस टैग से जुड़े हैं।`}
           </p>
         </div>
 
         {/* Article Grid */}
-        {articles.length === 0 ? (
+        {formattedArticles.length === 0 ? (
           <div className="text-center py-12 text-stone-500">
             इस टैग के अंतर्गत फिलहाल कोई समाचार उपलब्ध नहीं है।
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {articles.map((art) => (
+            {formattedArticles.map((art) => (
               <article key={art.id} className="border border-stone-200 rounded-xl overflow-hidden bg-white hover:shadow-md transition-shadow flex flex-col justify-between">
                 <div>
                   <div className="relative w-full h-[180px] bg-stone-100">

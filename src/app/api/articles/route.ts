@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { slugify } from '@/lib/utils';
 import { getNextNewsId, ensureArticleNewsIds } from '@/lib/newsId';
+import { getOrCreateTag } from '@/lib/tagUtils';
 
 export async function GET(request: Request) {
   try {
@@ -33,23 +34,119 @@ export async function GET(request: Request) {
 
     const district = districtSlug || searchParams.get('location') || searchParams.get('locationId');
     if (district) {
-      where.location = {
-        OR: [
-          { slug: district },
-          { name: district },
-          { id: district },
-        ],
-      };
+      let decodedDistrict = district;
+      try {
+        decodedDistrict = decodeURIComponent(district);
+      } catch (_) {}
+      const cleanDistrict = decodedDistrict.replace(/^#+/, '').trim();
+
+      const matchedLoc = await db.location.findFirst({
+        where: {
+          OR: [
+            { slug: district },
+            { slug: decodedDistrict },
+            { slug: cleanDistrict },
+            { name: decodedDistrict },
+            { name: cleanDistrict },
+            { id: district },
+          ],
+        },
+      });
+
+      const locName = matchedLoc?.name || cleanDistrict;
+      const locSlug = matchedLoc?.slug || cleanDistrict;
+      const locId = matchedLoc?.id;
+
+      const districtConditions: any[] = [
+        { location: { slug: locSlug } },
+        { location: { name: locName } },
+        {
+          tags: {
+            some: {
+              tag: {
+                OR: [
+                  { name: locName },
+                  { name: `#${locName}` },
+                  { slug: locSlug },
+                  { slug: cleanDistrict },
+                ],
+              },
+            },
+          },
+        },
+        { title: { contains: locName } },
+      ];
+
+      if (locId) {
+        districtConditions.unshift({ locationId: locId });
+      }
+
+      if (where.OR) {
+        where.AND = [
+          { OR: where.OR },
+          { OR: districtConditions },
+        ];
+        delete where.OR;
+      } else {
+        where.OR = districtConditions;
+      }
     }
 
     if (tagSlug) {
-      where.tags = {
-        some: {
-          tag: {
-            slug: tagSlug,
+      let decodedTag = tagSlug;
+      try {
+        decodedTag = decodeURIComponent(tagSlug);
+      } catch (_) {}
+      const cleanTag = decodedTag.replace(/^#+/, '').trim();
+
+      const matchingLoc = await db.location.findFirst({
+        where: {
+          OR: [
+            { slug: tagSlug },
+            { slug: decodedTag },
+            { slug: cleanTag },
+            { name: decodedTag },
+            { name: cleanTag },
+          ],
+        },
+      });
+
+      const tagConditions: any[] = [
+        {
+          tags: {
+            some: {
+              tag: {
+                OR: [
+                  { slug: tagSlug },
+                  { slug: decodedTag },
+                  { slug: cleanTag },
+                  { name: decodedTag },
+                  { name: cleanTag },
+                  { name: `#${cleanTag}` },
+                ],
+              },
+            },
           },
         },
-      };
+      ];
+
+      if (matchingLoc) {
+        tagConditions.push(
+          { locationId: matchingLoc.id },
+          { location: { slug: matchingLoc.slug } },
+          { title: { contains: matchingLoc.name } }
+        );
+      }
+
+      if (where.OR) {
+        where.AND = [
+          { OR: where.OR },
+          { OR: tagConditions },
+        ];
+        delete where.OR;
+      } else {
+        where.OR = tagConditions;
+      }
     }
 
     if (query) {
@@ -157,6 +254,7 @@ export async function POST(request: Request) {
       authorId,
       locationId,
       tagIds = [],
+      tags = [],
       isBreaking = false,
       isFeatured = false,
       isMainStory = false,
@@ -180,6 +278,67 @@ export async function POST(request: Request) {
       );
     }
 
+    // Gather and resolve all tag IDs
+    const finalTagIds = new Set<string>();
+    if (Array.isArray(tagIds)) {
+      tagIds.forEach((id: string) => {
+        if (id && typeof id === 'string') finalTagIds.add(id);
+      });
+    }
+    if (Array.isArray(tags)) {
+      for (const t of tags) {
+        if (!t) continue;
+        if (typeof t === 'string') {
+          if (/^[0-9a-fA-F-]{36}$/.test(t)) {
+            finalTagIds.add(t);
+          } else {
+            const created = await getOrCreateTag(t);
+            if (created) finalTagIds.add(created.id);
+          }
+        } else if (t.id) {
+          finalTagIds.add(t.id);
+        }
+      }
+    }
+
+    let finalLocationId = locationId || null;
+
+    // If locationId was not specified, check if any tag corresponds to a district
+    const loadedTags = finalTagIds.size > 0
+      ? await db.tag.findMany({ where: { id: { in: Array.from(finalTagIds) } } })
+      : [];
+
+    if (!finalLocationId && loadedTags.length > 0) {
+      for (const tag of loadedTags) {
+        const cleanName = tag.name.replace(/^#+/, '').trim();
+        const matchedLoc = await db.location.findFirst({
+          where: {
+            OR: [
+              { name: cleanName },
+              { name: tag.name },
+              { slug: tag.slug },
+              { slug: cleanName },
+            ],
+          },
+        });
+        if (matchedLoc) {
+          finalLocationId = matchedLoc.id;
+          break;
+        }
+      }
+    }
+
+    // If location is set, ensure district tag is also included
+    if (finalLocationId) {
+      const loc = await db.location.findUnique({ where: { id: finalLocationId } });
+      if (loc) {
+        const districtTag = await getOrCreateTag(loc.name);
+        if (districtTag) {
+          finalTagIds.add(districtTag.id);
+        }
+      }
+    }
+
     const baseSlug = slugify(title);
     const uniqueSlug = `${baseSlug}-${Date.now().toString().slice(-4)}`;
     const nextNewsId = await getNextNewsId();
@@ -197,7 +356,7 @@ export async function POST(request: Request) {
         sourceType: sourceType || null,
         primaryCategoryId,
         authorId: authorId || null,
-        locationId: locationId || null,
+        locationId: finalLocationId,
         isBreaking,
         isFeatured,
         isMainStory,
@@ -301,9 +460,8 @@ export async function POST(request: Request) {
       }
     }
 
-    if (Array.isArray(tagIds) && tagIds.length > 0) {
-      const uniqueTagIds = Array.from(new Set(tagIds));
-      for (const tagId of uniqueTagIds) {
+    if (finalTagIds.size > 0) {
+      for (const tagId of finalTagIds) {
         await db.articleTag.create({
           data: {
             articleId: article.id,

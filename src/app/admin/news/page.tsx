@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Newspaper, PlusCircle, Trash2, Edit, Eye, CheckSquare, Square, AlertOctagon, Archive, RotateCcw, Film } from 'lucide-react';
+import { Newspaper, PlusCircle, Trash2, Edit, Eye, CheckSquare, Square, AlertOctagon, Archive, RotateCcw, Film, Download, Link2 } from 'lucide-react';
 import DeleteConfirmModal from '@/components/admin/DeleteConfirmModal';
+import ExportLinksModal from '@/components/admin/ExportLinksModal';
 
 interface Article {
   id: string;
@@ -26,6 +27,7 @@ export default function AdminNewsPage() {
   const [archivedCount, setArchivedCount] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
+  const [exportModalOpen, setExportModalOpen] = useState(false);
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     action: 'CLEAR_ALL' | 'DELETE_SELECTED';
@@ -303,6 +305,19 @@ export default function AdminNewsPage() {
             <span>📦 आर्काइव लाइब्रेरी ({archivedCount})</span>
           </Link>
 
+          {/* Export All Links Button */}
+          {articles.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setExportModalOpen(true)}
+              className="bg-sky-600 hover:bg-sky-700 text-white px-3.5 py-2.5 rounded-xl text-xs font-black flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+              title="पन्ने के सभी लिंक व शॉर्ट वर्जन लिंक एक्सपोर्ट करें"
+            >
+              <Download className="w-4 h-4" />
+              <span>एक्सपोर्ट ऑल लिंक</span>
+            </button>
+          )}
+
           <Link
             href="/admin/news/new"
             className="bg-[#EA580C] hover:bg-orange-700 text-white px-3.5 py-2.5 rounded-xl text-xs font-extrabold flex items-center gap-2 shadow-md transition-all"
@@ -398,43 +413,60 @@ export default function AdminNewsPage() {
             </span>
           </div>
 
-          {selectedIds.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2.5">
-              {/* Batch Archive Button */}
-              {statusFilter !== 'ARCHIVED' && (
-                <button
-                  onClick={handleBulkArchive}
-                  disabled={loading}
-                  className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 shadow-md transition-all cursor-pointer"
-                >
-                  <Archive className="w-4 h-4" />
-                  <span>📦 चयनित {selectedIds.length} खबरें आर्काइव में भेजें</span>
-                </button>
-              )}
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Export Links Button */}
+            <button
+              type="button"
+              onClick={() => setExportModalOpen(true)}
+              className="bg-sky-600 hover:bg-sky-700 text-white px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+              title="पन्ने के सभी लिंक व शॉर्ट वर्जन लिंक एक्सपोर्ट करें"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>
+                {selectedIds.length > 0
+                  ? `🔗 चयनित ${selectedIds.length} लिंक एक्सपोर्ट करें`
+                  : '🔗 सभी लिंक एक्सपोर्ट करें'}
+              </span>
+            </button>
 
-              {/* Batch Restore & Republish Button */}
-              {(statusFilter === 'ARCHIVED' || statusFilter === 'ALL') && (
-                <button
-                  onClick={handleBulkRestore}
-                  disabled={loading}
-                  className="bg-[#16A34A] hover:bg-green-700 text-white px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 shadow-md transition-all cursor-pointer"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  <span>♻️ चयनित {selectedIds.length} खबरें रिस्टोर व रिपब्लिश करें</span>
-                </button>
-              )}
+            {selectedIds.length > 0 && (
+              <>
+                {/* Batch Archive Button */}
+                {statusFilter !== 'ARCHIVED' && (
+                  <button
+                    onClick={handleBulkArchive}
+                    disabled={loading}
+                    className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 shadow-md transition-all cursor-pointer"
+                  >
+                    <Archive className="w-4 h-4" />
+                    <span>📦 चयनित {selectedIds.length} खबरें आर्काइव में भेजें</span>
+                  </button>
+                )}
 
-              {/* Batch Delete */}
-              <button
-                onClick={handleBulkDelete}
-                disabled={loading}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 shadow-md transition-all cursor-pointer"
-              >
-                <Trash2 className="w-4 h-4" />
-                <span>🗑️ चयनित {selectedIds.length} डिलीट करें</span>
-              </button>
-            </div>
-          )}
+                {/* Batch Restore & Republish Button */}
+                {(statusFilter === 'ARCHIVED' || statusFilter === 'ALL') && (
+                  <button
+                    onClick={handleBulkRestore}
+                    disabled={loading}
+                    className="bg-[#16A34A] hover:bg-green-700 text-white px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 shadow-md transition-all cursor-pointer"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    <span>♻️ चयनित {selectedIds.length} खबरें रिस्टोर व रिपब्लिश करें</span>
+                  </button>
+                )}
+
+                {/* Batch Delete */}
+                <button
+                  onClick={handleBulkDelete}
+                  disabled={loading}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 shadow-md transition-all cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>🗑️ चयनित {selectedIds.length} डिलीट करें</span>
+                </button>
+              </>
+            )}
+          </div>
         </div>
       )}
 
@@ -487,7 +519,7 @@ export default function AdminNewsPage() {
                       </td>
 
                       <td className="p-3 font-extrabold text-stone-900 max-w-sm truncate">
-                        <Link href={`/news/${art.slug}`} target="_blank" className="hover:text-[#EA580C]">
+                        <Link href={`/news/${art.newsId || art.slug}`} target="_blank" className="hover:text-[#EA580C]">
                           {art.title}
                         </Link>
                       </td>
@@ -522,7 +554,7 @@ export default function AdminNewsPage() {
                         <div className="flex items-center justify-end gap-1.5">
                           {/* View */}
                           <Link
-                            href={`/news/${art.slug}`}
+                            href={`/news/${art.newsId || art.slug}`}
                             target="_blank"
                             className="p-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg transition-colors"
                             title="साइट पर देखें"
@@ -591,6 +623,14 @@ export default function AdminNewsPage() {
         isPermanent={false}
         loading={loading}
         errorMessage={deleteModal.errorMessage}
+      />
+
+      {/* Export Links Modal */}
+      <ExportLinksModal
+        isOpen={exportModalOpen}
+        onClose={() => setExportModalOpen(false)}
+        articles={articles}
+        selectedIds={selectedIds}
       />
     </div>
   );

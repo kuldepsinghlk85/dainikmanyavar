@@ -31,6 +31,7 @@ export async function GET(
       data: {
         ...article,
         categoryId: article.primaryCategoryId,
+        locationId: article.locationId,
         tags: article.tags.map((t) => t.tag),
       },
     });
@@ -68,7 +69,8 @@ export async function PUT(
       seoTitle,
       seoDescription,
       publishedAt,
-      tags = [],
+      tagIds,
+      tags,
       contentType,
       isPromoted,
       priority,
@@ -78,6 +80,74 @@ export async function PUT(
     const existing = await db.article.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ success: false, error: 'Article not found' }, { status: 404 });
+    }
+
+    let hasTagsUpdate = false;
+    const finalTagIds = new Set<string>();
+
+    if (Array.isArray(tagIds)) {
+      hasTagsUpdate = true;
+      tagIds.forEach((tid: string) => {
+        if (tid && typeof tid === 'string') finalTagIds.add(tid);
+      });
+    }
+
+    if (Array.isArray(tags)) {
+      hasTagsUpdate = true;
+      for (const t of tags) {
+        if (!t) continue;
+        if (typeof t === 'string') {
+          if (/^[0-9a-fA-F-]{36}$/.test(t)) {
+            finalTagIds.add(t);
+          } else {
+            const created = await getOrCreateTag(t);
+            if (created) finalTagIds.add(created.id);
+          }
+        } else if (t.id) {
+          finalTagIds.add(t.id);
+        }
+      }
+    }
+
+    let finalLocationId = locationId !== undefined ? (locationId || null) : existing.locationId;
+
+    const loadedTags = finalTagIds.size > 0
+      ? await db.tag.findMany({ where: { id: { in: Array.from(finalTagIds) } } })
+      : [];
+
+    // If locationId is not set, check if any tag corresponds to a district/location
+    if (!finalLocationId && loadedTags.length > 0) {
+      for (const tag of loadedTags) {
+        const cleanName = tag.name.replace(/^#+/, '').trim();
+        const matchedLoc = await db.location.findFirst({
+          where: {
+            OR: [
+              { name: cleanName },
+              { name: tag.name },
+              { slug: tag.slug },
+              { slug: cleanName },
+            ],
+          },
+        });
+        if (matchedLoc) {
+          finalLocationId = matchedLoc.id;
+          break;
+        }
+      }
+    }
+
+    // If location is set, ensure district tag is also included
+    if (finalLocationId) {
+      const loc = await db.location.findUnique({ where: { id: finalLocationId } });
+      if (loc) {
+        const districtTag = await getOrCreateTag(loc.name);
+        if (districtTag) {
+          finalTagIds.add(districtTag.id);
+          if (Array.isArray(tagIds) || Array.isArray(tags)) {
+            hasTagsUpdate = true;
+          }
+        }
+      }
     }
 
     const updated = await db.article.update({
@@ -91,7 +161,7 @@ export async function PUT(
         gallery: gallery !== undefined ? gallery : existing.gallery,
         sourceType: sourceType !== undefined ? sourceType : existing.sourceType,
         primaryCategoryId: primaryCategoryId || categoryId || existing.primaryCategoryId,
-        locationId: locationId !== undefined ? locationId : existing.locationId,
+        locationId: finalLocationId,
         status: status || existing.status,
         allowAudio: allowAudio !== undefined ? allowAudio : existing.allowAudio,
         videoEnabled: videoEnabled !== undefined ? Boolean(videoEnabled) : existing.videoEnabled,
@@ -172,35 +242,23 @@ export async function PUT(
       revalidatePath('/category/latest');
       revalidatePath(`/news/${updated.slug}`);
       revalidatePath('/admin/news');
+      if (finalLocationId) {
+        const loc = await db.location.findUnique({ where: { id: finalLocationId } });
+        if (loc?.slug) revalidatePath(`/district/${loc.slug}`);
+      }
     } catch (_) {}
 
     // Update Tags
-    if (Array.isArray(tags)) {
+    if (hasTagsUpdate) {
       await db.articleTag.deleteMany({ where: { articleId: id } });
 
-      for (const tagText of tags) {
-        if (!tagText || !tagText.trim()) continue;
-        const tagObj = await getOrCreateTag(tagText.trim());
-        if (!tagObj) continue;
-
-        // Check unique relation before creating
-        const existingRelation = await db.articleTag.findUnique({
-          where: {
-            articleId_tagId: {
-              articleId: id,
-              tagId: tagObj.id,
-            },
+      for (const tagId of finalTagIds) {
+        await db.articleTag.create({
+          data: {
+            articleId: id,
+            tagId,
           },
         });
-
-        if (!existingRelation) {
-          await db.articleTag.create({
-            data: {
-              articleId: id,
-              tagId: tagObj.id,
-            },
-          });
-        }
       }
     }
 

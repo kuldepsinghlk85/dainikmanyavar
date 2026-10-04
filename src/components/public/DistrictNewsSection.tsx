@@ -30,6 +30,7 @@ export interface DistrictStory {
     slug?: string;
   } | null;
   district?: string;
+  tags?: Array<{ id: string; name: string; slug: string }>;
 }
 
 interface DistrictNewsSectionProps {
@@ -46,6 +47,51 @@ const DEFAULT_DISTRICTS: LocationItem[] = [
   { id: 'cdd6c611-d302-4cb2-9e57-b8357cf038e1', name: 'सुल्तानपुर', slug: 'sultanpur' },
   { id: '15cdf010-c6b2-4a64-8f71-cecc79d110b4', name: 'मिर्ज़ापुर', slug: 'mirzapur' },
 ];
+
+function addStoryToCache(cache: Record<string, DistrictStory[]>, key: string, art: DistrictStory) {
+  if (!key) return;
+  if (!cache[key]) cache[key] = [];
+  if (!cache[key].some((item) => item.id === art.id)) {
+    cache[key].push(art);
+  }
+}
+
+function indexStory(cache: Record<string, DistrictStory[]>, art: DistrictStory, locList: LocationItem[]) {
+  // 1. Location relation keys
+  if (art.location?.slug) addStoryToCache(cache, art.location.slug, art);
+  if (art.location?.id) addStoryToCache(cache, art.location.id, art);
+  if (art.location?.name) addStoryToCache(cache, art.location.name, art);
+  if (art.district) addStoryToCache(cache, art.district, art);
+  if (art.locationId) addStoryToCache(cache, art.locationId, art);
+
+  // 2. Tag-based district matching
+  if (Array.isArray(art.tags)) {
+    for (const t of art.tags) {
+      const cleanTagName = t.name.replace(/^#+/, '').trim().toLowerCase();
+      const tagSlug = (t.slug || '').toLowerCase();
+      for (const loc of locList) {
+        const lName = loc.name.trim().toLowerCase();
+        const lSlug = loc.slug.trim().toLowerCase();
+        if (cleanTagName === lName || cleanTagName === lSlug || tagSlug === lSlug || tagSlug === lName) {
+          addStoryToCache(cache, loc.slug, art);
+          addStoryToCache(cache, loc.id, art);
+          addStoryToCache(cache, loc.name, art);
+        }
+      }
+    }
+  }
+
+  // 3. Title fallback
+  const titleLower = (art.title || '').toLowerCase();
+  for (const loc of locList) {
+    const lName = loc.name.trim().toLowerCase();
+    if (titleLower.includes(lName)) {
+      addStoryToCache(cache, loc.slug, art);
+      addStoryToCache(cache, loc.id, art);
+      addStoryToCache(cache, loc.name, art);
+    }
+  }
+}
 
 export default function DistrictNewsSection({
   initialLocations,
@@ -66,16 +112,10 @@ export default function DistrictNewsSection({
   // In-memory cache of articles per location slug or id
   const [articlesCache, setArticlesCache] = useState<Record<string, DistrictStory[]>>(() => {
     const cache: Record<string, DistrictStory[]> = {};
+    const locList = initialLocations && initialLocations.length > 0 ? initialLocations : DEFAULT_DISTRICTS;
     if (initialArticles && initialArticles.length > 0) {
       for (const art of initialArticles) {
-        const key = art.location?.slug || art.location?.name || art.district || 'other';
-        if (!cache[key]) cache[key] = [];
-        cache[key].push(art);
-
-        if (art.location?.id) {
-          if (!cache[art.location.id]) cache[art.location.id] = [];
-          cache[art.location.id].push(art);
-        }
+        indexStory(cache, art, locList);
       }
     }
     return cache;
@@ -115,11 +155,15 @@ export default function DistrictNewsSection({
       .then((res) => res.json())
       .then((resData) => {
         const fetchedList: DistrictStory[] = resData.data || [];
-        setArticlesCache((prev) => ({
-          ...prev,
-          [cacheKey]: fetchedList,
-          [idKey]: fetchedList,
-        }));
+        setArticlesCache((prev) => {
+          const next = { ...prev };
+          for (const item of fetchedList) {
+            indexStory(next, item, locations);
+          }
+          if (!next[cacheKey]) next[cacheKey] = fetchedList;
+          if (!next[idKey]) next[idKey] = fetchedList;
+          return next;
+        });
       })
       .catch(() => {
         setArticlesCache((prev) => ({
@@ -130,7 +174,7 @@ export default function DistrictNewsSection({
       .finally(() => {
         setLoading(false);
       });
-  }, [activeDistrict, articlesCache]);
+  }, [activeDistrict, articlesCache, locations]);
 
   // Get current active stories
   const currentStories = useMemo(() => {

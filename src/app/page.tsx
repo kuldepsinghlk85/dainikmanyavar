@@ -268,18 +268,22 @@ export default async function HomePage() {
   const dbDistrictArticles = await db.article.findMany({
     where: {
       status: 'PUBLISHED',
-      locationId: { not: null },
+      OR: [
+        { locationId: { not: null } },
+        { tags: { some: {} } },
+      ],
     },
     include: {
       location: true,
       category: true,
+      tags: { include: { tag: true } },
     },
     orderBy: [
       { newsId: 'desc' },
       { publishedAt: 'desc' },
       { createdAt: 'desc' },
     ],
-    take: 50,
+    take: 80,
   });
 
   const formattedDistrictArticles = dbDistrictArticles.map((art) => ({
@@ -293,6 +297,7 @@ export default async function HomePage() {
     location: art.location ? { id: art.location.id, name: art.location.name, slug: art.location.slug } : null,
     category: art.category ? { name: art.category.name, slug: art.category.slug } : null,
     district: art.location?.name || '',
+    tags: art.tags.map((t) => t.tag),
   }));
 
   // Fetch site widget and section settings (controlled from Admin Panel)

@@ -50,6 +50,8 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
   const [listenCount, setListenCount] = useState(0);
 
   const [categories, setCategories] = useState<Category[]>([]);
+  const [locations, setLocations] = useState<any[]>([]);
+  const [locationId, setLocationId] = useState('');
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [revisions, setRevisions] = useState<Revision[]>([]);
@@ -71,6 +73,7 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
           setContent(a.content || '');
           setFeaturedImage(a.featuredImage || '');
           setPrimaryCategoryId(a.primaryCategoryId || '');
+          setLocationId(a.locationId || '');
           setIsBreaking(a.isBreaking || false);
           setIsFeatured(a.isFeatured || false);
           setIsMainStory(a.isMainStory || false);
@@ -106,12 +109,36 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
         if (data.success && data.data) setCategories(data.data);
       })
       .catch(() => {});
+
+    fetch('/api/locations')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          setLocations(data.data.filter((l: any) => l.type !== 'DIVISION'));
+        }
+      })
+      .catch(() => {});
   }, [id]);
 
   const handleToggleTag = (tagId: string) => {
-    setSelectedTagIds((prev) =>
-      prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId]
-    );
+    setSelectedTagIds((prev) => {
+      const isSelecting = !prev.includes(tagId);
+      const next = isSelecting ? [...prev, tagId] : prev.filter((t) => t !== tagId);
+
+      if (isSelecting && !locationId) {
+        const tag = availableTags.find((t) => t.id === tagId);
+        if (tag) {
+          const cleanName = tag.name.replace(/^#+/, '').trim().toLowerCase();
+          const matchedLoc = locations.find(
+            (l) => l.name.trim().toLowerCase() === cleanName || l.slug.trim().toLowerCase() === cleanName
+          );
+          if (matchedLoc) {
+            setLocationId(matchedLoc.id);
+          }
+        }
+      }
+      return next;
+    });
   };
 
   const handleRestoreRevision = async (revisionId: string) => {
@@ -148,6 +175,7 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
           content,
           featuredImage,
           primaryCategoryId,
+          locationId: locationId || null,
           tagIds: selectedTagIds,
           isBreaking,
           isFeatured,
@@ -272,8 +300,8 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
           />
         </div>
 
-        {/* Category & Status */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Category, District & Status */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-bold text-stone-700 mb-1">प्राथमिक श्रेणी (Category)</label>
             <select
@@ -283,6 +311,35 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
             >
               {categories.map((cat) => (
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-stone-700 mb-1">संबंधित जिला (District / Location)</label>
+            <select
+              value={locationId}
+              onChange={(e) => {
+                const newLocId = e.target.value;
+                setLocationId(newLocId);
+                if (newLocId) {
+                  const loc = locations.find((l) => l.id === newLocId);
+                  if (loc) {
+                    const cleanLocName = loc.name.replace(/^#+/, '').trim().toLowerCase();
+                    const matchedTag = availableTags.find(
+                      (t) => t.name.replace(/^#+/, '').trim().toLowerCase() === cleanLocName
+                    );
+                    if (matchedTag && !selectedTagIds.includes(matchedTag.id)) {
+                      setSelectedTagIds((prev) => [...prev, matchedTag.id]);
+                    }
+                  }
+                }
+              }}
+              className="w-full p-2.5 border border-stone-300 rounded-lg text-sm focus:outline-none focus:border-[#F97316]"
+            >
+              <option value="">-- कोई जिला नहीं (प्रदेश/देश स्तर) --</option>
+              {locations.map((loc) => (
+                <option key={loc.id} value={loc.id}>📍 {loc.name}</option>
               ))}
             </select>
           </div>
