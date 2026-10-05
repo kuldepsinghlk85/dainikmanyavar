@@ -34,8 +34,11 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final String SITE_URL = "https://dainikmanyavar.com/mobile";
-    public static final String BACKUP_URL = "https://dainikmanyawar.in/mobile";
+    // When running debug build (emulator/local testing), connect to local Next.js server
+    public static final String SITE_URL = BuildConfig.DEBUG
+            ? "http://10.0.2.2:3015/mobile"
+            : "https://dainikmanyavar.com/mobile";
+    public static final String BACKUP_URL = "https://dainikmanyavar.com/mobile";
 
     private WebView webView;
     private SwipeRefreshLayout swipeRefresh;

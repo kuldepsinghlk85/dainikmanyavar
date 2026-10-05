@@ -63,3 +63,12 @@ Thumbs.db
 KEYSTORE_DETAILS.txt
 /android/KEYSTORE_DETAILS.txt
 
+# Editors & IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.orig
+
+

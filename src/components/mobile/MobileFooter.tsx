@@ -8,16 +8,21 @@ export default function MobileFooter() {
   return (
     <footer className="bg-stone-900 text-stone-300 pt-6 pb-20 px-4 mt-4 border-t-4 border-[#EA580C] text-xs space-y-4">
       {/* Brand & Slogan */}
-      <div className="space-y-1.5">
-        <Link href="/mobile" className="inline-block">
-          <Image
-            src="/logo.png"
-            alt="दैनिक मान्यवर"
-            width={180}
-            height={45}
-            unoptimized
-            className="h-10 w-auto object-contain rounded-md"
-          />
+      <div className="space-y-2">
+        <Link href="/mobile" className="inline-flex items-center gap-2.5">
+          <div className="h-11 w-11 rounded-xl bg-white p-1 shadow-xs flex items-center justify-center shrink-0 border border-stone-700">
+            <Image
+              src="/logo.png"
+              alt="दैनिक मान्यवर"
+              width={80}
+              height={80}
+              unoptimized
+              className="w-full h-full object-contain"
+            />
+          </div>
+          <span className="text-xl font-black text-white tracking-tight">
+            दैनिक मान्यवर
+          </span>
         </Link>
         <p className="text-[11px] text-stone-400 font-bold">
           निष्पक्ष एवं निर्भीक राष्ट्रीय हिंदी दैनिक समाचार पत्र
