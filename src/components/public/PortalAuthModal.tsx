@@ -184,14 +184,15 @@ export default function PortalAuthModal({
         {/* Header with Dainik Manyavar saffron banner */}
         <div className="bg-gradient-to-r from-[#EA580C] via-[#F97316] to-amber-600 p-4 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="relative w-28 h-8 bg-white/10 rounded px-1 flex items-center justify-center">
+            <div className="flex items-center gap-2">
               <Image
                 src="/logo.png"
                 alt="दैनिक मान्यवर"
-                width={120}
-                height={32}
-                className="h-6 w-auto object-contain brightness-0 invert"
+                width={36}
+                height={36}
+                className="w-8 h-8 rounded-lg object-contain bg-white p-0.5 shadow-xs"
               />
+              <span className="font-extrabold text-base text-white tracking-tight">दैनिक मान्यवर</span>
             </div>
             <span className="text-[11px] bg-white/20 px-2 py-0.5 rounded-full font-bold">
               पाठक सेवा

@@ -40,3 +40,26 @@ Thumbs.db
 /public/uploads/1789*
 /public/uploads/1790*
 
+# Android builds & caches
+*.apk
+*.aab
+*.ap_
+*.dex
+/android/.gradle/
+/android/build/
+/android/app/build/
+/android/local.properties
+/android/.idea/
+/android/*.iml
+/android/app/*.iml
+/android/captures/
+.externalNativeBuild/
+.cxx/
+
+# Keystores, certificates & credentials
+*.keystore
+*.jks
+*.pem
+KEYSTORE_DETAILS.txt
+/android/KEYSTORE_DETAILS.txt
+

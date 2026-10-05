@@ -1,0 +1,1 @@
+# Dainik Manyavar Proguard Rules

@@ -23,7 +23,7 @@ interface HeaderProps {
 export default function Header({ festivalBanner, siteLogo: propLogo, siteTagline: propTagline }: HeaderProps) {
   const [query, setQuery] = useState('');
   const [siteBanner, setSiteBanner] = useState<any>(null);
-  const [siteLogo, setSiteLogo] = useState<string>(propLogo || '/uploads/1788514240911_adlogomain.jpg');
+  const [siteLogo, setSiteLogo] = useState<string>(propLogo || '/logo.png');
   const [siteTagline, setSiteTagline] = useState<string>(propTagline || 'सब पर नजर  सबकी खबर');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);

@@ -11,12 +11,12 @@ export default function MobileFooter() {
       <div className="space-y-1.5">
         <Link href="/mobile" className="inline-block">
           <Image
-            src="/mobile-logo-dark.png?v=2"
+            src="/logo.png"
             alt="दैनिक मान्यवर"
             width={180}
             height={45}
             unoptimized
-            className="h-9 w-auto object-contain"
+            className="h-10 w-auto object-contain rounded-md"
           />
         </Link>
         <p className="text-[11px] text-stone-400 font-bold">

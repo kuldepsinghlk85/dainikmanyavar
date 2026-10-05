@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">दैनिक मान्यवर</string>
+    <string name="no_internet">इंटरनेट कनेक्शन उपलब्ध नहीं है</string>
+    <string name="retry">पुनः प्रयास करें</string>
+</resources>

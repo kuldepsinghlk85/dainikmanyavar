@@ -6,6 +6,7 @@ import MobileBottomNav from '@/components/mobile/MobileBottomNav';
 import MobileDrawer from '@/components/mobile/MobileDrawer';
 import { MobileThemeProvider } from '@/components/mobile/MobileThemeProvider';
 import { MobileMenuConfig, DEFAULT_MOBILE_MENU_CONFIG } from '@/lib/mobileMenuDefaults';
+import MobileSplashScreen from '@/components/mobile/MobileSplashScreen';
 
 export default function MobileLayout({ children }: { children: React.ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -28,6 +29,7 @@ export default function MobileLayout({ children }: { children: React.ReactNode }
 
   return (
     <MobileThemeProvider>
+      <MobileSplashScreen />
       <div className="min-h-screen bg-stone-100 dark:bg-[#0D0D0D] text-stone-900 dark:text-stone-100 flex flex-col font-sans max-w-lg mx-auto shadow-2xl border-x border-stone-200 dark:border-stone-800 transition-colors">
         <MobileHeader
           onOpenDrawer={() => setDrawerOpen(true)}

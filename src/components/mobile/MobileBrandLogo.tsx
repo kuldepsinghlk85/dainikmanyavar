@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 export default function MobileBrandLogo() {
-  const [mobileLogo, setMobileLogo] = useState<string>('/mobile-brand-logo.jpg');
+  const [mobileLogo, setMobileLogo] = useState<string>('/logo.png');
 
   useEffect(() => {
     fetch('/api/settings')
@@ -28,7 +28,7 @@ export default function MobileBrandLogo() {
     >
       <div className="relative h-11 w-11 sm:h-12 sm:w-12 shrink-0 flex items-center justify-center rounded-xl overflow-hidden bg-white shadow-xs border border-stone-200/90 dark:border-stone-700 transition-colors">
         <Image
-          src={mobileLogo || '/mobile-brand-logo.jpg'}
+          src={mobileLogo || '/logo.png'}
           alt="दैनिक मान्यवर"
           width={120}
           height={120}

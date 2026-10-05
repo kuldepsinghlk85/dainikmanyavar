@@ -187,17 +187,18 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
     <aside className="w-64 bg-[#0F172A] text-stone-200 flex flex-col flex-shrink-0 min-h-screen border-r border-slate-800 shadow-xl">
       {/* Brand Header */}
       <div className="p-4 border-b border-slate-800 bg-slate-900/60 flex items-center justify-between">
-        <Link href="/admin" className="flex items-center gap-2">
+        <Link href="/admin" className="flex items-center gap-2.5">
           <Image
             src="/logo.png"
             alt="दैनिक मान्यवर"
-            width={140}
-            height={40}
-            className="h-7 w-auto object-contain"
+            width={36}
+            height={36}
+            className="h-9 w-9 rounded-lg object-contain bg-white p-0.5 shadow-xs shrink-0"
           />
-          <span className="text-[10px] bg-[#EA580C] text-white px-1.5 py-0.5 rounded font-mono font-bold">
-            CMS v2.0
-          </span>
+          <div className="flex flex-col">
+            <span className="font-extrabold text-sm text-white tracking-tight leading-tight">दैनिक मान्यवर</span>
+            <span className="text-[10px] text-amber-400 font-bold font-mono">CMS v2.0</span>
+          </div>
         </Link>
       </div>
 

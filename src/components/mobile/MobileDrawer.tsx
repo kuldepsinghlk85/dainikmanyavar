@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { X, User, ChevronRight, MapPin, Monitor, Phone, Info, Globe, Sparkles, Newspaper } from 'lucide-react';
 import { DrawerConfig, DEFAULT_MOBILE_MENU_CONFIG } from '@/lib/mobileMenuDefaults';
 
@@ -383,13 +384,22 @@ export default function MobileDrawer({
       <div className="relative w-4/5 max-w-xs bg-white dark:bg-[#141414] text-stone-900 dark:text-stone-100 h-full shadow-2xl z-10 flex flex-col overflow-y-auto border-r border-stone-200 dark:border-stone-800 transition-colors">
         {/* Drawer Top Branding */}
         <div className="p-3.5 bg-gradient-to-r from-red-600 via-[#E53935] to-amber-600 text-white flex items-center justify-between shadow-xs">
-          <div className="space-y-0.5">
-            <span className="text-xl font-black tracking-tight block drop-shadow-xs">
-              दैनिक मान्यवर
-            </span>
-            <p className="text-[10px] text-red-100 font-bold">
-              निष्पक्ष • निर्भीक • विश्वसनीय
-            </p>
+          <div className="flex items-center gap-2.5">
+            <Image
+              src="/logo.png"
+              alt="दैनिक मान्यवर"
+              width={40}
+              height={40}
+              className="w-10 h-10 rounded-lg object-contain bg-white p-0.5 shadow-xs shrink-0"
+            />
+            <div className="space-y-0.5">
+              <span className="text-xl font-black tracking-tight block drop-shadow-xs leading-tight">
+                दैनिक मान्यवर
+              </span>
+              <p className="text-[10px] text-red-100 font-bold">
+                निष्पक्ष • निर्भीक • विश्वसनीय
+              </p>
+            </div>
           </div>
           <button
             onClick={onClose}

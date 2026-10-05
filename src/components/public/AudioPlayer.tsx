@@ -144,7 +144,7 @@ export default function AudioPlayer({ articleId, title, content }: AudioPlayerPr
           title: title,
           artist: 'दैनिक मान्यवर',
           album: 'ऑडियो समाचार बुलेटिन',
-          artwork: [{ src: '/mobile-logo-dark.png', sizes: '192x192', type: 'image/png' }],
+          artwork: [{ src: '/logo.png', sizes: '512x512', type: 'image/png' }],
         });
       } catch (_) {}
     }

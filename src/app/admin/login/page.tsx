@@ -46,10 +46,10 @@ export default function AdminLoginPage() {
           <Image
             src="/logo.png"
             alt="दैनिक मान्यवर"
-            width={320}
-            height={80}
+            width={96}
+            height={96}
             priority
-            className="mx-auto h-auto w-auto max-h-16 object-contain mb-3"
+            className="mx-auto w-24 h-24 object-contain mb-3 drop-shadow-sm"
           />
           <h1 className="text-xl font-extrabold text-stone-900">एडमिन लॉगिन कंट्रोल पैनल</h1>
           <p className="text-xs text-stone-500 mt-1 flex items-center justify-center gap-1">
