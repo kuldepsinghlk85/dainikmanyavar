@@ -12,8 +12,9 @@ import PopularTagsSection from '@/components/public/PopularTagsSection';
 import AdBanner from '@/components/public/AdBanner';
 import Footer from '@/components/public/Footer';
 import UserActivityTracker from '@/components/public/UserActivityTracker';
+import ArticleViewTracker from '@/components/public/ArticleViewTracker';
 import { db } from '@/lib/db';
-import { formatHindiDate, formatCount, calculateReadingTime } from '@/lib/utils';
+import { formatHindiDate, formatCount, calculateReadingTime, getPublicSiteUrl } from '@/lib/utils';
 import { generateNewsArticleJsonLd, generateBreadcrumbJsonLd } from '@/lib/seo';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -36,7 +37,20 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         { id: slug },
       ],
     },
-    select: { title: true, excerpt: true, featuredImage: true, newsId: true },
+    select: {
+      title: true,
+      excerpt: true,
+      featuredImage: true,
+      newsId: true,
+      slug: true,
+      seoTitle: true,
+      seoDescription: true,
+      canonicalUrl: true,
+      publishedAt: true,
+      updatedAt: true,
+      author: { select: { name: true } },
+      category: { select: { name: true } },
+    },
   });
 
   if (!article) {
@@ -50,23 +64,77 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
             { slug: { endsWith: `-${numMatch[1]}` } },
           ],
         },
-        select: { title: true, excerpt: true, featuredImage: true, newsId: true },
+        select: {
+          title: true,
+          excerpt: true,
+          featuredImage: true,
+          newsId: true,
+          slug: true,
+          seoTitle: true,
+          seoDescription: true,
+          canonicalUrl: true,
+          publishedAt: true,
+          updatedAt: true,
+          author: { select: { name: true } },
+          category: { select: { name: true } },
+        },
       });
     }
   }
 
   if (!article) return {};
 
+  const siteUrl = getPublicSiteUrl();
+  const canonicalUrl =
+    article.canonicalUrl ||
+    (article.newsId ? `${siteUrl}/news/${article.newsId}` : `${siteUrl}/news/${encodeURIComponent(article.slug)}`);
+
+  let imageUrl = article.featuredImage || `${siteUrl}/logo.png`;
+  if (imageUrl.startsWith('/')) {
+    imageUrl = `${siteUrl}${imageUrl}`;
+  }
+
+  const pageTitle = article.seoTitle || `${article.title} | दैनिक मान्यवर`;
+  const pageDescription = article.seoDescription || article.excerpt || article.title;
+
   return {
-    title: `${article.title} | दैनिक मान्यवर`,
-    description: article.excerpt || article.title,
+    title: pageTitle,
+    description: pageDescription,
     alternates: {
-      canonical: article.newsId ? `/news/${article.newsId}` : `/news/${slug}`,
+      canonical: canonicalUrl,
     },
     openGraph: {
-      title: article.title,
-      description: article.excerpt || article.title,
-      images: article.featuredImage ? [{ url: article.featuredImage }] : [],
+      title: pageTitle,
+      description: pageDescription,
+      url: canonicalUrl,
+      siteName: 'दैनिक मान्यवर',
+      locale: 'hi_IN',
+      type: 'article',
+      publishedTime: article.publishedAt ? new Date(article.publishedAt).toISOString() : undefined,
+      modifiedTime: article.updatedAt ? new Date(article.updatedAt).toISOString() : undefined,
+      section: article.category?.name || 'समाचार',
+      authors: article.author?.name ? [article.author.name] : ['दैनिक मान्यवर ब्यूरो'],
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: article.title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: pageTitle,
+      description: pageDescription,
+      images: [imageUrl],
+    },
+    robots: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
     },
   };
 }
@@ -132,12 +200,6 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
     redirect(`/news/${article.newsId}`);
   }
 
-  // Increment view count asynchronously
-  await db.article.update({
-    where: { id: article.id },
-    data: { viewCount: { increment: 1 } },
-  }).catch(() => {});
-
   const tags = article.tags.map((t) => t.tag);
 
   let reviewData: any = null;
@@ -171,10 +233,13 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
     }),
   ]);
 
+  const siteUrl = getPublicSiteUrl();
+
   const jsonLd = generateNewsArticleJsonLd({
     title: article.title,
     excerpt: article.excerpt || undefined,
     slug: article.slug,
+    newsId: article.newsId,
     featuredImage: article.featuredImage || undefined,
     publishedAt: article.publishedAt,
     updatedAt: article.updatedAt,
@@ -183,15 +248,18 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
   });
 
   const breadcrumbsJsonLd = generateBreadcrumbJsonLd([
-    { name: 'होम', url: 'https://dainikmanyawar.in' },
-    { name: article.category?.name || 'समाचार', url: `https://dainikmanyawar.in/category/${article.category?.slug || 'news'}` },
-    { name: article.title, url: `https://dainikmanyawar.in/news/${article.slug}` },
+    { name: 'होम', url: `${siteUrl}` },
+    { name: article.category?.name || 'समाचार', url: `${siteUrl}/category/${article.category?.slug || 'news'}` },
+    { name: article.title, url: article.newsId ? `${siteUrl}/news/${article.newsId}` : `${siteUrl}/news/${encodeURIComponent(article.slug)}` },
   ]);
 
   const readingTime = calculateReadingTime(article.content);
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
+      {/* Real View Tracker (Client-Side, filtered, debounced) */}
+      <ArticleViewTracker articleId={article.id} isMobile={false} />
+
       {/* SEO Structured Data */}
       <script
         type="application/ld+json"

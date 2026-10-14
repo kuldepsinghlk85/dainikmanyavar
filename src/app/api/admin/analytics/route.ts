@@ -12,8 +12,8 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
-    const statusFilter = searchParams.get('status') || 'published'; // 'published' | 'all'
-    const period = searchParams.get('period') || 'all'; // 'all' | 'week' | 'today'
+    const statusFilter = searchParams.get('status') || 'published'; // 'published' | 'all' | 'archived'
+    const period = searchParams.get('period') || 'all'; // 'all' | 'month' | 'week' | 'today'
     const limitParam = searchParams.get('limit') || '10'; // '10' | '50' | 'all'
     const sortParam = searchParams.get('sort') || 'views'; // 'views' | 'latest'
     const targetLimit = limitParam === 'all' ? Infinity : parseInt(limitParam, 10) || 10;
@@ -32,28 +32,38 @@ export async function GET(req: NextRequest) {
       articleWhere.status = 'ARCHIVED';
     }
 
+    const now = new Date();
+    const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const sevenDaysAgoUTC = new Date(todayUTC.getTime() - 7 * 86400000);
+    const twentyEightDaysAgoUTC = new Date(todayUTC.getTime() - 28 * 86400000);
+
     if (period === 'today') {
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      articleWhere.publishedAt = { gte: todayStart };
+      articleWhere.publishedAt = { gte: todayUTC };
     } else if (period === 'week') {
-      const weekStart = new Date();
-      weekStart.setDate(weekStart.getDate() - 7);
-      articleWhere.publishedAt = { gte: weekStart };
+      articleWhere.publishedAt = { gte: sevenDaysAgoUTC };
+    } else if (period === 'month') {
+      articleWhere.publishedAt = { gte: twentyEightDaysAgoUTC };
     }
 
     // Run parallel database queries
     const [
-      aggregateStats,
+      lifetimeStats,
+      liveStats,
+      archivedStats,
+      dailyStatsToday,
+      dailyStats7Days,
+      dailyStats28Days,
       publishedCount,
       archivedCount,
+      draftCount,
       allArticlesList,
       categoriesData,
       deviceLogs,
       recentActivityLogs,
+      recentDailyRecords,
     ] = await Promise.all([
+      // 1. Total Lifetime Views (All statuses)
       db.article.aggregate({
-        where: articleWhere,
         _sum: {
           viewCount: true,
           likeCount: true,
@@ -62,12 +72,40 @@ export async function GET(req: NextRequest) {
         },
         _count: true,
       }),
+      // 2. LIVE Articles Views
+      db.article.aggregate({
+        where: { status: 'PUBLISHED' },
+        _sum: { viewCount: true },
+      }),
+      // 3. ARCHIVED Articles Views
+      db.article.aggregate({
+        where: { status: 'ARCHIVED' },
+        _sum: { viewCount: true },
+      }),
+      // 4. Today's Views from Daily Stats
+      db.articleDailyStats.aggregate({
+        where: { date: { gte: todayUTC } },
+        _sum: { views: true, uniqueVisitors: true },
+      }),
+      // 5. Last 7 Days Views from Daily Stats
+      db.articleDailyStats.aggregate({
+        where: { date: { gte: sevenDaysAgoUTC } },
+        _sum: { views: true, uniqueVisitors: true },
+      }),
+      // 6. Last 28 Days Views from Daily Stats
+      db.articleDailyStats.aggregate({
+        where: { date: { gte: twentyEightDaysAgoUTC } },
+        _sum: { views: true, uniqueVisitors: true },
+      }),
+      // Counts
       db.article.count({ where: { status: 'PUBLISHED' } }),
       db.article.count({ where: { status: 'ARCHIVED' } }),
+      db.article.count({ where: { status: 'DRAFT' } }),
+      // Articles list
       db.article.findMany({
         where: articleWhere,
         orderBy: orderByClause,
-        take: queryTake, // dynamic take based on limit
+        take: queryTake,
         select: {
           id: true,
           newsId: true,
@@ -79,6 +117,8 @@ export async function GET(req: NextRequest) {
           shareCount: true,
           listenCount: true,
           publishedAt: true,
+          author: { select: { name: true } },
+          location: { select: { name: true } },
           category: {
             select: {
               name: true,
@@ -87,6 +127,7 @@ export async function GET(req: NextRequest) {
           },
         },
       }),
+      // Category performance
       db.category.findMany({
         select: {
           id: true,
@@ -98,10 +139,12 @@ export async function GET(req: NextRequest) {
           },
         },
       }),
+      // Device logs
       db.userActivityLog.groupBy({
         by: ['device'],
         _count: true,
       }),
+      // Recent activities
       db.userActivityLog.findMany({
         orderBy: { timestamp: 'desc' },
         take: 8,
@@ -109,6 +152,16 @@ export async function GET(req: NextRequest) {
           user: {
             select: { fullName: true },
           },
+        },
+      }),
+      // Daily trend rows (last 28 days)
+      db.articleDailyStats.findMany({
+        where: { date: { gte: twentyEightDaysAgoUTC } },
+        orderBy: { date: 'asc' },
+        select: {
+          date: true,
+          views: true,
+          uniqueVisitors: true,
         },
       }),
     ]);
@@ -141,7 +194,6 @@ export async function GET(req: NextRequest) {
       .filter((c) => c.count > 0)
       .sort((a, b) => b.views - a.views);
 
-    // Calculate total views across categories for percentages
     const totalCategoryViews = categoryStats.reduce((acc, c) => acc + c.views, 0) || 1;
     const categoryStatsWithPercent = categoryStats.map((c) => ({
       ...c,
@@ -159,6 +211,17 @@ export async function GET(req: NextRequest) {
     const mobilePercent = Math.round((mobileCount / totalDeviceCount) * 100);
     const desktopPercent = 100 - mobilePercent;
 
+    // Aggregate daily stats by date string
+    const dailyMap = new Map<string, { date: string; views: number; uniqueVisitors: number }>();
+    for (const r of recentDailyRecords) {
+      const dStr = r.date.toISOString().split('T')[0];
+      const existing = dailyMap.get(dStr) || { date: dStr, views: 0, uniqueVisitors: 0 };
+      existing.views += r.views;
+      existing.uniqueVisitors += r.uniqueVisitors;
+      dailyMap.set(dStr, existing);
+    }
+    const dailyTrends = Array.from(dailyMap.values());
+
     return NextResponse.json({
       success: true,
       data: {
@@ -168,14 +231,23 @@ export async function GET(req: NextRequest) {
           limit: limitParam,
           sort: sortParam,
         },
-        summary: {
-          totalViews: aggregateStats._sum.viewCount || 0,
-          totalLikes: aggregateStats._sum.likeCount || 0,
-          totalShares: aggregateStats._sum.shareCount || 0,
-          totalListens: aggregateStats._sum.listenCount || 0,
-          totalArticles: aggregateStats._count || 0,
+        metrics: {
+          totalLifetimeViews: lifetimeStats._sum.viewCount || 0,
+          liveViews: liveStats._sum.viewCount || 0,
+          archivedViews: archivedStats._sum.viewCount || 0,
+          todayViews: dailyStatsToday._sum.views || 0,
+          weekViews: dailyStats7Days._sum.views || 0,
+          monthViews: dailyStats28Days._sum.views || 0,
+          todayUniqueReaders: dailyStatsToday._sum.uniqueVisitors || 0,
+          weekUniqueReaders: dailyStats7Days._sum.uniqueVisitors || 0,
+          monthUniqueReaders: dailyStats28Days._sum.uniqueVisitors || 0,
+          totalArticles: lifetimeStats._count || 0,
           publishedCount,
           archivedCount,
+          draftCount,
+          totalLikes: lifetimeStats._sum.likeCount || 0,
+          totalShares: lifetimeStats._sum.shareCount || 0,
+          totalListens: lifetimeStats._sum.listenCount || 0,
         },
         topArticles,
         categoryStats: categoryStatsWithPercent,
@@ -184,6 +256,7 @@ export async function GET(req: NextRequest) {
           desktop: { count: desktopCount, percent: desktopPercent },
         },
         recentActivity: recentActivityLogs,
+        dailyTrends,
       },
     });
   } catch (error) {

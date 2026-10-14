@@ -71,4 +71,6 @@ KEYSTORE_DETAILS.txt
 *~
 *.orig
 
-
+# Backups
+backups/
+/backups/

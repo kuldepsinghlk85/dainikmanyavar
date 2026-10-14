@@ -9,17 +9,37 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://dainikmanyavar.com'),
   title: 'दैनिक मान्यवर - सच के साथ... समाज के लिए...',
   description: 'दैनिक मान्यवर - निष्पक्ष, तेज़ और भरोसेमंद हिंदी डिजिटल समाचार पोर्टल',
   manifest: '/manifest.json',
+  alternates: {
+    canonical: 'https://dainikmanyavar.com',
+  },
   openGraph: {
     title: 'दैनिक मान्यवर - समाचार पोर्टल',
     description: 'सरल, तेज़ और आधुनिक हिंदी समाचार पोर्टल',
-    url: 'https://dainikmanyawar.in',
+    url: 'https://dainikmanyavar.com',
     siteName: 'दैनिक मान्यवर',
-    images: [{ url: '/logo.png' }],
+    images: [{ url: '/logo.png', width: 600, height: 60, alt: 'दैनिक मान्यवर' }],
     locale: 'hi_IN',
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'दैनिक मान्यवर - समाचार पोर्टल',
+    description: 'सरल, तेज़ और आधुनिक हिंदी समाचार पोर्टल',
+    images: ['/logo.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    'max-image-preview': 'large',
+    'max-snippet': -1,
+    'max-video-preview': -1,
+  },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
   },
 };
 

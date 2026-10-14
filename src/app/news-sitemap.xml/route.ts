@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { getPublicSiteUrl } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,9 +14,9 @@ function escapeXml(unsafe: string): string {
 }
 
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://dainikmanyavar.com';
+  const baseUrl = getPublicSiteUrl();
 
-  // Google News requires articles published in the last 48 hours
+  // Google News requires articles published within the last 48 hours
   const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
 
   const articles = await db.article.findMany({
@@ -24,6 +25,8 @@ export async function GET() {
       publishedAt: { gte: twoDaysAgo },
     },
     select: {
+      id: true,
+      newsId: true,
       slug: true,
       title: true,
       publishedAt: true,
@@ -36,19 +39,21 @@ export async function GET() {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
 ${articles
-  .map(
-    (a) => `  <url>
-    <loc>${baseUrl}/news/${encodeURIComponent(a.slug)}</loc>
+  .map((a) => {
+    const articlePath = a.newsId ? `/news/${a.newsId}` : `/news/${encodeURIComponent(a.slug)}`;
+    const pubDate = new Date(a.publishedAt);
+    return `  <url>
+    <loc>${baseUrl}${articlePath}</loc>
     <news:news>
       <news:publication>
         <news:name>दैनिक मान्यवर</news:name>
         <news:language>hi</news:language>
       </news:publication>
-      <news:publication_date>${new Date(a.publishedAt).toISOString()}</news:publication_date>
+      <news:publication_date>${pubDate.toISOString()}</news:publication_date>
       <news:title>${escapeXml(a.title)}</news:title>
     </news:news>
-  </url>`
-  )
+  </url>`;
+  })
   .join('\n')}
 </urlset>`;
 

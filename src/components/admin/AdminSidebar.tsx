@@ -161,6 +161,7 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
               { label: '🔥 ब्रेकिंग टिकर (Ticker)', href: '/admin/breaking', icon: Flame },
               { label: '📢 विज्ञापन (Ads Manager)', href: '/admin/ads', icon: Megaphone },
               { label: '📊 एनालिटिक्स (Analytics)', href: '/admin/analytics', icon: BarChart3 },
+              { label: '📰 संपादकीय रिपोर्ट (Editorial)', href: '/admin/editorial-performance', icon: FileText },
               { label: '👥 एडमिन स्टाफ (Staff Users)', href: '/admin/users', icon: Users },
               { label: '⚙️ साइट सेटिंग्स (Settings)', href: '/admin/settings', icon: Settings },
             ]
