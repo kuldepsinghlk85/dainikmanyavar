@@ -101,6 +101,8 @@ async function main() {
     { name: '#युवा', slug: 'युवा' },
     { name: '#बारिश', slug: 'बारिश' },
     { name: '#मानसून', slug: 'मानसून' },
+    { name: '#फिल्में', slug: 'फिल्में' },
+    { name: '#फिल्मों_के_रिव्यू', slug: 'फिल्मों-के-रिव्यू' },
   ];
 
   const tagMap = new Map<string, string>();

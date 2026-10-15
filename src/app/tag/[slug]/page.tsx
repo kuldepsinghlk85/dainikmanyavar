@@ -76,7 +76,10 @@ export default async function TagPage({ params }: { params: Promise<{ slug: stri
     },
   });
 
-  const primaryTag = matchingTags[0] || (matchingLocation ? {
+  const isReviewTag = /रिव्यू|review/i.test(decodedSlug) || matchingTags.some(t => /रिव्यू|review/i.test(t.name) || /रिव्यू|review/i.test(t.slug));
+  const isFilmTag = /फिल्म|film|movie|cinema|सिनेमा/i.test(decodedSlug) || matchingTags.some(t => /फिल्म|film|movie|cinema|सिनेमा/i.test(t.name) || /फिल्म|film|movie|cinema|सिनेमा/i.test(t.slug));
+
+  let primaryTag: any = matchingTags[0] || (matchingLocation ? {
     id: matchingLocation.id,
     name: `#${matchingLocation.name}`,
     slug: matchingLocation.slug,
@@ -84,7 +87,23 @@ export default async function TagPage({ params }: { params: Promise<{ slug: stri
   } : null);
 
   if (!primaryTag && !matchingLocation) {
-    notFound();
+    if (isReviewTag) {
+      primaryTag = {
+        id: 'virtual-review',
+        name: '#फिल्मों_के_रिव्यू',
+        slug: 'फिल्मों-के-रिव्यू',
+        description: 'ताज़ा रिलीज हुई फिल्मों, वेब सीरीज और शो के विस्तृत निष्पक्ष रिव्यू व स्टार रेटिंग।',
+      };
+    } else if (isFilmTag) {
+      primaryTag = {
+        id: 'virtual-film',
+        name: '#फिल्में',
+        slug: 'फिल्में',
+        description: 'बॉलीवुड, सिनेमा व मनोरंजक फिल्मों की खास खबरें और पर्दे के पीछे की हलचल।',
+      };
+    } else {
+      notFound();
+    }
   }
 
   const tagIds = matchingTags.map((t) => t.id);
@@ -98,6 +117,19 @@ export default async function TagPage({ params }: { params: Promise<{ slug: stri
       { locationId: matchingLocation.id },
       { location: { slug: matchingLocation.slug } },
       { title: { contains: matchingLocation.name } }
+    );
+  }
+  if (isReviewTag) {
+    orConditions.push(
+      { contentType: 'movie_review' },
+      { title: { contains: 'रिव्यू' } }
+    );
+  }
+  if (isFilmTag) {
+    orConditions.push(
+      { category: { slug: 'manoranjan' } },
+      { title: { contains: 'फिल्म' } },
+      { title: { contains: 'फ़िल्म' } }
     );
   }
 

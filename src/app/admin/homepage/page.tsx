@@ -16,7 +16,8 @@ import {
   Flame,
   LayoutTemplate,
   Layers,
-  Megaphone
+  Megaphone,
+  Film
 } from 'lucide-react';
 
 export default function HomepageAdminPage() {
@@ -29,6 +30,7 @@ export default function HomepageAdminPage() {
     widget_horoscope_enabled: 'true',
     widget_stock_enabled: 'true',
     widget_gold_silver_enabled: 'true',
+    widget_movie_slider_enabled: 'true',
     festive_section_enabled: 'true',
     section_hero_enabled: 'true',
     section_trending_enabled: 'true',
@@ -141,6 +143,17 @@ export default function HomepageAdminPage() {
       borderColor: 'border-orange-200',
       manageHref: '/admin/festive',
       manageLabel: 'फेस्टिव अपलोडर खोलें',
+    },
+    {
+      key: 'widget_movie_slider_enabled',
+      title: '🎬 फिल्मों का न्यूज़ स्लाइडर (Movie News Slider Widget)',
+      desc: 'साइडबार में फिल्मों, मूवी रिव्यू व सिनेमा समाचार का ऑटो-स्लाइडिंग इमेज व हेडिंग विजेट',
+      icon: Film,
+      color: 'text-rose-500',
+      bgColor: 'bg-rose-50',
+      borderColor: 'border-rose-200',
+      manageHref: '/admin/articles?category=manoranjan',
+      manageLabel: 'सिनेमा खबरें प्रबंधित करें',
     },
   ];
 

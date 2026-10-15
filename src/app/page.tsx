@@ -23,6 +23,7 @@ import HoroscopeWidget from '@/components/public/HoroscopeWidget';
 import StockMarketWidget from '@/components/public/StockMarketWidget';
 import GoldSilverWidget from '@/components/public/GoldSilverWidget';
 import ManoranjanSection from '@/components/public/ManoranjanSection';
+import MovieNewsSliderWidget from '@/components/public/MovieNewsSliderWidget';
 
 import { db } from '@/lib/db';
 
@@ -309,6 +310,7 @@ export default async function HomePage() {
           'widget_horoscope_enabled',
           'widget_stock_enabled',
           'widget_gold_silver_enabled',
+          'widget_movie_slider_enabled',
           'section_hero_enabled',
           'section_trending_enabled',
           'section_latest_enabled',
@@ -331,6 +333,7 @@ export default async function HomePage() {
   const isHoroscopeEnabled = settingsMap.widget_horoscope_enabled !== 'false';
   const isStockEnabled = settingsMap.widget_stock_enabled !== 'false';
   const isGoldSilverEnabled = settingsMap.widget_gold_silver_enabled !== 'false';
+  const isMovieSliderEnabled = settingsMap.widget_movie_slider_enabled !== 'false';
 
   const isHeroEnabled = settingsMap.section_hero_enabled !== 'false';
   const isTrendingEnabled = settingsMap.section_trending_enabled !== 'false';
@@ -340,6 +343,54 @@ export default async function HomePage() {
   const isVideoEnabled = settingsMap.section_video_enabled !== 'false';
   const isTagsEnabled = settingsMap.section_tags_enabled !== 'false';
   const isManoranjanEnabled = settingsMap.section_manoranjan_enabled !== 'false';
+
+  // Fetch movie articles for Movie News Slider Widget if enabled
+  let movieSliderArticles: any[] = [];
+  if (isMovieSliderEnabled) {
+    movieSliderArticles = await db.article.findMany({
+      where: {
+        status: 'PUBLISHED',
+        OR: [
+          { category: { slug: 'manoranjan' } },
+          { contentType: 'movie_review' },
+          {
+            tags: {
+              some: {
+                tag: {
+                  slug: { in: ['filme', 'फिल्में', 'फिल्मों-के-रिव्यू', 'मूवी_रिव्यू', 'मनोरंजन'] },
+                },
+              },
+            },
+          },
+        ],
+      },
+      orderBy: [
+        { isFeatured: 'desc' },
+        { publishedAt: 'desc' },
+        { createdAt: 'desc' },
+      ],
+      take: 8,
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        featuredImage: true,
+        contentType: true,
+        publishedAt: true,
+        category: { select: { name: true, slug: true } },
+      },
+    });
+  }
+
+  const formattedMovieSlider = movieSliderArticles.map((art) => ({
+    id: art.id,
+    title: art.title,
+    slug: art.slug,
+    featuredImage: art.featuredImage,
+    contentType: art.contentType,
+    categoryName: art.category?.name || 'सिनेमा',
+    publishedAt: art.publishedAt,
+  }));
 
   // Fetch Manoranjan articles if enabled
   let manoranjanArticles: any[] = [];
@@ -451,6 +502,11 @@ export default async function HomePage() {
 
             {/* Sidebar Ad #2 */}
             <AdBanner position="sidebar_tall" sizeText="300 × 300 / Sidebar Ad #2" />
+
+            {/* Special Feeds Widget 5: Movie News Slider Widget */}
+            {isMovieSliderEnabled && formattedMovieSlider.length > 0 && (
+              <MovieNewsSliderWidget articles={formattedMovieSlider} />
+            )}
 
             {/* Popular Tags */}
             {isTagsEnabled && <PopularTagsSection />}
