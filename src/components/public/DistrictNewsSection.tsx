@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { formatHindiTimeAgo, formatCount } from '@/lib/utils';
 import { MapPin, Newspaper, Loader2, ArrowRight } from 'lucide-react';
+import SectionHeaderBar, { HeaderThemeConfig } from './SectionHeaderBar';
 
 export interface LocationItem {
   id: string;
@@ -36,6 +37,7 @@ export interface DistrictStory {
 interface DistrictNewsSectionProps {
   initialLocations?: LocationItem[];
   initialArticles?: DistrictStory[];
+  themeConfig?: HeaderThemeConfig;
 }
 
 const DEFAULT_DISTRICTS: LocationItem[] = [
@@ -96,6 +98,7 @@ function indexStory(cache: Record<string, DistrictStory[]>, art: DistrictStory, 
 export default function DistrictNewsSection({
   initialLocations,
   initialArticles = [],
+  themeConfig,
 }: DistrictNewsSectionProps) {
   const [locations, setLocations] = useState<LocationItem[]>(
     initialLocations && initialLocations.length > 0 ? initialLocations : DEFAULT_DISTRICTS
@@ -189,24 +192,27 @@ export default function DistrictNewsSection({
 
   return (
     <div className="mt-6 border border-stone-200 rounded-2xl p-4 sm:p-5 bg-white shadow-soft">
-      {/* Header */}
-      <div className="flex justify-between items-center border-b-2 border-[#F97316] pb-2.5 mb-3.5">
-        <div className="flex items-center gap-2">
-          <MapPin className="w-5 h-5 text-[#EA580C]" />
-          <h3 className="text-xl font-bold text-[#171717]">जिले की खबरें</h3>
-          {activeDistrict && (
+      {/* Themed Header Bar */}
+      <SectionHeaderBar
+        title="जिले की खबरें"
+        icon={<MapPin className="w-5 h-5 text-[#EA580C]" />}
+        badge={
+          activeDistrict ? (
             <span className="hidden sm:inline-block text-xs font-semibold bg-orange-100 text-[#EA580C] px-2.5 py-0.5 rounded-full">
               {activeDistrict.name}
             </span>
-          )}
-        </div>
-        <Link
-          href={`/district/${activeDistrict?.slug || 'jaunpur'}`}
-          className="text-xs text-[#EA580C] font-bold hover:underline flex items-center gap-1 group"
-        >
-          और देखें <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-        </Link>
-      </div>
+          ) : undefined
+        }
+        action={
+          <Link
+            href={`/district/${activeDistrict?.slug || 'jaunpur'}`}
+            className="text-xs text-[#EA580C] font-bold hover:underline flex items-center gap-1 group"
+          >
+            और देखें <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+        }
+        themeConfig={themeConfig}
+      />
 
       {/* Horizontal Tabs for Districts */}
       <div className="flex gap-2 overflow-x-auto whitespace-nowrap pb-2 mb-4 no-scrollbar">

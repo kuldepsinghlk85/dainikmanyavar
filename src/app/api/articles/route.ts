@@ -301,7 +301,11 @@ export async function POST(request: Request) {
       }
     }
 
-    let finalLocationId = locationId || null;
+    const locationIdsList: string[] = Array.isArray(body.locationIds)
+      ? body.locationIds.filter(Boolean)
+      : (locationId ? [locationId] : []);
+
+    let finalLocationId = locationIdsList.length > 0 ? locationIdsList[0] : (locationId || null);
 
     // If locationId was not specified, check if any tag corresponds to a district
     const loadedTags = finalTagIds.size > 0
@@ -323,13 +327,26 @@ export async function POST(request: Request) {
         });
         if (matchedLoc) {
           finalLocationId = matchedLoc.id;
+          if (!locationIdsList.includes(matchedLoc.id)) {
+            locationIdsList.push(matchedLoc.id);
+          }
           break;
         }
       }
     }
 
-    // If location is set, ensure district tag is also included
-    if (finalLocationId) {
+    // Ensure all selected locations have corresponding district tags in finalTagIds
+    if (locationIdsList.length > 0) {
+      for (const locId of locationIdsList) {
+        const loc = await db.location.findUnique({ where: { id: locId } });
+        if (loc) {
+          const districtTag = await getOrCreateTag(loc.name);
+          if (districtTag) {
+            finalTagIds.add(districtTag.id);
+          }
+        }
+      }
+    } else if (finalLocationId) {
       const loc = await db.location.findUnique({ where: { id: finalLocationId } });
       if (loc) {
         const districtTag = await getOrCreateTag(loc.name);

@@ -17,13 +17,28 @@ import {
   LayoutTemplate,
   Layers,
   Megaphone,
-  Film
+  Film,
+  Palette,
+  Image as ImageIcon,
+  Upload,
+  Eye,
+  Loader2,
+  RefreshCw,
+  Check
 } from 'lucide-react';
+import SectionHeaderBar from '@/components/public/SectionHeaderBar';
 
 export default function HomepageAdminPage() {
   const [loading, setLoading] = useState(true);
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [msg, setMsg] = useState('');
+
+  // Header Theme & Animation States
+  const [headerTheme, setHeaderTheme] = useState('default');
+  const [headerAnimation, setHeaderAnimation] = useState('shimmer');
+  const [headerCustomImage, setHeaderCustomImage] = useState('');
+  const [savingHeaderTheme, setSavingHeaderTheme] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const [widgetSettings, setWidgetSettings] = useState({
     widget_cricket_enabled: 'true',
@@ -51,11 +66,69 @@ export default function HomepageAdminPage() {
             ...prev,
             ...d.data,
           }));
+          if (d.data.header_bar_theme) setHeaderTheme(d.data.header_bar_theme);
+          if (d.data.header_bar_animation) setHeaderAnimation(d.data.header_bar_animation);
+          if (d.data.header_bar_custom_image) setHeaderCustomImage(d.data.header_bar_custom_image);
         }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  const handleSaveHeaderTheme = async () => {
+    setSavingHeaderTheme(true);
+    setMsg('');
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          header_bar_theme: headerTheme,
+          header_bar_animation: headerAnimation,
+          header_bar_custom_image: headerCustomImage,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMsg('🎨 हेडर बार डिज़ाइन थीम व एनिमेशन सफलतापूर्वक अपडेट कर दिया गया! होमपेज पर बदलाव लाइव हो चुके हैं।');
+        setTimeout(() => setMsg(''), 5000);
+      } else {
+        alert(data.error || 'थीम सेटिंग्स सुरक्षित करने में समस्या आई');
+      }
+    } catch (err: any) {
+      alert(err.message || 'नेटवर्क त्रुटि');
+    } finally {
+      setSavingHeaderTheme(false);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('caption', 'Header Bar Festive Strip');
+      const res = await fetch('/api/admin/media', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success && data.data?.url) {
+        setHeaderCustomImage(data.data.url);
+        setHeaderTheme('custom');
+        setMsg('🖼️ फेस्टिव इमेज पट्टी सफलतापूर्वक अपलोड हो गई! नीचे दिए सेव बटन पर क्लिक करके लागू करें।');
+        setTimeout(() => setMsg(''), 4000);
+      } else {
+        alert(data.error || 'इमेज अपलोड विफल');
+      }
+    } catch (err: any) {
+      alert(err.message || 'इमेज अपलोड में त्रुटि');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const handleToggle = async (key: string, currentValue: string) => {
     const newValue = currentValue === 'true' ? 'false' : 'true';
@@ -200,6 +273,349 @@ export default function HomepageAdminPage() {
           <button onClick={() => setMsg('')} className="text-emerald-700 font-bold hover:text-emerald-950">×</button>
         </div>
       )}
+
+      {/* SECTION: Header Bar Design Themes & Background Animation (User's Exact Request) */}
+      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-stone-200 shadow-sm space-y-5">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-stone-100 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-[#EA580C] shadow-xs">
+              <Palette className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-black text-stone-900">
+                  हेडर बार डिज़ाइन व फेस्टिवल थीम मैनेजर (Header Themes & Animation)
+                </h2>
+                <span className="bg-orange-100 text-[#EA580C] text-[10px] font-black px-2 py-0.5 rounded-full border border-orange-200">
+                  नया फीचर
+                </span>
+              </div>
+              <p className="text-xs text-stone-500 font-medium mt-0.5">
+                होमपेज के हेडर बार (ताजा खबरें, जिले की खबरें आदि) में बैकग्राउंड एनीमेशन, फेस्टिवल थीम्स व कस्टम इमेज पट्टी सेट करें
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSaveHeaderTheme}
+            disabled={savingHeaderTheme}
+            className="w-full sm:w-auto bg-[#EA580C] hover:bg-orange-700 text-white font-black text-xs px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+          >
+            {savingHeaderTheme ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>सेव हो रहा है...</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                <span>थीम सेटिंग्स सुरक्षित करें (Save)</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Live Interactive Preview Box */}
+        <div className="bg-stone-50/90 rounded-2xl p-4 border border-stone-200 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-black text-stone-700">
+              <Eye className="w-4 h-4 text-[#EA580C]" />
+              <span>लाइव रीयल-टाइम प्रीव्यू (Live Real-Time Preview)</span>
+            </div>
+            <span className="text-[11px] font-bold text-stone-500">
+              होमपेज पर ऐसा दिखाई देगा
+            </span>
+          </div>
+
+          <div className="bg-white p-3 rounded-xl border border-stone-200 shadow-xs">
+            <SectionHeaderBar
+              title="🕒 ताजा खबरें"
+              action={
+                <span className="text-xs text-[#EA580C] font-bold hover:underline cursor-pointer">
+                  और देखें →
+                </span>
+              }
+              themeConfig={{
+                theme: headerTheme,
+                animation: headerAnimation,
+                customImage: headerCustomImage,
+              }}
+            />
+            <div className="text-[11px] text-stone-400 font-medium text-center py-1">
+              (यह हेडर बार 'जिले की खबरें', 'मल्टी टैग न्यूज़', 'वीडियो बुलेटिन' और 'ट्रेंडिंग' पर भी समान रूप से लागू रहेगा)
+            </div>
+          </div>
+        </div>
+
+        {/* Step 1: Festival & Design Themes Grid */}
+        <div className="space-y-3">
+          <label className="text-xs font-black text-stone-900 flex items-center gap-1.5">
+            <span>1. हेडर डिज़ाइन थीम चुनें (Select Festival / Color Theme):</span>
+          </label>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {[
+              {
+                id: 'default',
+                title: 'क्लासिक मान्यवर (Default)',
+                desc: 'पारंपरिक ओरिजिनल ऑरेंज एक्सेंट व सौम्य लाइट शिमर',
+                bgClass: 'bg-gradient-to-r from-orange-50 via-amber-50 to-transparent border-b-2 border-orange-500',
+                badge: '🧡 क्लासिक',
+                badgeColor: 'bg-orange-100 text-orange-800 border-orange-200',
+              },
+              {
+                id: 'diwali',
+                title: 'दीपावली महोत्सव (Diwali)',
+                desc: 'डीप गोल्डन एम्बर, जगमगाती आभा व स्वर्णिम रोशनी',
+                bgClass: 'bg-gradient-to-r from-amber-100 via-orange-100 to-yellow-50 border-b-2 border-amber-500',
+                badge: '🪔 दीपोत्सव',
+                badgeColor: 'bg-amber-100 text-amber-800 border-amber-300',
+              },
+              {
+                id: 'holi',
+                title: 'होली रंगोत्सव (Holi)',
+                desc: 'सतरंगी पेस्टल रंगों का सौम्य संगम व जीवंत ऊर्जा',
+                bgClass: 'bg-gradient-to-r from-rose-100 via-amber-100 via-emerald-100 to-sky-100 border-b-2 border-rose-500',
+                badge: '🎨 रंगोत्सव',
+                badgeColor: 'bg-rose-100 text-rose-800 border-rose-200',
+              },
+              {
+                id: 'navratri',
+                title: 'नवरात्रि / दुर्गा पूजा (Navratri)',
+                desc: 'भगवा व गेंदा पुष्प की पावन व भक्तिमय छटा',
+                bgClass: 'bg-gradient-to-r from-orange-100 via-amber-100 to-red-50 border-b-2 border-orange-600',
+                badge: '🚩 पावन पर्व',
+                badgeColor: 'bg-orange-100 text-orange-800 border-orange-200',
+              },
+              {
+                id: 'tricolor',
+                title: 'तिरंगा / राष्ट्रीय पर्व (Tricolor)',
+                desc: 'केसरिया-श्वेत-हरा राष्ट्रीय गौरव का प्रतीक',
+                bgClass: 'bg-gradient-to-r from-orange-100 via-white to-emerald-100 border-b-2 border-orange-500',
+                badge: '🇮🇳 राष्ट्र गौरव',
+                badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+              },
+              {
+                id: 'royal',
+                title: 'रॉयल मरून व गोल्ड (Royal Velvet)',
+                desc: 'शाही मखमली मरून व स्वर्णिम किनारी का वैभव',
+                bgClass: 'bg-gradient-to-r from-rose-950/10 via-amber-900/10 to-transparent border-b-2 border-amber-600',
+                badge: '👑 शाही वैभव',
+                badgeColor: 'bg-stone-100 text-stone-800 border-stone-300',
+              },
+              {
+                id: 'custom',
+                title: 'कस्टम इमेज पट्टी (Custom Festive Strip)',
+                desc: 'त्योहारों की तोरण / झालर / स्पेशल पैटर्न पट्टी का बैकग्राउंड',
+                bgClass: 'bg-white border-b-2 border-orange-600',
+                badge: '🖼️ कस्टम पैटर्न',
+                badgeColor: 'bg-purple-100 text-purple-800 border-purple-200',
+              },
+            ].map((th) => {
+              const isSelected = headerTheme === th.id;
+              return (
+                <button
+                  type="button"
+                  key={th.id}
+                  onClick={() => setHeaderTheme(th.id)}
+                  className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer relative flex flex-col justify-between ${
+                    isSelected
+                      ? 'border-[#EA580C] bg-orange-50/40 ring-2 ring-orange-500/30 shadow-xs'
+                      : 'border-stone-200 bg-white hover:border-stone-300 hover:bg-stone-50/60'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${th.badgeColor}`}>
+                        {th.badge}
+                      </span>
+                      {isSelected && (
+                        <span className="w-5 h-5 rounded-full bg-[#EA580C] text-white flex items-center justify-center shadow-xs">
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        </span>
+                      )}
+                    </div>
+                    <div className="font-extrabold text-xs text-stone-900 mb-1">{th.title}</div>
+                    <p className="text-[11px] text-stone-500 leading-tight mb-3">{th.desc}</p>
+                  </div>
+
+                  {/* Visual Strip Preview Bar */}
+                  <div className={`h-4 rounded-lg w-full ${th.bgClass} shadow-2xs mt-auto`} />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Step 2: Background Animation Options */}
+        <div className="space-y-3 pt-3 border-t border-stone-100">
+          <label className="text-xs font-black text-stone-900 flex items-center gap-1.5">
+            <span>2. बैकग्राउंड एनीमेशन प्रभाव (Background Animation Effect):</span>
+          </label>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {[
+              {
+                id: 'shimmer',
+                title: '✨ लाइट शिमर स्वीप (Light Shimmer)',
+                desc: 'सौम्य चमकीली रोशनी की लहर जो निरंतर प्रवाहित होती है',
+              },
+              {
+                id: 'pulse',
+                title: '💫 सॉफ्ट पल्स ग्लो (Breathing Pulse)',
+                desc: 'मद्धिम सुनहरी रोशनी की धड़कन जो शांत आभा देती है',
+              },
+              {
+                id: 'wave',
+                title: '🌊 ग्रेडिएंट वेव (Gradient Wave)',
+                desc: 'रंगों की सौम्य गतिमान तरंग',
+              },
+              {
+                id: 'none',
+                title: '⏸️ स्थिर (Static / No Animation)',
+                desc: 'बिना किसी एनीमेशन के स्थिर पृष्ठभूमि',
+              },
+            ].map((anim) => {
+              const isSelected = headerAnimation === anim.id;
+              return (
+                <button
+                  type="button"
+                  key={anim.id}
+                  onClick={() => setHeaderAnimation(anim.id)}
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                    isSelected
+                      ? 'border-[#EA580C] bg-orange-50/50 ring-2 ring-orange-500/30'
+                      : 'border-stone-200 bg-white hover:border-stone-300'
+                  }`}
+                >
+                  <div className="font-extrabold text-xs text-stone-900 flex items-center justify-between mb-1">
+                    <span>{anim.title}</span>
+                    {isSelected && <Check className="w-4 h-4 text-[#EA580C] shrink-0" />}
+                  </div>
+                  <p className="text-[11px] text-stone-500 leading-tight">{anim.desc}</p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Step 3: Custom Festive Image Strip Options (Only visible or active when selected) */}
+        <div className="space-y-3 pt-3 border-t border-stone-100">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-black text-stone-900 flex items-center gap-1.5">
+              <ImageIcon className="w-4 h-4 text-[#EA580C]" />
+              <span>3. कस्टम फेस्टिव इमेज पट्टी (Custom Festive Pattern / Banner Strip):</span>
+            </label>
+            {headerTheme !== 'custom' && (
+              <span className="text-[11px] text-stone-400 font-medium">
+                (कस्टम इमेज पट्टी को लागू करने के लिए ऊपर 'कस्टम इमेज पट्टी' थीम चुनें)
+              </span>
+            )}
+          </div>
+
+          <div className="bg-stone-50 p-4 rounded-xl border border-stone-200 space-y-3">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="text"
+                placeholder="फेस्टिव इमेज URL दर्ज करें (उदा. /uploads/... या ऑनलाइन इमेज लिंक)"
+                value={headerCustomImage}
+                onChange={(e) => {
+                  setHeaderCustomImage(e.target.value);
+                  if (headerTheme !== 'custom' && e.target.value) {
+                    setHeaderTheme('custom');
+                  }
+                }}
+                className="flex-1 bg-white border border-stone-300 rounded-xl px-3.5 py-2 text-xs font-medium focus:outline-hidden focus:ring-2 focus:ring-orange-500"
+              />
+
+              <label className="bg-white hover:bg-stone-100 text-stone-800 font-bold text-xs px-4 py-2 rounded-xl border border-stone-300 flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-2xs">
+                {uploadingImage ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>अपलोड हो रहा है...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-3.5 h-3.5 text-stone-600" />
+                    <span>कम्प्यूटर से इमेज अपलोड करें</span>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={uploadingImage}
+                  className="hidden"
+                />
+              </label>
+
+              {headerCustomImage && (
+                <button
+                  type="button"
+                  onClick={() => setHeaderCustomImage('')}
+                  className="text-stone-500 hover:text-red-600 text-xs font-bold px-3 py-2 rounded-xl border border-stone-200 hover:border-red-200 hover:bg-red-50 transition-colors"
+                >
+                  हटाएं
+                </button>
+              )}
+            </div>
+
+            {/* Quick Sample Presets */}
+            <div className="pt-2 border-t border-stone-200/80 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-bold text-stone-500">त्वरित फेस्टिव प्रीसेट्स:</span>
+              {[
+                {
+                  label: '🌼 गेंदा पुष्प तोरण (Marigold Toran)',
+                  url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80',
+                },
+                {
+                  label: '✨ स्वर्णिम फेस्टिव लाइट्स (Golden Lights)',
+                  url: 'https://images.unsplash.com/photo-1514517521153-1be72277b32f?auto=format&fit=crop&w=1200&q=80',
+                },
+                {
+                  label: '🪔 दीपावली दीया पैटर्न (Diya Pattern)',
+                  url: 'https://images.unsplash.com/photo-1605379399642-870262d3d051?auto=format&fit=crop&w=1200&q=80',
+                },
+              ].map((p, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setHeaderCustomImage(p.url);
+                    setHeaderTheme('custom');
+                  }}
+                  className="text-[10px] font-extrabold bg-white hover:bg-orange-50 text-stone-700 hover:text-[#EA580C] border border-stone-200 hover:border-orange-300 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Save Action */}
+        <div className="flex justify-end pt-2">
+          <button
+            type="button"
+            onClick={handleSaveHeaderTheme}
+            disabled={savingHeaderTheme}
+            className="w-full sm:w-auto bg-[#EA580C] hover:bg-orange-700 text-white font-black text-xs px-6 py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+          >
+            {savingHeaderTheme ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>सेव हो रहा है...</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                <span>थीम सेटिंग्स सुरक्षित करें (Save)</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
 
       {/* SECTION 1: Special Live News Widgets (User's Exact Request) */}
       <div className="space-y-4">

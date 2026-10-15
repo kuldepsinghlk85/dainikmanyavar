@@ -109,7 +109,13 @@ export async function PUT(
       }
     }
 
-    let finalLocationId = locationId !== undefined ? (locationId || null) : existing.locationId;
+    const locationIdsList: string[] = Array.isArray(body.locationIds)
+      ? body.locationIds.filter(Boolean)
+      : (locationId ? [locationId] : []);
+
+    let finalLocationId = locationIdsList.length > 0
+      ? locationIdsList[0]
+      : (locationId !== undefined ? (locationId || null) : existing.locationId);
 
     const loadedTags = finalTagIds.size > 0
       ? await db.tag.findMany({ where: { id: { in: Array.from(finalTagIds) } } })
@@ -131,13 +137,27 @@ export async function PUT(
         });
         if (matchedLoc) {
           finalLocationId = matchedLoc.id;
+          if (!locationIdsList.includes(matchedLoc.id)) {
+            locationIdsList.push(matchedLoc.id);
+          }
           break;
         }
       }
     }
 
-    // If location is set, ensure district tag is also included
-    if (finalLocationId) {
+    // Ensure all selected locations have corresponding district tags in finalTagIds
+    if (locationIdsList.length > 0) {
+      for (const locId of locationIdsList) {
+        const loc = await db.location.findUnique({ where: { id: locId } });
+        if (loc) {
+          const districtTag = await getOrCreateTag(loc.name);
+          if (districtTag) {
+            finalTagIds.add(districtTag.id);
+            hasTagsUpdate = true;
+          }
+        }
+      }
+    } else if (finalLocationId) {
       const loc = await db.location.findUnique({ where: { id: finalLocationId } });
       if (loc) {
         const districtTag = await getOrCreateTag(loc.name);
@@ -242,8 +262,8 @@ export async function PUT(
       revalidatePath('/category/latest');
       revalidatePath(`/news/${updated.slug}`);
       revalidatePath('/admin/news');
-      if (finalLocationId) {
-        const loc = await db.location.findUnique({ where: { id: finalLocationId } });
+      for (const locId of locationIdsList) {
+        const loc = await db.location.findUnique({ where: { id: locId } });
         if (loc?.slug) revalidatePath(`/district/${loc.slug}`);
       }
     } catch (_) {}

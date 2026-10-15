@@ -323,11 +323,20 @@ export default async function HomePage() {
           'manoranjan_widget_viral_enabled',
           'manoranjan_widget_cricket_enabled',
           'manoranjan_widget_films_enabled',
+          'header_bar_theme',
+          'header_bar_animation',
+          'header_bar_custom_image',
         ],
       },
     },
   });
   const settingsMap = Object.fromEntries(settingsRecords.map((s) => [s.key, s.value]));
+
+  const headerThemeConfig = {
+    theme: settingsMap.header_bar_theme || 'default',
+    animation: settingsMap.header_bar_animation || 'shimmer',
+    customImage: settingsMap.header_bar_custom_image || '',
+  };
 
   const isCricketEnabled = settingsMap.widget_cricket_enabled !== 'false';
   const isHoroscopeEnabled = settingsMap.widget_horoscope_enabled !== 'false';
@@ -463,27 +472,30 @@ export default async function HomePage() {
             {isHeroEnabled && <HeroSection articles={formattedSlider} />}
 
             {/* Latest News Grid */}
-            {isLatestEnabled && <LatestNewsCards articles={latestArticles} />}
+            {isLatestEnabled && <LatestNewsCards articles={latestArticles} themeConfig={headerThemeConfig} />}
 
             {/* District News Section */}
             {isDistrictEnabled && (
               <DistrictNewsSection
                 initialLocations={sortedLocations}
                 initialArticles={formattedDistrictArticles}
+                themeConfig={headerThemeConfig}
               />
             )}
 
             {/* Multi-Tag News Section */}
-            {isMultiTagEnabled && <MultiTagNewsSection articles={formattedMultiTagArticles} />}
+            {isMultiTagEnabled && <MultiTagNewsSection articles={formattedMultiTagArticles} themeConfig={headerThemeConfig} />}
 
             {/* Video News Bulletins (only when active video bulletins exist) */}
-            {isVideoEnabled && formattedVideos.length > 0 && <VideoNewsSection videos={formattedVideos} />}
+            {isVideoEnabled && formattedVideos.length > 0 && (
+              <VideoNewsSection videos={formattedVideos} themeConfig={headerThemeConfig} />
+            )}
           </div>
 
           {/* Right Column (Organized Special Feeds & Sidebar Ads) */}
           <aside className="space-y-6">
             {/* Trending Section */}
-            {isTrendingEnabled && <TrendingSection articles={trendingArticles} />}
+            {isTrendingEnabled && <TrendingSection articles={trendingArticles} themeConfig={headerThemeConfig} />}
 
             {/* Special Feeds Widget 1: Cricket Live Updates */}
             {isCricketEnabled && <CricketWidget />}

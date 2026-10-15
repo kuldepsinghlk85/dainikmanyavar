@@ -7,6 +7,7 @@ import { ArrowLeft, Save, Eye, CheckCircle2, Image as ImageIcon, Volume2, Tag as
 import ImageUploadWidget from '@/components/admin/ImageUploadWidget';
 import HtmlContentEditor from '@/components/admin/HtmlContentEditor';
 import AutoTranslateButton from '@/components/admin/AutoTranslateButton';
+import DistrictMultiSelector, { LocationItem } from '@/components/admin/DistrictMultiSelector';
 
 export default function EditArticleAdminPage() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function EditArticleAdminPage() {
 
   const [categories, setCategories] = useState<any[]>([]);
   const [locations, setLocations] = useState<any[]>([]);
+  const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
   const [allTags, setAllTags] = useState<any[]>([]);
   const [newTagName, setNewTagName] = useState('');
   const [tagSearch, setTagSearch] = useState('');
@@ -65,39 +67,22 @@ export default function EditArticleAdminPage() {
   useEffect(() => {
     if (!id) return;
 
-    // Fetch Categories
-    fetch('/api/categories')
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.success && d.data) setCategories(d.data);
-      })
-      .catch(() => {});
+    Promise.all([
+      fetch('/api/categories').then((r) => r.json()).catch(() => ({})),
+      fetch('/api/locations').then((r) => r.json()).catch(() => ({})),
+      fetch('/api/admin/tags').then((r) => r.json()).catch(() => ({})),
+      fetch(`/api/articles/${id}`).then((r) => r.json()).catch(() => ({})),
+    ])
+      .then(([catData, locData, tagData, artData]) => {
+        if (catData.success && catData.data) setCategories(catData.data);
 
-    // Fetch Locations
-    fetch('/api/locations')
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.success && d.data) {
-          // Show only districts and cities in the news location dropdown (exclude division groupings to prevent duplicate city names)
-          setLocations(d.data.filter((l: any) => l.type !== 'DIVISION'));
-        }
-      })
-      .catch(() => {});
+        const locs = locData.success && locData.data ? locData.data.filter((l: any) => l.type !== 'DIVISION') : [];
+        setLocations(locs);
 
-    // Fetch All Tags
-    fetch('/api/admin/tags')
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.success && Array.isArray(d.data)) setAllTags(d.data);
-      })
-      .catch(() => {});
+        if (tagData.success && Array.isArray(tagData.data)) setAllTags(tagData.data);
 
-    // Fetch Article Details
-    fetch(`/api/articles/${id}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.success && data.data) {
-          const a = data.data;
+        if (artData.success && artData.data) {
+          const a = artData.data;
           setForm({
             title: a.title || '',
             subtitle: a.subtitle || '',
@@ -114,6 +99,24 @@ export default function EditArticleAdminPage() {
             slug: a.slug || '',
           });
 
+          // Resolve selected districts from both locationId AND matching tags
+          const initialLocIds: string[] = [];
+          if (a.locationId) {
+            initialLocIds.push(a.locationId);
+          }
+          if (Array.isArray(a.tags)) {
+            for (const t of a.tags) {
+              const cleanTag = (t.name || '').replace(/^#+/, '').trim().toLowerCase();
+              const matched = locs.find(
+                (l: any) => l.name.trim().toLowerCase() === cleanTag || (l.slug || '').toLowerCase() === cleanTag
+              );
+              if (matched && !initialLocIds.includes(matched.id)) {
+                initialLocIds.push(matched.id);
+              }
+            }
+          }
+          setSelectedLocationIds(initialLocIds);
+
           if (a.contentType) setContentType(a.contentType);
           if (a.movieReview) {
             const mr = a.movieReview;
@@ -129,7 +132,7 @@ export default function EditArticleAdminPage() {
             if (mr.spoilersContent) setSpoilersContent(mr.spoilersContent);
           }
         } else {
-          setErrorMsg(data.error || 'समाचार प्राप्त नहीं हो सका');
+          setErrorMsg(artData?.error || 'समाचार प्राप्त नहीं हो सका');
         }
         setLoading(false);
       })
@@ -217,23 +220,96 @@ export default function EditArticleAdminPage() {
     setLocUploading(false);
   };
 
+  const handleLocationIdsChange = (newIds: string[]) => {
+    setSelectedLocationIds(newIds);
+    const primaryId = newIds[0] || '';
+
+    // Synchronize tagsString: add tags for selected locations, remove tags for unselected locations
+    const currentTags = form.tagsString
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
+
+    const allLocNames = locations.map((l) => l.name.trim().toLowerCase());
+    const selectedLocNames = newIds
+      .map((id) => locations.find((l) => l.id === id)?.name.trim())
+      .filter(Boolean) as string[];
+
+    // Keep tags that are NOT any removed location
+    const nonLocationTags = currentTags.filter((t) => {
+      const clean = t.replace(/^#+/, '').trim().toLowerCase();
+      if (allLocNames.includes(clean) && !selectedLocNames.map((s) => s.toLowerCase()).includes(clean)) {
+        return false;
+      }
+      return true;
+    });
+
+    // Add selected location tags if missing
+    const updatedTags = [...nonLocationTags];
+    selectedLocNames.forEach((name) => {
+      const tagWithHash = `#${name}`;
+      if (!updatedTags.some((t) => t.replace(/^#+/, '').trim().toLowerCase() === name.toLowerCase())) {
+        updatedTags.push(tagWithHash);
+      }
+    });
+
+    setForm((prev) => ({
+      ...prev,
+      locationId: primaryId,
+      tagsString: updatedTags.join(', '),
+    }));
+  };
+
+  const handleQuickInlineAddLocation = async (name: string) => {
+    try {
+      const res = await fetch('/api/locations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          type: 'DISTRICT',
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        const createdLoc = data.data;
+        setLocations((prev) => {
+          if (prev.some((l) => l.id === createdLoc.id)) return prev;
+          return [...prev, createdLoc];
+        });
+        handleLocationIdsChange([...selectedLocationIds, createdLoc.id]);
+        setMsg(`स्थान '${createdLoc.name}' सफलतापूर्वक जुड़ गया और चयनित हो गया!`);
+      } else if (data.data?.id) {
+        if (!selectedLocationIds.includes(data.data.id)) {
+          handleLocationIdsChange([...selectedLocationIds, data.data.id]);
+        }
+      } else {
+        alert(data.error || 'स्थान जोड़ने में समस्या आई');
+      }
+    } catch (err: any) {
+      alert(err.message || 'स्थान जोड़ने में समस्या आई');
+    }
+  };
+
   const handleQuickCreateLocation = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newLocName.trim()) return;
 
-    const trimmed = newLocName.trim().toLowerCase();
-    const existing = locations.find((l) => l.name.trim().toLowerCase() === trimmed);
-    if (existing) {
-      setForm((prev) => ({ ...prev, locationId: existing.id }));
-      setShowAddLocationModal(false);
-      setNewLocName('');
-      setNewLocImage('');
-      setMsg(`स्थान '${existing.name}' पहले से सूची में मौजूद है और चुन लिया गया है।`);
-      return;
-    }
-
     setLocSubmitting(true);
     try {
+      const trimmed = newLocName.trim().toLowerCase();
+      const existing = locations.find((l) => l.name.trim().toLowerCase() === trimmed);
+      if (existing) {
+        if (!selectedLocationIds.includes(existing.id)) {
+          handleLocationIdsChange([...selectedLocationIds, existing.id]);
+        }
+        setShowAddLocationModal(false);
+        setNewLocName('');
+        setNewLocImage('');
+        setLocSubmitting(false);
+        return;
+      }
+
       const res = await fetch('/api/locations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -250,14 +326,16 @@ export default function EditArticleAdminPage() {
           if (prev.some((l) => l.id === createdLoc.id)) return prev;
           return [...prev, createdLoc];
         });
-        setForm((prev) => ({ ...prev, locationId: createdLoc.id }));
+        handleLocationIdsChange([...selectedLocationIds, createdLoc.id]);
         setShowAddLocationModal(false);
         setNewLocName('');
         setNewLocImage('');
-        setMsg(`स्थान '${createdLoc.name}' सफलतापूर्वक जुड़ गया और चुना गया! इसका चित्र आर्काइव में सुरक्षित हो गया।`);
+        setMsg(`स्थान '${createdLoc.name}' सफलतापूर्वक जुड़ गया और चयनित हो गया! इसका चित्र आर्काइव में सुरक्षित हो गया।`);
       } else {
         if (data.data && data.data.id) {
-          setForm((prev) => ({ ...prev, locationId: data.data.id }));
+          if (!selectedLocationIds.includes(data.data.id)) {
+            handleLocationIdsChange([...selectedLocationIds, data.data.id]);
+          }
           setShowAddLocationModal(false);
           setNewLocName('');
           setNewLocImage('');
@@ -287,6 +365,8 @@ export default function EditArticleAdminPage() {
         body: JSON.stringify({
           ...form,
           primaryCategoryId: form.categoryId,
+          locationId: selectedLocationIds[0] || null,
+          locationIds: selectedLocationIds,
           tags: tagsArray,
           contentType,
           movieReview:
@@ -579,45 +659,13 @@ export default function EditArticleAdminPage() {
               </select>
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-extrabold text-stone-900 flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-[#EA580C]" />
-                  <span>स्थान / जिला (Location)</span>
-                </label>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddLocationModal(true)}
-                    className="text-[11px] font-black text-[#EA580C] hover:text-orange-700 bg-orange-50 hover:bg-orange-100 px-2 py-0.5 rounded border border-orange-200 flex items-center gap-1 transition-colors"
-                  >
-                    <Plus className="w-3 h-3" />
-                    <span>नया स्थान जोड़ें</span>
-                  </button>
-                  <Link
-                    href="/admin/locations"
-                    target="_blank"
-                    className="text-[11px] font-bold text-stone-500 hover:text-stone-800 flex items-center gap-0.5 hover:underline"
-                    title="स्थान सूची और आर्काइव प्रबंधित करें"
-                  >
-                    <span>स्थान सूची</span>
-                    <ExternalLink className="w-2.5 h-2.5" />
-                  </Link>
-                </div>
-              </div>
-              <select
-                value={form.locationId}
-                onChange={(e) => setForm({ ...form, locationId: e.target.value })}
-                className="w-full p-2.5 border border-stone-300 rounded-xl text-xs font-bold text-stone-900 bg-white"
-              >
-                <option value="">-- स्थान / जिला चुनें (Optional) --</option>
-                {locations.map((loc) => (
-                  <option key={loc.id} value={loc.id}>
-                    📍 {loc.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <DistrictMultiSelector
+              locations={locations}
+              selectedIds={selectedLocationIds}
+              onChange={handleLocationIdsChange}
+              onOpenAddModal={() => setShowAddLocationModal(true)}
+              onQuickInlineAdd={handleQuickInlineAddLocation}
+            />
 
             <div className="pt-2">
               <label className="flex items-center gap-2 text-xs font-bold text-stone-800 cursor-pointer">

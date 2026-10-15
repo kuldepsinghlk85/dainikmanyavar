@@ -7,6 +7,7 @@ import ImageUploader from '@/components/admin/ImageUploader';
 import HtmlContentEditor from '@/components/admin/HtmlContentEditor';
 import VoiceInputButton from '@/components/public/VoiceInputButton';
 import AutoTranslateButton from '@/components/admin/AutoTranslateButton';
+import DistrictMultiSelector from '@/components/admin/DistrictMultiSelector';
 import { ArrowLeft, Save, ExternalLink, Plus, MapPin, Upload, X, CheckCircle2, Bell } from 'lucide-react';
 
 interface Category {
@@ -37,6 +38,7 @@ export default function AddNewsPage() {
   const [featuredImage, setFeaturedImage] = useState('');
   const [primaryCategoryId, setPrimaryCategoryId] = useState('');
   const [locationId, setLocationId] = useState('');
+  const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
   const [isBreaking, setIsBreaking] = useState(false);
   const [isFeatured, setIsFeatured] = useState(false);
   const [isMainStory, setIsMainStory] = useState(false);
@@ -176,6 +178,69 @@ export default function AddNewsPage() {
     setLocUploading(false);
   };
 
+  const handleLocationIdsChange = (newIds: string[]) => {
+    setSelectedLocationIds(newIds);
+    setLocationId(newIds[0] || '');
+
+    // Sync with selectedTagIds
+    const locNames = locations.map((l) => l.name.trim().toLowerCase());
+    const selectedLocNames = newIds
+      .map((id) => locations.find((l) => l.id === id)?.name.trim().toLowerCase())
+      .filter(Boolean) as string[];
+
+    const remainingTagIds = selectedTagIds.filter((tid) => {
+      const tag = availableTags.find((t) => t.id === tid);
+      if (!tag) return true;
+      const cleanName = tag.name.replace(/^#+/, '').trim().toLowerCase();
+      if (locNames.includes(cleanName) && !selectedLocNames.includes(cleanName)) {
+        return false;
+      }
+      return true;
+    });
+
+    const updatedTagIds = [...remainingTagIds];
+    selectedLocNames.forEach((name) => {
+      const matchedTag = availableTags.find(
+        (t) => t.name.replace(/^#+/, '').trim().toLowerCase() === name
+      );
+      if (matchedTag && !updatedTagIds.includes(matchedTag.id)) {
+        updatedTagIds.push(matchedTag.id);
+      }
+    });
+
+    setSelectedTagIds(updatedTagIds);
+  };
+
+  const handleQuickInlineAddLocation = async (name: string) => {
+    try {
+      const res = await fetch('/api/locations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          type: 'DISTRICT',
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        const createdLoc = data.data;
+        setLocations((prev) => {
+          if (prev.some((l) => l.id === createdLoc.id)) return prev;
+          return [...prev, createdLoc];
+        });
+        handleLocationIdsChange([...selectedLocationIds, createdLoc.id]);
+      } else if (data.data?.id) {
+        if (!selectedLocationIds.includes(data.data.id)) {
+          handleLocationIdsChange([...selectedLocationIds, data.data.id]);
+        }
+      } else {
+        alert(data.error || 'स्थान जोड़ने में समस्या आई');
+      }
+    } catch (err: any) {
+      alert(err.message || 'स्थान जोड़ने में समस्या आई');
+    }
+  };
+
   const handleQuickCreateLocation = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newLocName.trim()) return;
@@ -183,7 +248,9 @@ export default function AddNewsPage() {
     const trimmed = newLocName.trim().toLowerCase();
     const existing = locations.find((l) => l.name.trim().toLowerCase() === trimmed);
     if (existing) {
-      setLocationId(existing.id);
+      if (!selectedLocationIds.includes(existing.id)) {
+        handleLocationIdsChange([...selectedLocationIds, existing.id]);
+      }
       setShowAddLocationModal(false);
       setNewLocName('');
       setNewLocImage('');
@@ -209,14 +276,15 @@ export default function AddNewsPage() {
           if (prev.some((l) => l.id === createdLoc.id)) return prev;
           return [...prev, createdLoc];
         });
-        setLocationId(createdLoc.id);
+        handleLocationIdsChange([...selectedLocationIds, createdLoc.id]);
         setShowAddLocationModal(false);
         setNewLocName('');
         setNewLocImage('');
       } else {
         if (data.data && data.data.id) {
-          // If server returned existing location on 409 conflict
-          setLocationId(data.data.id);
+          if (!selectedLocationIds.includes(data.data.id)) {
+            handleLocationIdsChange([...selectedLocationIds, data.data.id]);
+          }
           setShowAddLocationModal(false);
           setNewLocName('');
           setNewLocImage('');
@@ -250,7 +318,8 @@ export default function AddNewsPage() {
           content,
           featuredImage: featuredImage || 'https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?auto=format&fit=crop&w=1200&q=80',
           primaryCategoryId,
-          locationId: locationId || null,
+          locationId: selectedLocationIds[0] || null,
+          locationIds: selectedLocationIds,
           tagIds: selectedTagIds,
           isBreaking,
           isFeatured,
@@ -542,58 +611,14 @@ export default function AddNewsPage() {
             </select>
           </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-bold text-stone-700 flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-[#EA580C]" />
-                <span>स्थान / जिला (Location)</span>
-              </label>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setShowAddLocationModal(true)}
-                  className="text-[11px] font-black text-[#EA580C] hover:text-orange-700 bg-orange-50 hover:bg-orange-100 px-1.5 py-0.5 rounded border border-orange-200 flex items-center gap-0.5 transition-colors cursor-pointer"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span>नया स्थान</span>
-                </button>
-                <Link
-                  href="/admin/locations"
-                  target="_blank"
-                  className="text-[11px] font-bold text-stone-500 hover:text-stone-800 flex items-center gap-0.5 hover:underline"
-                  title="स्थान सूची और आर्काइव खोलें"
-                >
-                  <ExternalLink className="w-2.5 h-2.5" />
-                </Link>
-              </div>
-            </div>
-            <select
-              value={locationId}
-              onChange={(e) => {
-                const newLocId = e.target.value;
-                setLocationId(newLocId);
-                if (newLocId) {
-                  const loc = locations.find((l) => l.id === newLocId);
-                  if (loc) {
-                    const cleanLocName = loc.name.replace(/^#+/, '').trim().toLowerCase();
-                    const matchedTag = availableTags.find(
-                      (t) => t.name.replace(/^#+/, '').trim().toLowerCase() === cleanLocName
-                    );
-                    if (matchedTag && !selectedTagIds.includes(matchedTag.id)) {
-                      setSelectedTagIds((prev) => [...prev, matchedTag.id]);
-                    }
-                  }
-                }
-              }}
-              className="w-full p-2.5 border border-stone-300 rounded-lg text-sm bg-white focus:outline-none focus:border-[#F97316]"
-            >
-              <option value="">-- स्थान / जिला चुनें (Optional) --</option>
-              {locations.map((loc) => (
-                <option key={loc.id} value={loc.id}>
-                  📍 {loc.name}
-                </option>
-              ))}
-            </select>
+          <div className="md:col-span-2">
+            <DistrictMultiSelector
+              locations={locations}
+              selectedIds={selectedLocationIds}
+              onChange={handleLocationIdsChange}
+              onOpenAddModal={() => setShowAddLocationModal(true)}
+              onQuickInlineAdd={handleQuickInlineAddLocation}
+            />
           </div>
 
           <div>

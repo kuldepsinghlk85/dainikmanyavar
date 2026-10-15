@@ -4,6 +4,8 @@ import React from 'react';
 import Link from 'next/link';
 import { formatCount } from '@/lib/utils';
 
+import SectionHeaderBar, { HeaderThemeConfig } from './SectionHeaderBar';
+
 interface TrendingItem {
   id: string;
   title: string;
@@ -15,9 +17,10 @@ interface TrendingItem {
 interface TrendingSectionProps {
   items?: TrendingItem[];
   articles?: TrendingItem[];
+  themeConfig?: HeaderThemeConfig;
 }
 
-export default function TrendingSection({ items, articles }: TrendingSectionProps) {
+export default function TrendingSection({ items, articles, themeConfig }: TrendingSectionProps) {
   const defaultItems: TrendingItem[] = [
     { id: '1', title: 'यूपी में नई शिक्षा नीति लागू, स्कूलों में स्मार्ट बोर्ड', slug: 'up-schools-digital-education-smart-boards-2026', viewCount: 24100 },
     { id: '2', title: 'जौनपुर में पुलिस की बड़ी कार्रवाई, गिरोह गिरफ्तार', slug: 'jaunpur-police-action-gang-busted', viewCount: 18700 },
@@ -30,12 +33,15 @@ export default function TrendingSection({ items, articles }: TrendingSectionProp
 
   return (
     <aside className="border border-[#E8E8E8] rounded-xl p-4 bg-white shadow-soft">
-      <div className="flex justify-between items-center border-b-2 border-[#F97316] pb-2 mb-3.5">
-        <h3 className="text-xl font-bold text-[#171717]">🔥 ट्रेंडिंग न्यूज़</h3>
-        <Link href="/category/latest" className="text-xs text-[#EA580C] font-semibold hover:underline">
-          और देखें →
-        </Link>
-      </div>
+      <SectionHeaderBar
+        title="🔥 ट्रेंडिंग न्यूज़"
+        action={
+          <Link href="/category/latest" className="text-xs text-[#EA580C] font-bold hover:underline">
+            और देखें →
+          </Link>
+        }
+        themeConfig={themeConfig}
+      />
 
       <div className="flex flex-col gap-3">
         {trendingList.slice(0, 5).map((item, index) => (

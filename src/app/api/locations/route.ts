@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { slugify } from '@/lib/utils';
 import { getAdminSession } from '@/lib/auth';
+import { getOrCreateTag } from '@/lib/tagUtils';
 
 export async function GET(request: Request) {
   try {
@@ -136,6 +137,11 @@ export async function POST(request: Request) {
         _count: { select: { articles: true } },
       },
     });
+
+    // Ensure corresponding Tag is created/synced for district news distribution
+    try {
+      await getOrCreateTag(trimmedName);
+    } catch (_) {}
 
     // Automatic Archival: If an image is provided, ensure it is archived in MediaItem for future reuse
     if (image && typeof image === 'string' && image.trim()) {

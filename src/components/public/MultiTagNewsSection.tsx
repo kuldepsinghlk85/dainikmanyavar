@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Tag, ArrowRight } from 'lucide-react';
+import SectionHeaderBar, { HeaderThemeConfig } from './SectionHeaderBar';
 import { formatHindiTimeAgo, formatCount } from '@/lib/utils';
 
 export interface MultiTagArticle {
@@ -22,9 +23,10 @@ export interface MultiTagArticle {
 
 interface MultiTagNewsSectionProps {
   articles?: MultiTagArticle[];
+  themeConfig?: HeaderThemeConfig;
 }
 
-export default function MultiTagNewsSection({ articles }: MultiTagNewsSectionProps) {
+export default function MultiTagNewsSection({ articles, themeConfig }: MultiTagNewsSectionProps) {
   // If articles passed, use them
   const items = articles && articles.length > 0 ? articles.slice(0, 3) : [];
 
@@ -34,18 +36,19 @@ export default function MultiTagNewsSection({ articles }: MultiTagNewsSectionPro
 
   return (
     <div className="border border-stone-200 rounded-2xl p-4 sm:p-5 bg-white shadow-soft">
-      <div className="flex justify-between items-center border-b-2 border-[#F97316] pb-2.5 mb-4">
-        <div className="flex items-center gap-2">
-          <Tag className="w-5 h-5 text-[#EA580C]" />
-          <h3 className="text-xl font-bold text-[#171717]">मल्टी टैग न्यूज़</h3>
-        </div>
-        <Link
-          href="/category/latest"
-          className="text-xs text-[#EA580C] font-bold hover:underline flex items-center gap-1 group"
-        >
-          ताज़ा ख़बरें <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-        </Link>
-      </div>
+      <SectionHeaderBar
+        title="मल्टी टैग न्यूज़"
+        icon={<Tag className="w-5 h-5 text-[#EA580C]" />}
+        action={
+          <Link
+            href="/category/latest"
+            className="text-xs text-[#EA580C] font-bold hover:underline flex items-center gap-1 group"
+          >
+            ताज़ा ख़बरें <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+        }
+        themeConfig={themeConfig}
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {items.map((item) => (

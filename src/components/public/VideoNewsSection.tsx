@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Play, Film, ArrowRight } from 'lucide-react';
+import SectionHeaderBar, { HeaderThemeConfig } from './SectionHeaderBar';
 
 export interface VideoItem {
   id: string;
@@ -24,9 +25,10 @@ export interface VideoItem {
 interface VideoNewsSectionProps {
   videos?: VideoItem[];
   videoNewsList?: VideoItem[];
+  themeConfig?: HeaderThemeConfig;
 }
 
-export default function VideoNewsSection({ videos, videoNewsList }: VideoNewsSectionProps) {
+export default function VideoNewsSection({ videos, videoNewsList, themeConfig }: VideoNewsSectionProps) {
   const itemsList = (videos && videos.length > 0) ? videos : (videoNewsList && videoNewsList.length > 0) ? videoNewsList : [];
 
   const main2Videos = itemsList.slice(0, 2);
@@ -39,18 +41,23 @@ export default function VideoNewsSection({ videos, videoNewsList }: VideoNewsSec
   return (
     <div className="border border-stone-200 rounded-2xl p-4 sm:p-5 bg-white shadow-soft flex flex-col justify-between">
       <div>
-        <div className="flex justify-between items-center border-b-2 border-[#F97316] pb-2.5 mb-4">
-          <h3 className="text-xl font-bold text-[#171717] flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse"></span>
-            <span>वीडियो न्यूज़ बुलेटिन</span>
-          </h3>
-          <Link
-            href="/video"
-            className="text-xs text-[#EA580C] font-bold hover:underline flex items-center gap-1 group"
-          >
-            और देखें <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-        </div>
+        <SectionHeaderBar
+          title={
+            <span className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse"></span>
+              <span>वीडियो न्यूज़ बुलेटिन</span>
+            </span>
+          }
+          action={
+            <Link
+              href="/video"
+              className="text-xs text-[#EA580C] font-bold hover:underline flex items-center gap-1 group"
+            >
+              और देखें <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          }
+          themeConfig={themeConfig}
+        />
 
         {/* Top 2 Video Bulletins */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">

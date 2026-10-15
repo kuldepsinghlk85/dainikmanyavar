@@ -5,6 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { formatHindiTimeAgo, formatCount } from '@/lib/utils';
 
+import SectionHeaderBar, { HeaderThemeConfig } from './SectionHeaderBar';
+
 interface Tag {
   name: string;
   slug: string;
@@ -23,19 +25,23 @@ interface Article {
 
 interface LatestNewsCardsProps {
   articles?: Article[];
+  themeConfig?: HeaderThemeConfig;
 }
 
-export default function LatestNewsCards({ articles }: LatestNewsCardsProps) {
+export default function LatestNewsCards({ articles, themeConfig }: LatestNewsCardsProps) {
   if (!articles || articles.length === 0) return null;
 
   return (
     <div>
-      <div className="flex justify-between items-center border-b-2 border-[#F97316] pb-2 mb-4">
-        <h3 className="text-xl font-bold text-[#171717]">🕒 ताजा खबरें</h3>
-        <Link href="/category/latest" target="_blank" className="text-xs text-[#EA580C] font-semibold hover:underline">
-          और देखें →
-        </Link>
-      </div>
+      <SectionHeaderBar
+        title="🕒 ताजा खबरें"
+        action={
+          <Link href="/category/latest" target="_blank" className="text-xs text-[#EA580C] font-bold hover:underline">
+            और देखें →
+          </Link>
+        }
+        themeConfig={themeConfig}
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {articles.map((art) => {
