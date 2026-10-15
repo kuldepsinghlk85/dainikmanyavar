@@ -119,6 +119,9 @@ public class MainActivity extends AppCompatActivity {
         cookieManager.setAcceptCookie(true);
         cookieManager.setAcceptThirdPartyCookies(webView, true);
 
+        settings.setSupportMultipleWindows(true);
+        settings.setJavaScriptCanOpenWindowsAutomatically(true);
+
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
@@ -129,6 +132,30 @@ public class MainActivity extends AppCompatActivity {
                     progressBar.setVisibility(View.GONE);
                     swipeRefresh.setRefreshing(false);
                 }
+            }
+
+            @Override
+            public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, android.os.Message resultMsg) {
+                WebView.HitTestResult result = view.getHitTestResult();
+                String data = result != null ? result.getExtra() : null;
+                if (data != null) {
+                    return handleUrl(data);
+                }
+                WebView tempWebView = new WebView(MainActivity.this);
+                tempWebView.setWebViewClient(new WebViewClient() {
+                    @Override
+                    public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest request) {
+                        return handleUrl(request.getUrl().toString());
+                    }
+                    @Override
+                    public boolean shouldOverrideUrlLoading(WebView v, String url) {
+                        return handleUrl(url);
+                    }
+                });
+                WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
+                transport.setWebView(tempWebView);
+                resultMsg.sendToTarget();
+                return true;
             }
 
             @Override

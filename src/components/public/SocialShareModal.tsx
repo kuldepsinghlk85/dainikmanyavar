@@ -83,7 +83,12 @@ export default function SocialShareModal({
       color: 'bg-[#25D366] hover:bg-[#20bd5a] text-white',
       icon: '🟢',
       onClick: () => {
-        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank');
+        const text = encodeURIComponent(shareText);
+        if (typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+          window.location.href = `whatsapp://send?text=${text}`;
+        } else {
+          window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+        }
       },
     },
     {

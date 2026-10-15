@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import MobileFooter from '@/components/mobile/MobileFooter';
 import { ArrowLeft, Phone, Mail, MapPin, Send, CheckCircle2 } from 'lucide-react';
 import VoiceInputButton from '@/components/public/VoiceInputButton';
 
@@ -185,8 +184,6 @@ export default function MobileContactPage() {
           )}
         </div>
       </main>
-
-      <MobileFooter />
     </div>
   );
 }

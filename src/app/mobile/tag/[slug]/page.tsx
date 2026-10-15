@@ -5,7 +5,6 @@ import { db } from '@/lib/db';
 import { ArrowLeft, Tag as TagIcon } from 'lucide-react';
 import MobileNewsList from '@/components/mobile/MobileNewsList';
 import MobileCategoryChips from '@/components/mobile/MobileCategoryChips';
-import MobileFooter from '@/components/mobile/MobileFooter';
 
 export const dynamic = 'force-dynamic';
 
@@ -136,8 +135,6 @@ export default async function MobileTagPage({ params }: { params: Promise<{ slug
           </div>
         )}
       </div>
-
-      <MobileFooter />
     </div>
   );
 }

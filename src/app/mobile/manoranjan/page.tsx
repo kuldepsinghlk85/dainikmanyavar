@@ -1,7 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import MobileFooter from '@/components/mobile/MobileFooter';
 import { db } from '@/lib/db';
 import {
   Film,
@@ -203,8 +202,6 @@ export default async function MobileManoranjanPage({
           })
         )}
       </div>
-
-      <MobileFooter />
     </div>
   );
 }

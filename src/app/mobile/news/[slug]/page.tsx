@@ -6,7 +6,6 @@ import { db } from '@/lib/db';
 import { formatHindiTimeAgo, getPublicSiteUrl, getShortShareUrl } from '@/lib/utils';
 import { ArrowLeft, Clock, Eye, Share2, MessageCircle, Volume2 } from 'lucide-react';
 import MobileNewsList from '@/components/mobile/MobileNewsList';
-import MobileFooter from '@/components/mobile/MobileFooter';
 import AudioPlayer from '@/components/public/AudioPlayer';
 import UserActivityTracker from '@/components/public/UserActivityTracker';
 import ShareBar from '@/components/public/ShareBar';
@@ -220,7 +219,7 @@ export default async function MobileNewsDetailPage({
 
   const siteUrl = getPublicSiteUrl();
   const shortShareUrl = getShortShareUrl(article, siteUrl);
-  const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(
+  const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(
     `*${article.title}*\n\nदैनिक मान्यवर पर पूरी खबर पढ़ें:\n${shortShareUrl}`
   )}`;
 
@@ -312,8 +311,6 @@ export default async function MobileNewsDetailPage({
 
           <a
             href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
             className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-xs active:scale-95"
           >
             <MessageCircle className="w-3.5 h-3.5" />
@@ -448,9 +445,6 @@ export default async function MobileNewsDetailPage({
           />
         </div>
       )}
-
-      {/* Footer */}
-      <MobileFooter />
     </article>
   );
 }

@@ -76,7 +76,7 @@ npm run db:studio
 - The link must always open in a new tab (`target="_blank" rel="noopener noreferrer"`).
 - Components maintaining this:
   - Desktop public pages: `src/components/public/Footer.tsx` (rendered across public desktop pages).
-  - Mobile pages: `src/components/mobile/MobileFooter.tsx` (rendered across all pages under `src/app/mobile/`).
+  - Mobile pages: `src/components/mobile/MobileDrawer.tsx` (rendered in slide drawer footer across `/mobile` pages).
   - Admin pages: `src/app/admin/layout.tsx` (wraps all `/admin/*` views) and `src/app/admin/login/page.tsx`.
 
 ## Security — rules for any change

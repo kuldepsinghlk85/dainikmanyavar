@@ -9,7 +9,6 @@ import MobileHeroCard from '@/components/mobile/MobileHeroCard';
 import MobileNewsList from '@/components/mobile/MobileNewsList';
 import MobileReelsFeed from '@/components/mobile/MobileReelsFeed';
 import MobileManoranjanSection from '@/components/mobile/MobileManoranjanSection';
-import MobileFooter from '@/components/mobile/MobileFooter';
 import { Building2, Globe, MapPin, Sparkles, Newspaper } from 'lucide-react';
 
 // Dainik Manyavar Mobile Edition - Amar Ujala Style Layout (ISR 60s)
@@ -361,9 +360,6 @@ export default async function MobileHomePage() {
           icon={<Newspaper className="w-3.5 h-3.5 text-[#E53935]" />}
         />
       )}
-
-      {/* Footer */}
-      <MobileFooter />
     </div>
   );
 }

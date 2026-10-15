@@ -4,7 +4,6 @@ import { notFound, redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import MobileCategoryChips from '@/components/mobile/MobileCategoryChips';
 import MobileNewsList from '@/components/mobile/MobileNewsList';
-import MobileFooter from '@/components/mobile/MobileFooter';
 import { ArrowLeft, Flame } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -181,9 +180,6 @@ export default async function MobileCategoryPage({
 
       {/* Articles List */}
       <MobileNewsList articles={articles} />
-
-      {/* Footer */}
-      <MobileFooter />
     </div>
   );
 }

@@ -67,23 +67,42 @@ export default function ShareBar({
     return `*${title}*\n\nदैनिक मान्यवर पर पूरी खबर पढ़ें:\n${shortUrl}`;
   };
 
-  const handleWhatsAppShare = () => {
+  const openExternalLink = (url: string) => {
+    const isMobileDevice =
+      typeof window !== 'undefined' &&
+      (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || isMobile);
+    if (isMobileDevice) {
+      window.location.href = url;
+    } else {
+      window.open(url, '_blank');
+    }
+  };
+
+  const handleWhatsAppShare = (e?: React.MouseEvent) => {
     const text = encodeURIComponent(getWhatsAppShareText());
-    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+    const isMobileDevice =
+      typeof window !== 'undefined' &&
+      (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || isMobile);
+
+    if (isMobileDevice) {
+      window.location.href = `whatsapp://send?text=${text}`;
+    } else {
+      window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+    }
   };
 
   const handleFacebookShare = () => {
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shortUrl)}`, '_blank');
+    openExternalLink(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shortUrl)}`);
   };
 
   const handleTwitterShare = () => {
     const text = encodeURIComponent(`${title} | @dainikmanyawar`);
-    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(shortUrl)}`, '_blank');
+    openExternalLink(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(shortUrl)}`);
   };
 
   const handleTelegramShare = () => {
     const text = encodeURIComponent(title);
-    window.open(`https://t.me/share/url?url=${encodeURIComponent(shortUrl)}&text=${text}`, '_blank');
+    openExternalLink(`https://t.me/share/url?url=${encodeURIComponent(shortUrl)}&text=${text}`);
   };
 
   const handleNativeShare = async () => {
@@ -117,13 +136,22 @@ export default function ShareBar({
 
       {/* Share Buttons Module */}
       <div className="flex flex-wrap items-center gap-2">
-        <button
-          onClick={handleWhatsAppShare}
+        <a
+          href={`whatsapp://send?text=${encodeURIComponent(getWhatsAppShareText())}`}
+          onClick={(e) => {
+            const isMobileDevice =
+              typeof window !== 'undefined' &&
+              (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || isMobile);
+            if (!isMobileDevice) {
+              e.preventDefault();
+              window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(getWhatsAppShareText())}`, '_blank');
+            }
+          }}
           className="bg-[#25D366] hover:bg-green-600 text-white font-black px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition-transform active:scale-95 cursor-pointer"
           title="व्हाट्सएप पर शेयर करें"
         >
           <span>🟢 WhatsApp</span>
-        </button>
+        </a>
 
         <button
           onClick={handleFacebookShare}

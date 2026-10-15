@@ -1,7 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { db } from '@/lib/db';
-import MobileFooter from '@/components/mobile/MobileFooter';
 import EpaperFlipbookViewer from '@/components/public/EpaperFlipbookViewer';
 import EpaperDateSelector from '@/components/public/EpaperDateSelector';
 import { Newspaper, Calendar, Archive, ArrowLeft } from 'lucide-react';
@@ -167,8 +166,6 @@ export default async function MobileEpaperPage({
           </section>
         )}
       </main>
-
-      <MobileFooter />
     </div>
   );
 }

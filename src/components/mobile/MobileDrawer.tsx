@@ -493,6 +493,20 @@ export default function MobileDrawer({
               </Link>
             </div>
           )}
+          <div className="text-center text-[10px] text-stone-500 font-mono pt-2 border-t border-stone-200 dark:border-stone-800 space-y-0.5">
+            <div>&copy; {new Date().getFullYear()} दैनिक मान्यवर (Dainik Manyavar)</div>
+            <div className="text-stone-400">
+              Technology Partner:{' '}
+              <a
+                href="https://easylauncher.net"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-stone-600 dark:text-stone-300 hover:underline font-sans font-semibold"
+              >
+                EasyLauncher.net
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </div>

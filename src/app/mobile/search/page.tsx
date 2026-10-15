@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { db } from '@/lib/db';
 import MobileCategoryChips from '@/components/mobile/MobileCategoryChips';
 import MobileNewsList from '@/components/mobile/MobileNewsList';
-import MobileFooter from '@/components/mobile/MobileFooter';
 import MobileSearchInput from '@/components/mobile/MobileSearchInput';
 import { ArrowLeft, Search, Flame } from 'lucide-react';
 
@@ -96,9 +95,6 @@ export default async function MobileSearchPage({
       ) : (
         <MobileNewsList articles={articles} />
       )}
-
-      {/* Footer */}
-      <MobileFooter />
     </div>
   );
 }
