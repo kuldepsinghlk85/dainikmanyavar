@@ -18,6 +18,10 @@ export default function SettingsAdminPage() {
     festival_banner_title: '🎁 रक्षाबंधन पर्व की हार्दिक शुभकामनाएं! | दैनिक मान्यवर परिवार',
     festival_banner_image: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=800&q=80',
     festival_banner_link: '#',
+    official_website_url: 'https://dainikmanyavar.com/',
+    official_instagram_url: 'https://www.instagram.com/dainikmanyavarofficial/',
+    official_youtube_url: 'https://www.youtube.com/@DainikManyavarOfficial',
+    official_facebook_url: 'https://www.facebook.com/profile.php?id=61595721003030',
   });
 
   const [loading, setLoading] = useState(false);
@@ -509,6 +513,73 @@ export default function SettingsAdminPage() {
                   {settings.site_tagline || settings.site_subtitle}
                 </p>
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* Official Social Media Channels (Website, Instagram, YouTube, Facebook) */}
+        <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-sm space-y-4">
+          <div className="border-b border-stone-100 pb-2">
+            <h3 className="font-bold text-sm text-stone-900 flex items-center gap-2">
+              <span className="w-2.5 h-4 bg-[#EA580C] rounded-xs inline-block"></span>
+              <span>दैनिक मान्यवर ऑफिशियल सोशल मीडिया लिंक्स (Official Channels)</span>
+            </h3>
+            <p className="text-xs text-stone-500 mt-0.5">
+              वेबसाइट, सोशल कनेक्ट और पोस्ट जनरेटर में उपयोग होने वाले आधिकारिक चैनल लिंक्स
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-stone-700 mb-1">
+                🌐 मुख्य वेबसाइट (Website URL)
+              </label>
+              <input
+                type="text"
+                value={settings.official_website_url}
+                onChange={(e) => handleChange('official_website_url', e.target.value)}
+                className="w-full p-2.5 border border-stone-300 rounded-lg text-xs font-mono font-bold"
+                placeholder="https://dainikmanyavar.com/"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-stone-700 mb-1">
+                📸 ऑफिशियल इंस्टाग्राम (Instagram Profile URL)
+              </label>
+              <input
+                type="text"
+                value={settings.official_instagram_url}
+                onChange={(e) => handleChange('official_instagram_url', e.target.value)}
+                className="w-full p-2.5 border border-stone-300 rounded-lg text-xs font-mono font-bold text-pink-700"
+                placeholder="https://www.instagram.com/dainikmanyavarofficial/"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-stone-700 mb-1">
+                ▶️ ऑफिशियल यूट्यूब चैनल (YouTube Channel URL)
+              </label>
+              <input
+                type="text"
+                value={settings.official_youtube_url}
+                onChange={(e) => handleChange('official_youtube_url', e.target.value)}
+                className="w-full p-2.5 border border-stone-300 rounded-lg text-xs font-mono font-bold text-red-700"
+                placeholder="https://www.youtube.com/@DainikManyavarOfficial"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-stone-700 mb-1">
+                👍 ऑफिशियल फेसबुक पेज (Facebook Page URL)
+              </label>
+              <input
+                type="text"
+                value={settings.official_facebook_url}
+                onChange={(e) => handleChange('official_facebook_url', e.target.value)}
+                className="w-full p-2.5 border border-stone-300 rounded-lg text-xs font-mono font-bold text-blue-700"
+                placeholder="https://www.facebook.com/profile.php?id=61595721003030"
+              />
             </div>
           </div>
         </div>

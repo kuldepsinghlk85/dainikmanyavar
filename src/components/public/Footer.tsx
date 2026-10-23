@@ -2,19 +2,73 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { Youtube, Instagram, Facebook, Globe } from 'lucide-react';
+import { OFFICIAL_SOCIAL_LINKS, OFFICIAL_HANDLES } from '@/lib/social';
 
 export default function Footer() {
   return (
     <footer className="bg-[#FFF1E6] text-[#3F2A1D] pt-8 pb-4 border-t-4 border-[#F97316]">
       <div className="wrap">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-7 mb-6">
-          {/* Brand Info */}
+          {/* Brand Info & Official Social Badges */}
           <div>
             <h2 className="text-2xl font-extrabold text-[#C2410C] mb-2">दैनिक मान्यवर</h2>
             <p className="text-sm text-[#6B4A36] leading-relaxed mb-3">
               निष्पक्ष, तेज़ और भरोसेमंद खबरें। जनहित की आवाज, विकास और समाज के प्रति समर्पित डिजिटल समाचार मंच।
             </p>
-            <p className="text-xs text-[#9A5A2E]">📍 उत्तर प्रदेश, भारत</p>
+            <p className="text-xs text-[#9A5A2E] mb-3">📍 उत्तर प्रदेश, भारत</p>
+
+            {/* Official Social Channels Row */}
+            <div className="pt-2 border-t border-[#FDBA74]/60">
+              <p className="text-xs font-bold text-[#C2410C] mb-2">ऑफिशियल सोशल मीडिया:</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <a
+                  href={OFFICIAL_SOCIAL_LINKS.youtube}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-lg bg-[#FF0000] text-white flex items-center justify-center hover:scale-105 transition-transform shadow-2xs"
+                  title="YouTube: @DainikManyavarOfficial"
+                >
+                  <Youtube className="w-4 h-4" />
+                </a>
+                <a
+                  href={OFFICIAL_SOCIAL_LINKS.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#833AB4] via-[#FD1D1D] to-[#F77737] text-white flex items-center justify-center hover:scale-105 transition-transform shadow-2xs"
+                  title="Instagram: @dainikmanyavarofficial"
+                >
+                  <Instagram className="w-4 h-4" />
+                </a>
+                <a
+                  href={OFFICIAL_SOCIAL_LINKS.facebook}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-lg bg-[#1877F2] text-white flex items-center justify-center hover:scale-105 transition-transform shadow-2xs"
+                  title="Facebook Page: दैनिक मान्यवर"
+                >
+                  <Facebook className="w-4 h-4" />
+                </a>
+                <a
+                  href={OFFICIAL_SOCIAL_LINKS.whatsapp}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-lg bg-[#25D366] text-white flex items-center justify-center hover:scale-105 transition-transform shadow-2xs font-bold text-xs"
+                  title="WhatsApp: +91 93361 81297"
+                >
+                  💬
+                </a>
+                <a
+                  href={OFFICIAL_SOCIAL_LINKS.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-lg bg-[#EA580C] text-white flex items-center justify-center hover:scale-105 transition-transform shadow-2xs"
+                  title="वेबसाइट: dainikmanyavar.com"
+                >
+                  <Globe className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
           </div>
 
           {/* Quick Links & Services */}
@@ -43,7 +97,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="https://wa.me/919336181297"
+                  href={OFFICIAL_SOCIAL_LINKS.whatsapp}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-[#16A34A] transition-colors font-semibold flex items-center gap-1 text-emerald-800"
@@ -61,17 +115,17 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="mailto:editor.dainikmanyavar@gmail.com"
+                  href={`mailto:${OFFICIAL_SOCIAL_LINKS.email}`}
                   className="hover:text-[#EA580C] transition-colors text-xs flex items-center gap-1 text-stone-600 truncate max-w-[200px]"
-                  title="editor.dainikmanyavar@gmail.com"
+                  title={OFFICIAL_SOCIAL_LINKS.email}
                 >
-                  <span>✉️ editor.dainikmanyavar@gmail.com</span>
+                  <span>✉️ {OFFICIAL_SOCIAL_LINKS.email}</span>
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* Active Categories with Content (Jaunpur link removed) */}
+          {/* Active Categories with Content */}
           <div>
             <h4 className="font-bold text-[#3F2A1D] mb-3 text-base">महत्वपूर्ण श्रेणियां</h4>
             <ul className="space-y-2 text-sm text-[#6B4A36]">

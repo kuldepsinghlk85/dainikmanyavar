@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ImageUploader from '@/components/admin/ImageUploader';
 import HtmlContentEditor from '@/components/admin/HtmlContentEditor';
+import ParagraphBlockEditor from '@/components/admin/ParagraphBlockEditor';
 import VoiceInputButton from '@/components/public/VoiceInputButton';
 import AutoTranslateButton from '@/components/admin/AutoTranslateButton';
 import DistrictMultiSelector from '@/components/admin/DistrictMultiSelector';
@@ -732,13 +733,12 @@ export default function AddNewsPage() {
           />
         </div>
 
-        {/* HTML & Visual Content Editor */}
-        <HtmlContentEditor
+        {/* ✍️ फोटो अपलोड के साथ पैराग्राफ (Paragraphs with Photo Uploads - User's Exact Feature) */}
+        <ParagraphBlockEditor
           value={content}
           onChange={(html) => setContent(html)}
-          required
-          label="पूरा समाचार विवरण (Full Content Body - HTML/Visual Editor) *"
-          placeholder="<p>समाचार की विस्तृत जानकारी यहाँ दर्ज करें या HTML डेटा पेस्ट करें...</p>"
+          label="3. फोटो अपलोड के साथ पैराग्राफ (Paragraphs with Photo Uploads)"
+          subtitleHint="प्रत्येक पैराग्राफ खंड के लिए उप-शीर्षक, विवरण और फोटो बदलें या नया जोड़ें।"
         />
 
         {/* Flags & Toggles */}

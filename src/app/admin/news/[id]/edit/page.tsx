@@ -3,11 +3,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save, Eye, CheckCircle2, Image as ImageIcon, Volume2, Tag as TagIcon, Sparkles, ExternalLink, Plus, MapPin, Upload, X, FolderArchive, Bell } from 'lucide-react';
+import { ArrowLeft, Save, Eye, CheckCircle2, Image as ImageIcon, Volume2, Tag as TagIcon, Sparkles, ExternalLink, Plus, MapPin, Upload, X, FolderArchive, Bell, Share2 } from 'lucide-react';
 import ImageUploadWidget from '@/components/admin/ImageUploadWidget';
 import HtmlContentEditor from '@/components/admin/HtmlContentEditor';
+import ParagraphBlockEditor from '@/components/admin/ParagraphBlockEditor';
 import AutoTranslateButton from '@/components/admin/AutoTranslateButton';
 import DistrictMultiSelector, { LocationItem } from '@/components/admin/DistrictMultiSelector';
+import SocialPostGeneratorModal from '@/components/admin/SocialPostGeneratorModal';
 
 export default function EditArticleAdminPage() {
   const router = useRouter();
@@ -35,6 +37,8 @@ export default function EditArticleAdminPage() {
   const [locUploading, setLocUploading] = useState(false);
   const [locSubmitting, setLocSubmitting] = useState(false);
   const locFileInputRef = useRef<HTMLInputElement>(null);
+  const [showSocialModal, setShowSocialModal] = useState(false);
+  const [articleNewsId, setArticleNewsId] = useState<number | undefined>(undefined);
 
   const [form, setForm] = useState({
     title: '',
@@ -83,6 +87,7 @@ export default function EditArticleAdminPage() {
 
         if (artData.success && artData.data) {
           const a = artData.data;
+          if (a.newsId) setArticleNewsId(a.newsId);
           setForm({
             title: a.title || '',
             subtitle: a.subtitle || '',
@@ -469,8 +474,18 @@ export default function EditArticleAdminPage() {
             className="text-xs font-extrabold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors shadow-2xs"
           >
             <Bell className="w-3.5 h-3.5 text-red-600 animate-pulse" />
-            <span>🔔 पुश नोटिफिकेशन बनाएं</span>
+            <span>🔔 पुश नोटिफिकेशन</span>
           </Link>
+
+          <button
+            type="button"
+            onClick={() => setShowSocialModal(true)}
+            className="text-xs font-extrabold text-white bg-gradient-to-r from-orange-600 to-amber-600 hover:opacity-95 px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+            title="आधिकारिक सोशल मीडिया पोस्ट बनाएं"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            <span>📱 सोशल पोस्ट बनाएं</span>
+          </button>
         </div>
       </div>
 
@@ -519,13 +534,12 @@ export default function EditArticleAdminPage() {
           />
         </div>
 
-        {/* Content Body with HTML & Visual Editor */}
-        <HtmlContentEditor
+        {/* ✍️ फोटो अपलोड के साथ पैराग्राफ (Paragraphs with Photo Uploads - User's Exact Feature) */}
+        <ParagraphBlockEditor
           value={form.content}
           onChange={(html) => setForm({ ...form, content: html })}
-          required
-          label="विस्तृत समाचार सामग्री (Content Body) *"
-          placeholder="यहाँ पूरा समाचार लिखें या HTML डेटा फ़ीड कोड पेस्ट करें..."
+          label="3. फोटो अपलोड के साथ पैराग्राफ (Paragraphs with Photo Uploads)"
+          subtitleHint="प्रत्येक पैराग्राफ खंड के लिए उप-शीर्षक, विवरण और फोटो बदलें या नया जोड़ें।"
         />
 
         {/* Image & Audio Settings */}
@@ -975,6 +989,22 @@ export default function EditArticleAdminPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Social Post Creator Modal */}
+      {showSocialModal && (
+        <SocialPostGeneratorModal
+          isOpen={showSocialModal}
+          onClose={() => setShowSocialModal(false)}
+          article={{
+            id,
+            newsId: articleNewsId,
+            title: form.title,
+            slug: form.slug,
+            excerpt: form.excerpt,
+            featuredImage: form.featuredImage,
+          }}
+        />
       )}
     </div>
   );

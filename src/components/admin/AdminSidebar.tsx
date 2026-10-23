@@ -74,6 +74,7 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
         { label: 'डैशबोर्ड (Dashboard)', href: '/admin', icon: LayoutDashboard },
         { label: 'सभी समाचार (All News)', href: '/admin/news', icon: Newspaper },
         { label: 'नया समाचार जोड़ें', href: '/admin/news/new', icon: PlusCircle },
+        { label: '🔗 शॉर्ट लिंक्स व सोशल (Short Links & Social)', href: '/admin/short-links', icon: Globe },
         { label: '🔥 ब्रेकिंग न्यूज़ टिकर (Breaking Ticker)', href: '/admin/breaking', icon: Flame },
         { label: '🌟 मुख्य स्लाइडर व टॉप न्यूज़ (Hero Slider)', href: '/admin/slider', icon: Sliders },
         { label: '🔔 पुश नोटिफिकेशन (Push System)', href: '/admin/notifications', icon: Bell },

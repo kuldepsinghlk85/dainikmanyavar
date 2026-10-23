@@ -4,6 +4,7 @@ import React, { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import ImageUploader from '@/components/admin/ImageUploader';
 import HtmlContentEditor from '@/components/admin/HtmlContentEditor';
+import ParagraphBlockEditor from '@/components/admin/ParagraphBlockEditor';
 import VoiceInputButton from '@/components/public/VoiceInputButton';
 import { ArrowLeft, Save, Eye, Heart, Share2, Volume2, RotateCcw, History } from 'lucide-react';
 import { formatCount } from '@/lib/utils';
@@ -413,13 +414,12 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
           />
         </div>
 
-        {/* Content with HTML & Visual Editor */}
-        <HtmlContentEditor
+        {/* ✍️ फोटो अपलोड के साथ पैराग्राफ (Paragraphs with Photo Uploads - User's Exact Feature) */}
+        <ParagraphBlockEditor
           value={content}
           onChange={(html) => setContent(html)}
-          required
-          label="पूरा समाचार विवरण (Full Content Body - HTML/Visual Editor) *"
-          placeholder="यहाँ पूरा समाचार लिखें या HTML डेटा फ़ीड कोड पेस्ट करें..."
+          label="3. फोटो अपलोड के साथ पैराग्राफ (Paragraphs with Photo Uploads)"
+          subtitleHint="प्रत्येक पैराग्राफ खंड के लिए उप-शीर्षक, विवरण और फोटो बदलें या नया जोड़ें।"
         />
 
         {/* Toggles */}

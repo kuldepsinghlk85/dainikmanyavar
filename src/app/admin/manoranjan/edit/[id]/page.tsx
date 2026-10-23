@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import ImageUploader from '@/components/admin/ImageUploader';
 import HtmlContentEditor from '@/components/admin/HtmlContentEditor';
+import ParagraphBlockEditor from '@/components/admin/ParagraphBlockEditor';
 import VoiceInputButton from '@/components/public/VoiceInputButton';
 import AutoTranslateButton from '@/components/admin/AutoTranslateButton';
 import {
@@ -496,20 +497,13 @@ export default function EditManoranjanArticlePage() {
           />
         </div>
 
-        {/* 5. Detailed Article Body (HtmlContentEditor + Voice Typing) */}
-        <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs space-y-3">
-          <label className="block text-xs font-black text-stone-900 uppercase tracking-wider">
-            5. विस्तृत लेख / समाचार विवरण (Detailed Content) *
-          </label>
-          <p className="text-[11px] text-stone-500">
-            अखबार की तरह पैराग्राफ, सब-हेडिंग्स, कोट्स आदि से सजाएं। एडिटर के अंदर मौजूद माइक द्वारा सीधे बोलकर भी लिख सकते हैं।
-          </p>
-          <HtmlContentEditor
-            value={content}
-            onChange={(val) => setContent(val)}
-            placeholder="यहाँ विस्तृत मनोरंजन समाचार, रिव्यू या कहानी लिखें अथवा माइक द्वारा बोलें..."
-          />
-        </div>
+        {/* ✍️ 5. फोटो अपलोड के साथ पैराग्राफ (Paragraphs with Photo Uploads) */}
+        <ParagraphBlockEditor
+          value={content}
+          onChange={(val) => setContent(val)}
+          label="5. फोटो अपलोड के साथ पैराग्राफ (Paragraphs with Photo Uploads)"
+          subtitleHint="प्रत्येक पैराग्राफ खंड के लिए उप-शीर्षक, विवरण और फोटो बदलें या नया जोड़ें।"
+        />
 
         {/* 6. Video / Reel Integration (First-class Video Data Content) */}
         <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs space-y-3">

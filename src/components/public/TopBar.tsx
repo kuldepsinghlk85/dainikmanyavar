@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { Youtube, Instagram, Facebook } from 'lucide-react';
+import { OFFICIAL_SOCIAL_LINKS } from '@/lib/social';
 
 export default function TopBar() {
   const [mounted, setMounted] = useState(false);
@@ -24,9 +26,52 @@ export default function TopBar() {
       <div className="wrap flex flex-wrap justify-between items-center py-1.5 gap-2">
         <div className="flex items-center gap-2 text-[11px] sm:text-xs" suppressHydrationWarning>
           <span>📅 {currentDate}</span>
-          <span className="hidden sm:inline">|</span>
+          <span className="hidden sm:inline text-stone-300">|</span>
           <span className="hidden sm:inline">📍 उत्तर प्रदेश</span>
+          <span className="hidden md:inline text-stone-300">|</span>
+
+          {/* Top Bar Quick Social Follow Icons */}
+          <div className="hidden md:flex items-center gap-1.5 pl-1">
+            <span className="text-[10px] text-stone-400 font-bold">फॉलो करें:</span>
+            <a
+              href={OFFICIAL_SOCIAL_LINKS.youtube}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#FF0000] hover:scale-115 transition-transform"
+              title="यूट्यूब: @DainikManyavarOfficial"
+            >
+              <Youtube className="w-3.5 h-3.5" />
+            </a>
+            <a
+              href={OFFICIAL_SOCIAL_LINKS.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#E4405F] hover:scale-115 transition-transform"
+              title="इंस्टाग्राम: @dainikmanyavarofficial"
+            >
+              <Instagram className="w-3.5 h-3.5" />
+            </a>
+            <a
+              href={OFFICIAL_SOCIAL_LINKS.facebook}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#1877F2] hover:scale-115 transition-transform"
+              title="फेसबुक: दैनिक मान्यवर"
+            >
+              <Facebook className="w-3.5 h-3.5" />
+            </a>
+            <a
+              href={OFFICIAL_SOCIAL_LINKS.whatsapp}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#25D366] hover:scale-115 transition-transform text-xs"
+              title="व्हाट्सएप: +91 93361 81297"
+            >
+              💬
+            </a>
+          </div>
         </div>
+
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap text-[11px] sm:text-xs">
           <Link href="/category/latest" className="hover:text-[#EA580C] font-medium hidden sm:inline">
             ताज़ा ख़बरें

@@ -12,7 +12,9 @@ import {
   ExternalLink,
   Globe,
   ListFilter,
+  Share2,
 } from 'lucide-react';
+import { OFFICIAL_SOCIAL_LINKS } from '@/lib/social';
 
 interface ArticleItem {
   id: string;
@@ -43,8 +45,8 @@ export default function ExportLinksModal({
     selectedIds.length > 0 ? 'selected' : 'all'
   );
 
-  // Line style in TXT: 'pair' (Full Link | Short Link), 'tab' (Tab separated), or 'detailed' (Title + Links)
-  const [txtFormat, setTxtFormat] = useState<'pair' | 'tab' | 'detailed'>('pair');
+  // Line style in TXT: 'pair' (Full Link | Short Link), 'tab' (Tab separated), 'detailed' (Title + Links), or 'social' (Social Post with official handles)
+  const [txtFormat, setTxtFormat] = useState<'pair' | 'tab' | 'detailed' | 'social'>('pair');
 
   // Domain selection: 'live' (https://dainikmanyavar.com) or 'current' (window.location.origin)
   const [useLiveDomain, setUseLiveDomain] = useState<boolean>(true);
@@ -108,6 +110,16 @@ export default function ExportLinksModal({
       return linkItems
         .map((item) => `${item.fullUrl}\t${item.shortUrl}`)
         .join('\n');
+    }
+
+    if (txtFormat === 'social') {
+      // Social Media ready-to-publish posts with official links
+      return linkItems
+        .map(
+          (item) =>
+            `📰 *${item.title}*\n\n👉 पूरी खबर विस्तार से पढ़ें:\n${item.shortUrl}\n\n━━━━━━━━━━━━━━━━━━━━\nदैनिक मान्यवर के आधिकारिक चैनल्स से जुड़े रहें:\n🌐 वेबसाइट: ${OFFICIAL_SOCIAL_LINKS.website}\n📸 इंस्टाग्राम: ${OFFICIAL_SOCIAL_LINKS.instagram}\n▶️ यूट्यूब: ${OFFICIAL_SOCIAL_LINKS.youtube}\n👍 फेसबुक: ${OFFICIAL_SOCIAL_LINKS.facebook}\n📲 व्हाट्सएप: ${OFFICIAL_SOCIAL_LINKS.whatsapp}\n`
+        )
+        .join('\n────────────────────────────────────\n\n');
     }
 
     // Detailed format: Title, Full Link, Short Link
@@ -321,6 +333,19 @@ export default function ExportLinksModal({
                   title="शीर्षक + लिंक"
                 >
                   शीर्षक सहित
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTxtFormat('social')}
+                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
+                    txtFormat === 'social'
+                      ? 'bg-[#EA580C] text-white shadow-xs font-black'
+                      : 'text-stone-700 hover:text-stone-900 font-bold'
+                  }`}
+                  title="सोशल मीडिया पोस्ट फॉर्मेट (ऑफ़िशियल चैनल्स सहित)"
+                >
+                  <Share2 className="w-3 h-3" />
+                  <span>सोशल पोस्ट</span>
                 </button>
               </div>
             </div>

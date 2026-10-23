@@ -2,6 +2,7 @@ import React from 'react';
 import { db } from '@/lib/db';
 import { Link as LinkIcon, ExternalLink } from 'lucide-react';
 import { formatCount, getPublicSiteUrl } from '@/lib/utils';
+import { OFFICIAL_SOCIAL_LINKS, OFFICIAL_HANDLES } from '@/lib/social';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +20,45 @@ export default async function ShortLinksAdminPage() {
       <div>
         <h1 className="text-2xl font-extrabold text-stone-900">शॉर्ट लिंक्स (Short URLs Manager)</h1>
         <p className="text-xs text-stone-500">WhatsApp व सोशल मीडिया शेयरिंग हेतु जनरेट शॉर्ट कोड्स (`/s/[code]`)</p>
+      </div>
+
+      {/* Official Social Channels Strip */}
+      <div className="p-3 bg-orange-50/80 border border-orange-200 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs">
+        <span className="font-bold text-stone-800">दैनिक मान्यवर आधिकारिक सोशल हैंडल्स:</span>
+        <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold">
+          <a
+            href={OFFICIAL_SOCIAL_LINKS.youtube}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-[#FF0000] text-white px-2 py-0.5 rounded flex items-center gap-1 hover:opacity-90 shadow-2xs"
+          >
+            ▶️ {OFFICIAL_HANDLES.youtube}
+          </a>
+          <a
+            href={OFFICIAL_SOCIAL_LINKS.instagram}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-gradient-to-r from-pink-600 to-amber-600 text-white px-2 py-0.5 rounded flex items-center gap-1 hover:opacity-90 shadow-2xs"
+          >
+            📸 {OFFICIAL_HANDLES.instagram}
+          </a>
+          <a
+            href={OFFICIAL_SOCIAL_LINKS.facebook}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-[#1877F2] text-white px-2 py-0.5 rounded flex items-center gap-1 hover:opacity-90 shadow-2xs"
+          >
+            👍 Facebook Page
+          </a>
+          <a
+            href={OFFICIAL_SOCIAL_LINKS.website}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-[#EA580C] text-white px-2 py-0.5 rounded flex items-center gap-1 hover:opacity-90 shadow-2xs"
+          >
+            🌐 dainikmanyavar.com
+          </a>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden">

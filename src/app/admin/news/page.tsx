@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Newspaper, PlusCircle, Trash2, Edit, Eye, CheckSquare, Square, AlertOctagon, Archive, RotateCcw, Film, Download, Link2 } from 'lucide-react';
+import { Newspaper, PlusCircle, Trash2, Edit, Eye, CheckSquare, Square, AlertOctagon, Archive, RotateCcw, Film, Download, Link2, Share2 } from 'lucide-react';
 import DeleteConfirmModal from '@/components/admin/DeleteConfirmModal';
 import ExportLinksModal from '@/components/admin/ExportLinksModal';
+import SocialPostGeneratorModal from '@/components/admin/SocialPostGeneratorModal';
 
 interface Article {
   id: string;
@@ -28,6 +29,7 @@ export default function AdminNewsPage() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [socialArticle, setSocialArticle] = useState<Article | null>(null);
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     action: 'CLEAR_ALL' | 'DELETE_SELECTED';
@@ -571,6 +573,16 @@ export default function AdminNewsPage() {
                             <Edit className="w-3.5 h-3.5" />
                           </Link>
 
+                          {/* Social Post Creator */}
+                          <button
+                            type="button"
+                            onClick={() => setSocialArticle(art)}
+                            className="p-1.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:opacity-90 text-white rounded-lg transition-all cursor-pointer shadow-2xs"
+                            title="सोशल मीडिया पोस्ट बनाएं (ऑफिशियल लिंक्स सहित)"
+                          >
+                            <Share2 className="w-3.5 h-3.5" />
+                          </button>
+
                           {/* 1-Click Archive Button if Active */}
                           {art.status !== 'ARCHIVED' ? (
                             <button
@@ -632,6 +644,20 @@ export default function AdminNewsPage() {
         articles={articles}
         selectedIds={selectedIds}
       />
+
+      {/* Social Post Creator Modal */}
+      {socialArticle && (
+        <SocialPostGeneratorModal
+          isOpen={!!socialArticle}
+          onClose={() => setSocialArticle(null)}
+          article={{
+            id: socialArticle.id,
+            newsId: socialArticle.newsId,
+            title: socialArticle.title,
+            slug: socialArticle.slug,
+          }}
+        />
+      )}
     </div>
   );
 }

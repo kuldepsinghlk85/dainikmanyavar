@@ -3,8 +3,9 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { X, User, ChevronRight, MapPin, Monitor, Phone, Info, Globe, Sparkles, Newspaper } from 'lucide-react';
+import { X, User, ChevronRight, MapPin, Monitor, Phone, Info, Globe, Sparkles, Newspaper, Youtube, Instagram, Facebook } from 'lucide-react';
 import { DrawerConfig, DEFAULT_MOBILE_MENU_CONFIG } from '@/lib/mobileMenuDefaults';
+import { OFFICIAL_SOCIAL_LINKS } from '@/lib/social';
 
 interface MobileDrawerProps {
   isOpen: boolean;
@@ -481,10 +482,64 @@ export default function MobileDrawer({
           </div>
         )}
 
-        {/* Footer Info */}
-        <div className="p-3 bg-stone-50 dark:bg-[#181818] border-t border-stone-200 dark:border-stone-800 mt-auto space-y-2 text-xs font-semibold text-stone-600 dark:text-stone-400">
+        {/* Footer Info & Official Social Channels */}
+        <div className="p-3 bg-stone-50 dark:bg-[#181818] border-t border-stone-200 dark:border-stone-800 mt-auto space-y-2.5 text-xs font-semibold text-stone-600 dark:text-stone-400">
+          {/* Official Social Media Follow Row */}
+          <div className="pb-2 border-b border-stone-200 dark:border-stone-800">
+            <span className="block text-[10px] font-black text-stone-500 uppercase tracking-wider mb-1.5">
+              ऑफिशियल सोशल मीडिया:
+            </span>
+            <div className="flex items-center justify-between gap-1.5">
+              <a
+                href={OFFICIAL_SOCIAL_LINKS.youtube}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-1.5 bg-[#FF0000] text-white rounded-lg flex items-center justify-center text-xs shadow-2xs"
+                title="यूट्यूब"
+              >
+                <Youtube className="w-3.5 h-3.5" />
+              </a>
+              <a
+                href={OFFICIAL_SOCIAL_LINKS.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-1.5 bg-gradient-to-tr from-[#833AB4] via-[#FD1D1D] to-[#F77737] text-white rounded-lg flex items-center justify-center text-xs shadow-2xs"
+                title="इंस्टाग्राम"
+              >
+                <Instagram className="w-3.5 h-3.5" />
+              </a>
+              <a
+                href={OFFICIAL_SOCIAL_LINKS.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-1.5 bg-[#1877F2] text-white rounded-lg flex items-center justify-center text-xs shadow-2xs"
+                title="फेसबुक"
+              >
+                <Facebook className="w-3.5 h-3.5" />
+              </a>
+              <a
+                href={OFFICIAL_SOCIAL_LINKS.whatsapp}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-1.5 bg-[#25D366] text-white rounded-lg flex items-center justify-center text-xs shadow-2xs font-bold"
+                title="व्हाट्सएप"
+              >
+                💬
+              </a>
+              <a
+                href={OFFICIAL_SOCIAL_LINKS.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-1.5 bg-[#EA580C] text-white rounded-lg flex items-center justify-center text-xs shadow-2xs"
+                title="वेबसाइट"
+              >
+                <Globe className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          </div>
+
           {config.showContact !== false && (
-            <div className="flex justify-between items-center text-[11px] text-stone-500 dark:text-stone-400 pt-1">
+            <div className="flex justify-between items-center text-[11px] text-stone-500 dark:text-stone-400 pt-0.5">
               <Link href="/mobile/contact" onClick={onClose} className="hover:underline flex items-center gap-1">
                 <Phone className="w-3 h-3" /> संपर्क
               </Link>
