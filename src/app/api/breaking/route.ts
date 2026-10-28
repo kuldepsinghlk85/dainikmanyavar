@@ -8,7 +8,7 @@ export async function GET() {
         isArchived: false,
         active: true,
       },
-      orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
+      orderBy: [{ createdAt: 'desc' }, { priority: 'desc' }],
       include: {
         article: {
           select: { id: true, title: true, slug: true },

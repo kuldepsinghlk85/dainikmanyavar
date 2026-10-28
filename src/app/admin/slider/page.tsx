@@ -7,6 +7,8 @@ import {
   Sliders,
   ArrowUp,
   ArrowDown,
+  ChevronsUp,
+  ChevronsDown,
   Trash2,
   Plus,
   Save,
@@ -105,8 +107,8 @@ export default function AdminSliderPage() {
   };
 
   // Add article to slider
+  // Add article to slider (Prepend to TOP as #1)
   const handleAddArticle = (art: SearchArticle) => {
-    const nextOrder = items.length > 0 ? Math.max(...items.map((i) => i.order)) + 1 : 1;
     const newItem: SliderItem = {
       id: art.id,
       newsId: art.newsId,
@@ -114,14 +116,16 @@ export default function AdminSliderPage() {
       slug: art.slug,
       featuredImage: art.featuredImage,
       publishedAt: art.publishedAt,
-      order: nextOrder,
+      order: 1,
       enabled: true,
       category: art.category,
     };
-    setItems((prev) => [...prev, newItem]);
+    // Prepend to top (#1) and re-index all subsequent items
+    const reordered = [newItem, ...items].map((item, idx) => ({ ...item, order: idx + 1 }));
+    setItems(reordered);
     setSearchResults((prev) => prev.filter((a) => a.id !== art.id));
     setIsDirty(true);
-    setMsg('समाचार स्लाइडर सूची में जोड़ दिया गया! सहेजने के लिए "क्रम व सेटिंग्स सुरक्षित करें" पर क्लिक करें।');
+    setMsg('ताज़ा समाचार सबसे ऊपर (#1 शीर्ष) जोड़ दिया गया है! सहेजने के लिए "क्रम व सेटिंग्स सुरक्षित करें" पर क्लिक करें।');
   };
 
   // Move item UP
@@ -145,6 +149,28 @@ export default function AdminSliderPage() {
     next[index] = next[index + 1];
     next[index + 1] = temp;
     // Re-assign 1-based order
+    const reordered = next.map((item, idx) => ({ ...item, order: idx + 1 }));
+    setItems(reordered);
+    setIsDirty(true);
+  };
+
+  // Move item directly to TOP (शीर्ष पर लाएं)
+  const handleMoveToTop = (index: number) => {
+    if (index === 0) return;
+    const next = [...items];
+    const [target] = next.splice(index, 1);
+    next.unshift(target);
+    const reordered = next.map((item, idx) => ({ ...item, order: idx + 1 }));
+    setItems(reordered);
+    setIsDirty(true);
+  };
+
+  // Move item directly to BOTTOM (सबसे नीचे भेजें)
+  const handleMoveToBottom = (index: number) => {
+    if (index === items.length - 1) return;
+    const next = [...items];
+    const [target] = next.splice(index, 1);
+    next.push(target);
     const reordered = next.map((item, idx) => ({ ...item, order: idx + 1 }));
     setItems(reordered);
     setIsDirty(true);
@@ -377,7 +403,7 @@ export default function AdminSliderPage() {
                 >
                   {/* Left: Sequence Position & Up/Down Arrows */}
                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="flex items-center gap-1 bg-stone-100 p-1.5 rounded-xl border border-stone-200 shrink-0">
+                    <div className="flex items-center gap-1.5 bg-stone-100 p-1.5 rounded-xl border border-stone-200 shrink-0">
                       <span className="w-7 h-7 bg-[#EA580C] text-white font-mono font-black text-xs rounded-lg flex items-center justify-center shadow-xs">
                         #{index + 1}
                       </span>
@@ -387,7 +413,7 @@ export default function AdminSliderPage() {
                           type="button"
                           onClick={() => handleMoveUp(index)}
                           disabled={isFirst}
-                          title="ऊपर ले जाएं (Move Up)"
+                          title="एक स्थान ऊपर ले जाएं (Move Up)"
                           className="p-1 text-stone-600 hover:text-stone-900 hover:bg-white rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                         >
                           <ArrowUp className="w-3.5 h-3.5" />
@@ -396,10 +422,31 @@ export default function AdminSliderPage() {
                           type="button"
                           onClick={() => handleMoveDown(index)}
                           disabled={isLast}
-                          title="नीचे ले जाएं (Move Down)"
+                          title="एक स्थान नीचे खिसकाएं (Move Down)"
                           className="p-1 text-stone-600 hover:text-stone-900 hover:bg-white rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                         >
                           <ArrowDown className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="flex flex-col gap-0.5 border-l border-stone-200 pl-1">
+                        <button
+                          type="button"
+                          onClick={() => handleMoveToTop(index)}
+                          disabled={isFirst}
+                          title="सीधे सबसे ऊपर शीर्ष पर लाएं (Move to Top)"
+                          className="p-1 text-[#EA580C] hover:text-orange-800 hover:bg-white rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                          <ChevronsUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMoveToBottom(index)}
+                          disabled={isLast}
+                          title="सीधे सबसे नीचे भेजें (Move to Bottom)"
+                          className="p-1 text-stone-500 hover:text-stone-800 hover:bg-white rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                          <ChevronsDown className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>

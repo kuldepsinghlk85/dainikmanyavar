@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     const [items, articles] = await Promise.all([
       db.breakingNews.findMany({
         where,
-        orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
+        orderBy: [{ createdAt: 'desc' }, { priority: 'desc' }],
         include: {
           article: {
             select: { id: true, title: true, slug: true },
@@ -87,10 +87,11 @@ export async function POST(request: Request) {
         data: {
           customHeadline: headline,
           articleId: articleId || null,
-          priority: Number(priority) || 1,
+          priority: priority !== undefined ? Number(priority) : 3,
           active: active !== undefined ? Boolean(active) : true,
           isArchived: false,
           archivedAt: null,
+          createdAt: new Date(),
         },
         include: { article: true },
       });
@@ -208,6 +209,112 @@ export async function POST(request: Request) {
         success: true,
         message: `सभी ${count.count} आर्काइव्ड टिकर सफलतापूर्वक रिस्टोर व लाइव कर दिए गए!`,
       });
+    }
+
+    // 8. MOVE UP (ऊपर लाएं)
+    if (action === 'MOVE_UP' && id) {
+      const current = await db.breakingNews.findUnique({ where: { id } });
+      if (!current) return NextResponse.json({ success: false, error: 'टिकर नहीं मिला' }, { status: 404 });
+
+      // Find item immediately above (newer createdAt)
+      const prev = await db.breakingNews.findFirst({
+        where: {
+          isArchived: current.isArchived,
+          createdAt: { gt: current.createdAt },
+        },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      if (prev) {
+        // Swap createdAts
+        const tempTime = prev.createdAt;
+        let newCurrentTime = tempTime;
+        let newPrevTime = current.createdAt;
+        if (newCurrentTime.getTime() <= newPrevTime.getTime()) {
+          newCurrentTime = new Date(newPrevTime.getTime() + 1000);
+        }
+        await db.$transaction([
+          db.breakingNews.update({ where: { id: current.id }, data: { createdAt: newCurrentTime } }),
+          db.breakingNews.update({ where: { id: prev.id }, data: { createdAt: newPrevTime } }),
+        ]);
+      }
+
+      return NextResponse.json({ success: true, message: 'टिकर ऊपर लाया गया!' });
+    }
+
+    // 9. MOVE DOWN (नीचे खिसकाएं)
+    if (action === 'MOVE_DOWN' && id) {
+      const current = await db.breakingNews.findUnique({ where: { id } });
+      if (!current) return NextResponse.json({ success: false, error: 'टिकर नहीं मिला' }, { status: 404 });
+
+      // Find item immediately below (older createdAt)
+      const next = await db.breakingNews.findFirst({
+        where: {
+          isArchived: current.isArchived,
+          createdAt: { lt: current.createdAt },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (next) {
+        // Swap createdAts
+        const tempTime = next.createdAt;
+        let newCurrentTime = tempTime;
+        let newNextTime = current.createdAt;
+        if (newCurrentTime.getTime() >= newNextTime.getTime()) {
+          newCurrentTime = new Date(newNextTime.getTime() - 1000);
+        }
+        await db.$transaction([
+          db.breakingNews.update({ where: { id: current.id }, data: { createdAt: newCurrentTime } }),
+          db.breakingNews.update({ where: { id: next.id }, data: { createdAt: newNextTime } }),
+        ]);
+      }
+
+      return NextResponse.json({ success: true, message: 'टिकर नीचे खिसकाया गया!' });
+    }
+
+    // 10. MOVE TO TOP (सीधे सबसे ऊपर शीर्ष पर लाएं)
+    if (action === 'MOVE_TO_TOP' && id) {
+      const current = await db.breakingNews.findUnique({ where: { id } });
+      if (!current) return NextResponse.json({ success: false, error: 'टिकर नहीं मिला' }, { status: 404 });
+
+      const topItem = await db.breakingNews.findFirst({
+        where: { isArchived: current.isArchived },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      const bumpTime = topItem
+        ? new Date(Math.max(Date.now(), topItem.createdAt.getTime() + 1000))
+        : new Date();
+
+      await db.breakingNews.update({
+        where: { id: current.id },
+        data: { createdAt: bumpTime },
+      });
+
+      return NextResponse.json({ success: true, message: 'टिकर सबसे ऊपर (#1 शीर्ष) लाया गया!' });
+    }
+
+    // 11. MOVE TO BOTTOM (सीधे सबसे नीचे भेजें)
+    if (action === 'MOVE_TO_BOTTOM' && id) {
+      const current = await db.breakingNews.findUnique({ where: { id } });
+      if (!current) return NextResponse.json({ success: false, error: 'टिकर नहीं मिला' }, { status: 404 });
+
+      const bottomItem = await db.breakingNews.findFirst({
+        where: { isArchived: current.isArchived },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      const sinkTime = bottomItem
+        ? new Date(bottomItem.createdAt.getTime() - 1000)
+        : new Date();
+
+      await db.breakingNews.update({
+        where: { id: current.id },
+        data: { createdAt: sinkTime },
+      });
+
+      return NextResponse.json({ success: true, message: 'टिकर सबसे नीचे भेजा गया!' });
     }
 
     return NextResponse.json({ success: false, error: 'अमान्य अनुरोध (Invalid action)' }, { status: 400 });

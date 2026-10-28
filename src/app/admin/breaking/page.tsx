@@ -18,6 +18,10 @@ import {
   Search,
   AlertCircle,
   TrendingUp,
+  ArrowUp,
+  ArrowDown,
+  ChevronsUp,
+  ChevronsDown,
 } from 'lucide-react';
 
 interface ArticleOption {
@@ -83,10 +87,68 @@ export default function BreakingNewsAdminPage() {
     setFormData({
       customHeadline: '',
       articleId: '',
-      priority: 1,
+      priority: 3,
       active: true,
     });
     setIsModalOpen(true);
+  };
+
+  const handleMoveUp = async (id: string) => {
+    try {
+      const res = await fetch('/api/admin/breaking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'MOVE_UP', id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchItems();
+      }
+    } catch (err) {}
+  };
+
+  const handleMoveDown = async (id: string) => {
+    try {
+      const res = await fetch('/api/admin/breaking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'MOVE_DOWN', id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchItems();
+      }
+    } catch (err) {}
+  };
+
+  const handleMoveToTop = async (id: string) => {
+    try {
+      const res = await fetch('/api/admin/breaking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'MOVE_TO_TOP', id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMsg(data.message || 'टिकर सबसे ऊपर (#1 शीर्ष) लाया गया!');
+        fetchItems();
+      }
+    } catch (err) {}
+  };
+
+  const handleMoveToBottom = async (id: string) => {
+    try {
+      const res = await fetch('/api/admin/breaking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'MOVE_TO_BOTTOM', id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMsg(data.message || 'टिकर सबसे नीचे भेजा गया!');
+        fetchItems();
+      }
+    } catch (err) {}
   };
 
   const handleOpenEditModal = (item: BreakingItem) => {
@@ -535,8 +597,10 @@ export default function BreakingNewsAdminPage() {
             </p>
           </div>
         ) : (
-          items.map((item) => {
+          items.map((item, index) => {
             const isSelected = selectedIds.includes(item.id);
+            const isFirst = index === 0;
+            const isLast = index === items.length - 1;
 
             return (
               <div
@@ -561,6 +625,55 @@ export default function BreakingNewsAdminPage() {
                     )}
                   </button>
 
+                  {/* Sequence Position & Up/Down Arrows */}
+                  <div className="flex items-center gap-1.5 bg-stone-100 p-1 rounded-xl border border-stone-200 shrink-0">
+                    <span className="w-6 h-6 bg-[#DC2626] text-white font-mono font-black text-xs rounded-lg flex items-center justify-center shadow-xs">
+                      #{index + 1}
+                    </span>
+
+                    <div className="flex flex-col gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() => handleMoveUp(item.id)}
+                        disabled={isFirst || loading}
+                        title="एक स्थान ऊपर ले जाएं (Move Up)"
+                        className="p-1 text-stone-600 hover:text-stone-900 hover:bg-white rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                      >
+                        <ArrowUp className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMoveDown(item.id)}
+                        disabled={isLast || loading}
+                        title="एक स्थान नीचे खिसकाएं (Move Down)"
+                        className="p-1 text-stone-600 hover:text-stone-900 hover:bg-white rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                      >
+                        <ArrowDown className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="flex flex-col gap-0.5 border-l border-stone-200 pl-1">
+                      <button
+                        type="button"
+                        onClick={() => handleMoveToTop(item.id)}
+                        disabled={isFirst || loading}
+                        title="सीधे सबसे ऊपर शीर्ष पर लाएं (Move to Top)"
+                        className="p-1 text-red-600 hover:text-red-800 hover:bg-white rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                      >
+                        <ChevronsUp className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMoveToBottom(item.id)}
+                        disabled={isLast || loading}
+                        title="सीधे सबसे नीचे भेजें (Move to Bottom)"
+                        className="p-1 text-stone-500 hover:text-stone-800 hover:bg-white rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                      >
+                        <ChevronsDown className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="mt-0.5">
                     <Flame
                       className={`w-5 h-5 ${
@@ -573,6 +686,13 @@ export default function BreakingNewsAdminPage() {
 
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex flex-wrap items-center gap-2 text-[10px]">
+                      {/* Top Lead Badge */}
+                      {index === 0 && (
+                        <span className="bg-red-600 text-white px-2 py-0.5 rounded font-black text-[10px] flex items-center gap-1 shadow-xs">
+                          ⭐ सबसे ताज़ा / शीर्ष (#1 First)
+                        </span>
+                      )}
+
                       {/* Status Badges */}
                       {item.isArchived ? (
                         <span className="bg-amber-100 text-amber-900 border border-amber-200 px-2 py-0.5 rounded font-black">
@@ -763,9 +883,9 @@ export default function BreakingNewsAdminPage() {
                     onChange={(e) => setFormData({ ...formData, priority: Number(e.target.value) })}
                     className="w-full p-2.5 border border-stone-300 rounded-xl text-xs font-bold text-stone-800 focus:outline-none focus:border-[#EA580C]"
                   >
-                    <option value={1}>1 - सामान्य (Normal)</option>
+                    <option value={3}>3 - अति-महत्वपूर्ण (Top Urgent - शीर्ष प्राथमिकता)</option>
                     <option value={2}>2 - उच्च (High)</option>
-                    <option value={3}>3 - अति-महत्वपूर्ण (Top Urgent)</option>
+                    <option value={1}>1 - सामान्य (Normal)</option>
                   </select>
                 </div>
 
