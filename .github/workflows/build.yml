@@ -77,8 +77,22 @@ jobs:
           name: builder
           use: true
 
+      - name: 🔍 Check registry credentials
+        id: check_registry
+        env:
+          BUILD_USER: ${{ secrets.DANIKMANYAWAR_BUILD_USERNAME }}
+          BUILD_TOKEN: ${{ secrets.DANIKMANYAWAR_BUILD_TOKEN }}
+        run: |
+          if [ -n "$BUILD_USER" ] && [ -n "$BUILD_TOKEN" ]; then
+            echo "can_push=true" >> $GITHUB_OUTPUT
+            echo "✅ Registry credentials available"
+          else
+            echo "can_push=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ Registry credentials not provided; build will run without pushing to registry"
+          fi
+
       - name: 🔐 Login to GitLab Container Registry
-        if: ${{ inputs.push_image && secrets.DANIKMANYAWAR_BUILD_USERNAME != '' && secrets.DANIKMANYAWAR_BUILD_TOKEN != '' }}
+        if: ${{ inputs.push_image && steps.check_registry.outputs.can_push == 'true' }}
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -90,7 +104,7 @@ jobs:
         with:
           context: .
           file: ./.devops/Dockerfile
-          push: ${{ inputs.push_image && secrets.DANIKMANYAWAR_BUILD_USERNAME != '' && secrets.DANIKMANYAWAR_BUILD_TOKEN != '' }}
+          push: ${{ inputs.push_image && steps.check_registry.outputs.can_push == 'true' }}
           platforms: linux/amd64
           tags: |
             ${{ env.IMAGE }}:${{ steps.meta.outputs.short_sha }}
