@@ -272,31 +272,84 @@ export default function HtmlContentEditor({
       {/* WYSIWYG Formatting Toolbar (Visible in Visual Mode) */}
       {activeTab === 'visual' && (
         <div className="bg-stone-100/90 px-3 py-1.5 border-b border-stone-200 flex flex-wrap items-center gap-1">
-          {/* Headings */}
+          {/* Headings & Paragraph */}
           <button
             type="button"
             onClick={() => execCmd('formatBlock', '<p>')}
             className="px-2 py-1 text-xs font-bold text-stone-700 hover:bg-white rounded hover:text-stone-900 cursor-pointer"
             title="सामान्य पैराग्राफ (Paragraph)"
           >
-            <Pilcrow className="w-3.5 h-3.5" />
+            <Pilcrow className="w-3.5 h-3.5 inline mr-0.5" />
+            <span className="text-[10px]">पैरा</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => execCmd('formatBlock', '<h1>')}
+            className="px-2 py-1 text-xs font-black text-stone-800 hover:bg-white rounded hover:text-stone-950 cursor-pointer"
+            title="मुख्य हेडिंग 1 (Heading 1 - 28px)"
+          >
+            H1
           </button>
           <button
             type="button"
             onClick={() => execCmd('formatBlock', '<h2>')}
-            className="px-2 py-1 text-xs font-bold text-stone-700 hover:bg-white rounded hover:text-stone-900 cursor-pointer"
-            title="उप-शीर्षक 1 (Heading 2)"
+            className="px-2 py-1 text-xs font-black text-stone-800 hover:bg-white rounded hover:text-stone-950 cursor-pointer flex items-center gap-0.5"
+            title="बड़ी हेडिंग 2 (Heading 2 - 22px)"
           >
             <Heading2 className="w-3.5 h-3.5" />
+            <span>H2</span>
           </button>
           <button
             type="button"
             onClick={() => execCmd('formatBlock', '<h3>')}
-            className="px-2 py-1 text-xs font-bold text-stone-700 hover:bg-white rounded hover:text-stone-900 cursor-pointer"
-            title="उप-शीर्षक 2 (Heading 3)"
+            className="px-2 py-1 text-xs font-bold text-stone-700 hover:bg-white rounded hover:text-stone-900 cursor-pointer flex items-center gap-0.5"
+            title="मध्यम हेडिंग 3 (Heading 3 - 18px)"
           >
             <Heading3 className="w-3.5 h-3.5" />
+            <span>H3</span>
           </button>
+
+          <div className="h-4 w-px bg-stone-300 mx-1" />
+
+          {/* Font Size Selector (फॉन्ट आकार बड़ा / छोटा करने की सुविधा) */}
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] font-bold text-stone-500">फॉन्ट:</span>
+            <select
+              onChange={(e) => {
+                if (e.target.value) {
+                  execCmd('fontSize', e.target.value);
+                  e.target.value = '';
+                }
+              }}
+              defaultValue=""
+              className="text-[11px] font-bold py-1 px-1.5 bg-white border border-stone-300 rounded-md text-stone-800 cursor-pointer focus:outline-none"
+              title="चयनित टेक्स्ट का फॉन्ट आकार बदलें"
+            >
+              <option value="" disabled>आकार चुनें</option>
+              <option value="2">छोटा (13px)</option>
+              <option value="3">सामान्य (16px)</option>
+              <option value="4">मध्यम बड़ा (18px)</option>
+              <option value="5">बड़ा फॉन्ट (20px)</option>
+              <option value="6">बहुत बड़ा फॉन्ट (24px)</option>
+              <option value="7">विशाल हेडिंग (28px)</option>
+            </select>
+            <button
+              type="button"
+              onClick={() => execCmd('fontSize', '5')}
+              className="px-1.5 py-0.5 rounded bg-orange-100 hover:bg-orange-200 text-[#EA580C] text-[11px] font-black cursor-pointer shadow-2xs"
+              title="फॉन्ट बड़ा करें (A+ Large)"
+            >
+              A+
+            </button>
+            <button
+              type="button"
+              onClick={() => execCmd('fontSize', '6')}
+              className="px-1.5 py-0.5 rounded bg-orange-200 hover:bg-orange-300 text-orange-900 text-[11px] font-black cursor-pointer shadow-2xs"
+              title="फॉन्ट बहुत बड़ा करें (A++ Extra Large)"
+            >
+              A++
+            </button>
+          </div>
 
           <div className="h-4 w-px bg-stone-300 mx-1" />
 

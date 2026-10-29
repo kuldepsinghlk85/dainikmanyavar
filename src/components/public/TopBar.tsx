@@ -96,6 +96,10 @@ export default function TopBar() {
           <Link href="/user/dashboard" className="text-[#EA580C] font-black hover:underline flex items-center gap-1">
             <span>👤 पाठक खाता</span>
           </Link>
+          <span className="text-stone-300">|</span>
+          <Link href="/reporter/login" className="text-orange-700 font-black hover:underline flex items-center gap-1 bg-orange-100/60 px-2 py-0.5 rounded-md">
+            <span>✍️ रिपोर्टर कॉर्नर</span>
+          </Link>
         </div>
       </div>
     </div>

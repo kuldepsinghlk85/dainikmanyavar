@@ -423,6 +423,34 @@ export default async function MobileNewsDetailPage({
           </div>
         )}
 
+        {/* Author / Reporter Byline Box */}
+        {article.author && (
+          <div className="my-4 p-3.5 rounded-2xl bg-gradient-to-r from-orange-50 via-amber-50/40 to-stone-50 border border-orange-200/80 shadow-2xs flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#EA580C] to-amber-500 text-white font-bold flex items-center justify-center text-lg overflow-hidden shrink-0 shadow-sm">
+              {article.author.photo ? (
+                <img src={article.author.photo} alt={article.author.name} className="w-full h-full object-cover" />
+              ) : (
+                article.author.name.slice(0, 1)
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[9px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full bg-orange-100 text-orange-800">
+                  ✍️ {article.author.designation || 'संवाददाता'}
+                </span>
+                <span className="font-bold text-xs text-stone-900">
+                  {article.author.name}
+                </span>
+              </div>
+              {article.author.bio && (
+                <p className="text-[11px] text-stone-600 mt-0.5 line-clamp-2 leading-relaxed">
+                  {article.author.bio}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Bottom Social Share Bar */}
         <ShareBar
           articleId={article.id}

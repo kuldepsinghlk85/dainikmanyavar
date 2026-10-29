@@ -41,9 +41,10 @@ model User {
   password  String
   name      String
   role      Role     @default(EDITOR)
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  active          Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  reporterProfile ReporterProfile?
 }
 
 model Category {
@@ -91,23 +92,25 @@ model Location {
   active    Boolean      @default(true)
   createdAt DateTime     @default(now())
   updatedAt DateTime     @default(now()) @updatedAt
-  articles  Article[]
-  sources   NewsSource[]
+  articles         Article[]
+  sources          NewsSource[]
+  reporterProfiles ReporterProfile[]
 }
 
 model Author {
-  id          String    @id @default(uuid())
-  name        String
-  slug        String    @unique
-  photo       String?
-  bio         String?
-  designation String?
-  city        String?
-  authorType  String    @default("reporter") // reporter, editor, columnist, reviewer, guest_author
-  socialLinks String?
-  isVerified  Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  articles    Article[]
+  id               String            @id @default(uuid())
+  name             String
+  slug             String            @unique
+  photo            String?
+  bio              String?
+  designation      String?
+  city             String?
+  authorType       String            @default("reporter") // reporter, editor, columnist, reviewer, guest_author
+  socialLinks      String?
+  isVerified       Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  articles         Article[]
+  reporterProfiles ReporterProfile[]
 }
 
 model Article {
@@ -175,8 +178,9 @@ model Article {
   revisions         ArticleRevision[]
   audios            ArticleAudio[]
   shortLinks        ShortLink[]
-  breakingNews      BreakingNews[]
-  campaigns         NotificationCampaign[]
+  breakingNews         BreakingNews[]
+  campaigns            NotificationCampaign[]
+  reporterSubmissions  ReporterSubmission[]
 
   @@index([newsId])
   @@index([contentType])
@@ -892,3 +896,76 @@ model MovieReview {
 
   @@index([rating])
 }
+
+model ReporterProfile {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reporterId   String   @unique // e.g. "DM-REP-101"
+  fullName     String
+  mobileNumber String?
+  designation  String   @default("संवाददाता") // संवाददाता, जिला संवाददाता, विशेष संवाददाता, ब्यूरो चीफ
+  district     String?  // e.g. "जौनपुर", "वाराणसी"
+  locationId   String?
+  location     Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  bio          String?
+  photo        String?
+  authorId     String?
+  author       Author?  @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  submissions   ReporterSubmission[]
+  notifications ReporterNotification[]
+
+  @@index([reporterId])
+  @@index([district])
+}
+
+model ReporterSubmission {
+  id                String          @id @default(uuid())
+  reporterProfileId String
+  reporterProfile   ReporterProfile @relation(fields: [reporterProfileId], references: [id], onDelete: Cascade)
+  headline          String
+  subtitle          String?
+  categoryId        String?
+  locationId        String?
+  locationName      String?
+  eventDate         DateTime?
+  excerpt           String?
+  content           String
+  featuredImage     String?
+  additionalImages  String?         // JSON: Array<{ url: string, caption?: string }>
+  sourceNote        String?         // स्रोत या संपादक के लिए नोट
+  status            String          @default("DRAFT") // DRAFT, SUBMITTED, UNDER_REVIEW, CHANGES_REQUESTED, APPROVED, PUBLISHED, REJECTED, UNPUBLISHED
+  editorComment     String?         // सुधार या अस्वीकृति की टिप्पणी
+  reviewedBy        String?         // Admin user ID or name
+  reviewedAt        DateTime?
+  articleId         String?         // Linked published Article ID
+  article           Article?        @relation(fields: [articleId], references: [id], onDelete: SetNull)
+  publishedAt       DateTime?
+  revisionRequested Boolean         @default(false)
+  revisionNote      String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([reporterProfileId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ReporterNotification {
+  id                String          @id @default(uuid())
+  reporterProfileId String
+  reporterProfile   ReporterProfile @relation(fields: [reporterProfileId], references: [id], onDelete: Cascade)
+  title             String
+  message           String
+  type              String          @default("INFO") // SUBMISSION_ACCEPTED, CHANGES_REQUESTED, STORY_APPROVED, STORY_PUBLISHED, STORY_REJECTED
+  submissionId      String?
+  read              Boolean         @default(false)
+  createdAt         DateTime        @default(now())
+
+  @@index([reporterProfileId, read])
+}
+

@@ -221,16 +221,37 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
       take: 4,
       include: { tags: { include: { tag: true } } },
     }),
-    db.article.findMany({
-      where: { status: 'PUBLISHED' },
-      orderBy: [
-        { forceTrending: 'desc' },
-        { viewCount: 'desc' },
-        { publishedAt: 'desc' },
-      ],
-      take: 5,
-      select: { id: true, title: true, slug: true, viewCount: true },
-    }),
+    (async () => {
+      const section = await db.homepageSection.findUnique({
+        where: { sectionKey: 'trending_widget' },
+      });
+      let manualList: Array<{ id: string; order: number; enabled: boolean }> = [];
+      try {
+        if (section?.manualArticles) manualList = JSON.parse(section.manualArticles);
+      } catch (_) {}
+      const enabledIds = manualList.filter((m) => m.enabled !== false).sort((a, b) => a.order - b.order).map((m) => m.id);
+      if (enabledIds.length > 0) {
+        const dbItems = await db.article.findMany({
+          where: { id: { in: enabledIds }, status: 'PUBLISHED' },
+          select: { id: true, newsId: true, title: true, slug: true, viewCount: true, publishedAt: true },
+        });
+        const map = new Map(dbItems.map((a) => [a.id, a]));
+        const ordered = enabledIds
+          .map((id) => map.get(id))
+          .filter((item): item is NonNullable<typeof item> => Boolean(item));
+        if (ordered.length >= 10) return ordered.slice(0, 15);
+      }
+      return db.article.findMany({
+        where: { status: 'PUBLISHED' },
+        orderBy: [
+          { newsId: 'desc' },
+          { publishedAt: 'desc' },
+          { createdAt: 'desc' },
+        ],
+        take: 15,
+        select: { id: true, newsId: true, title: true, slug: true, viewCount: true, publishedAt: true },
+      });
+    })(),
   ]);
 
   const siteUrl = getPublicSiteUrl();
@@ -482,6 +503,37 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
                     #{t.name.replace(/^#/, '')}
                   </Link>
                 ))}
+              </div>
+            )}
+
+            {/* Author / Reporter Byline Box */}
+            {article.author && (
+              <div className="my-6 p-4 rounded-2xl bg-gradient-to-r from-orange-50 via-amber-50/40 to-stone-50 border border-orange-200/80 shadow-xs flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#EA580C] to-amber-500 text-white font-bold flex items-center justify-center text-xl overflow-hidden shrink-0 shadow-sm">
+                  {article.author.photo ? (
+                    <img src={article.author.photo} alt={article.author.name} className="w-full h-full object-cover" />
+                  ) : (
+                    article.author.name.slice(0, 1)
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full bg-orange-100 text-orange-800">
+                      ✍️ {article.author.designation || 'संवाददाता'}
+                    </span>
+                    <Link
+                      href={`/author/${article.author.slug}`}
+                      className="font-bold text-sm sm:text-base text-stone-900 hover:text-[#EA580C] transition-colors"
+                    >
+                      {article.author.name}
+                    </Link>
+                  </div>
+                  {article.author.bio && (
+                    <p className="text-xs text-stone-600 mt-1 line-clamp-2 leading-relaxed">
+                      {article.author.bio}
+                    </p>
+                  )}
+                </div>
               </div>
             )}
 

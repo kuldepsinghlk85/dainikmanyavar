@@ -16,72 +16,38 @@ import {
   Sparkles,
   Loader2,
   MoveVertical,
-  Check
+  Check,
+  Bold,
+  Italic,
+  Underline,
+  Heading2,
+  Heading3,
+  Type,
+  Highlighter,
+  Eraser,
+  Eye,
+  EyeOff,
+  List,
+  FolderOpen
 } from 'lucide-react';
 import VoiceInputButton from '@/components/public/VoiceInputButton';
 import HtmlContentEditor from '@/components/admin/HtmlContentEditor';
+import MediaGalleryModal from '@/components/admin/MediaGalleryModal';
+import {
+  ParagraphBlock,
+  uid,
+  formatTextToParagraphs,
+  serializeBlocksToHtml,
+} from '@/lib/paragraphBlocks';
 
-export interface ParagraphBlock {
-  id: string;
-  subtitle?: string;
-  imageUrl?: string;
-  imageCaption?: string;
-  text: string;
-}
+export type { ParagraphBlock };
+export { serializeBlocksToHtml, formatTextToParagraphs, uid };
 
 interface ParagraphBlockEditorProps {
   value: string;
   onChange: (html: string) => void;
   label?: string;
   subtitleHint?: string;
-}
-
-// Generate unique ID
-function uid(): string {
-  return 'b_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
-}
-
-// Format plain text into clean <p> HTML paragraphs
-function formatTextToParagraphs(rawText: string): string {
-  if (!rawText || !rawText.trim()) return '';
-  return rawText
-    .split(/\n\s*\n/)
-    .map((p) => p.trim())
-    .filter(Boolean)
-    .map((p) => `<p>${p.replace(/\n/g, '<br/>')}</p>`)
-    .join('\n');
-}
-
-// Serialize blocks array to production-grade Dainik Manyavar HTML
-function serializeBlocksToHtml(blocks: ParagraphBlock[]): string {
-  if (!blocks || blocks.length === 0) return '';
-
-  const htmlSections = blocks.map((block, idx) => {
-    const subtitleHtml = block.subtitle && block.subtitle.trim()
-      ? `<h3 class="text-xl sm:text-2xl font-bold text-stone-900 mt-6 mb-3 tracking-tight">${block.subtitle.trim()}</h3>`
-      : '';
-
-    const photoHtml = block.imageUrl && block.imageUrl.trim()
-      ? `<figure class="my-4 overflow-hidden rounded-2xl bg-stone-100 border border-stone-200 shadow-xs">
-          <img src="${block.imageUrl.trim()}" alt="${(block.imageCaption || block.subtitle || 'दैनिक मान्यवर समाचार चित्र').replace(/"/g, '&quot;')}" class="w-full max-h-[520px] object-cover" loading="lazy" />
-          ${block.imageCaption && block.imageCaption.trim() ? `<figcaption class="text-xs text-stone-600 bg-stone-50 px-3 py-1.5 border-t border-stone-200 italic text-center font-medium">📷 ${block.imageCaption.trim()}</figcaption>` : ''}
-        </figure>`
-      : '';
-
-    const textHtml = block.text && block.text.trim()
-      ? `<div class="paragraph-body text-stone-800 leading-relaxed text-base sm:text-lg space-y-3 font-normal">${formatTextToParagraphs(block.text)}</div>`
-      : '';
-
-    return `<section class="news-paragraph-block my-5 border-b border-stone-100 pb-5 last:border-b-0" data-block-id="${block.id}" data-block-index="${idx}">
-      ${subtitleHtml}
-      ${photoHtml}
-      ${textHtml}
-    </section>`;
-  }).join('\n\n');
-
-  // Embed JSON payload in safe HTML comment so it can be rehydrated with 100% fidelity on edit
-  const metadataComment = `\n<!-- __DM_ARTICLE_BLOCKS__:${JSON.stringify(blocks)} -->`;
-  return htmlSections + metadataComment;
 }
 
 // Extract blocks from HTML comment or parse existing HTML
@@ -225,6 +191,76 @@ export default function ParagraphBlockEditor({
   const [editorMode, setEditorMode] = useState<'blocks' | 'classic'>('blocks');
   const [uploadingBlockId, setUploadingBlockId] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [previewBlocks, setPreviewBlocks] = useState<Record<string, boolean>>({});
+  const [galleryTargetBlockId, setGalleryTargetBlockId] = useState<string | null>(null);
+
+  // Helper to wrap or apply formatting to selected text in a block's textarea
+  const applyFormatToBlock = (
+    blockId: string,
+    prefix: string,
+    suffix: string,
+    defaultPlaceholder: string = 'टेक्स्ट'
+  ) => {
+    const textarea = document.getElementById(`textarea-block-${blockId}`) as HTMLTextAreaElement | null;
+    const block = blocks.find((b) => b.id === blockId);
+    if (!block) return;
+
+    if (!textarea) {
+      handleBlockChange(blockId, 'text', (block.text || '') + ` ${prefix}${defaultPlaceholder}${suffix}`);
+      return;
+    }
+
+    const start = textarea.selectionStart ?? 0;
+    const end = textarea.selectionEnd ?? 0;
+    const currentText = block.text || '';
+    const selectedText = currentText.substring(start, end);
+
+    const replacement = selectedText
+      ? `${prefix}${selectedText}${suffix}`
+      : `${prefix}${defaultPlaceholder}${suffix}`;
+    const newText = currentText.substring(0, start) + replacement + currentText.substring(end);
+
+    handleBlockChange(blockId, 'text', newText);
+
+    setTimeout(() => {
+      textarea.focus();
+      if (selectedText) {
+        textarea.setSelectionRange(start + prefix.length, start + prefix.length + selectedText.length);
+      } else {
+        textarea.setSelectionRange(start + prefix.length, start + prefix.length + defaultPlaceholder.length);
+      }
+    }, 25);
+  };
+
+  // Helper to remove formatting / strip HTML tags from selected text
+  const removeFormatFromBlock = (blockId: string) => {
+    const textarea = document.getElementById(`textarea-block-${blockId}`) as HTMLTextAreaElement | null;
+    const block = blocks.find((b) => b.id === blockId);
+    if (!block || !textarea) return;
+
+    const start = textarea.selectionStart ?? 0;
+    const end = textarea.selectionEnd ?? 0;
+    const currentText = block.text || '';
+    const selectedText = currentText.substring(start, end);
+    if (!selectedText) return;
+
+    const stripped = selectedText.replace(/<\/?[^>]+(>|$)/g, '');
+    const newText = currentText.substring(0, start) + stripped + currentText.substring(end);
+    handleBlockChange(blockId, 'text', newText);
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start, start + stripped.length);
+    }, 25);
+  };
+
+  // Toggle live preview for a block
+  const toggleBlockPreview = (blockId: string) => {
+    setPreviewBlocks((prev) => ({
+      ...prev,
+      [blockId]: !prev[blockId],
+    }));
+  };
 
   // Keep a ref of internal changes to avoid re-parsing on self-triggered updates
   const internalHtmlRef = useRef<string>(value);
@@ -328,68 +364,89 @@ export default function ParagraphBlockEditor({
 
   return (
     <div className="space-y-4">
-      {/* Module Top Header (Matching User's Screenshot Exactly) */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-stone-200 shadow-xs">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-base sm:text-lg font-black text-stone-900 tracking-tight flex items-center gap-1.5">
-              <span>✍️</span>
-              <span>{label}</span>
-            </h3>
-            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-orange-100 text-[#EA580C] border border-orange-200">
-              मल्टीपल फोटो सपोर्ट
+      {/* 2 Big Visible Tabs: Block Mode vs Full HTML Editor */}
+      <div className="bg-stone-100 p-1.5 rounded-2xl border border-stone-200 grid grid-cols-1 sm:grid-cols-2 gap-2 shadow-inner">
+        <button
+          type="button"
+          onClick={() => setEditorMode('blocks')}
+          className={`py-3 px-4 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer ${
+            editorMode === 'blocks'
+              ? 'bg-[#EA580C] text-white shadow-md'
+              : 'text-stone-700 hover:bg-stone-200/80 bg-white/70'
+          }`}
+        >
+          <LayoutList className="w-4 h-4" />
+          <span>📰 पैराग्राफ ब्लॉक मोड (मल्टीपल फोटो व खंडवार)</span>
+          {editorMode === 'blocks' && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/20 text-white font-bold">
+              सक्रिय
             </span>
-          </div>
-          <p className="text-xs text-stone-500 font-medium mt-1">
-            {subtitleHint}
-          </p>
-        </div>
+          )}
+        </button>
 
-        {/* Top Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          {/* Add Paragraph Above Button */}
-          <button
-            type="button"
-            onClick={() => handleAddBlock('top')}
-            className="flex-1 sm:flex-initial text-xs font-bold text-stone-700 bg-stone-100 hover:bg-stone-200 border border-stone-300 px-3.5 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
-            title="लेख के सबसे ऊपर नया पैराग्राफ जोड़ें"
-          >
-            <Plus className="w-3.5 h-3.5 text-[#EA580C]" />
-            <span>+ ऊपर नया पैराग्राफ</span>
-          </button>
-
-          {/* Add Paragraph Button (Screenshot Match) */}
-          <button
-            type="button"
-            onClick={() => handleAddBlock('bottom')}
-            className="flex-1 sm:flex-initial text-xs font-black text-white bg-[#EA580C] hover:bg-orange-700 border border-orange-600 px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm hover:shadow-md"
-            title="लेख के अंत में नया पैराग्राफ जोड़ें"
-          >
-            <Plus className="w-4 h-4" />
-            <span>+ नया पैराग्राफ जोड़ें</span>
-          </button>
-
-          {/* Mode Switcher */}
-          <button
-            type="button"
-            onClick={() => setEditorMode(editorMode === 'blocks' ? 'classic' : 'blocks')}
-            className="text-xs font-bold text-stone-600 hover:text-stone-900 bg-white border border-stone-300 px-3 py-2 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
-            title="पैराग्राफ ब्लॉक्स या क्लासिक एडिटर के बीच स्विच करें"
-          >
-            {editorMode === 'blocks' ? (
-              <>
-                <Code2 className="w-3.5 h-3.5 text-stone-500" />
-                <span>क्लासिक मोड</span>
-              </>
-            ) : (
-              <>
-                <LayoutList className="w-3.5 h-3.5 text-[#EA580C]" />
-                <span>ब्लॉक मोड</span>
-              </>
-            )}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setEditorMode('classic')}
+          className={`py-3 px-4 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer ${
+            editorMode === 'classic'
+              ? 'bg-blue-600 text-white shadow-md'
+              : 'text-stone-700 hover:bg-stone-200/80 bg-white/70'
+          }`}
+        >
+          <Code2 className="w-4 h-4" />
+          <span>💻 पूर्ण HTML / विज़ुअल एडिटर (बोल्ड, इटैलिक, बड़ा फॉन्ट)</span>
+          {editorMode === 'classic' && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/20 text-white font-bold">
+              सक्रिय
+            </span>
+          )}
+        </button>
       </div>
+
+      {/* Module Sub-Header (Only in Blocks Mode) */}
+      {editorMode === 'blocks' && (
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-stone-200 shadow-xs">
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base sm:text-lg font-black text-stone-900 tracking-tight flex items-center gap-1.5">
+                <span>✍️</span>
+                <span>{label}</span>
+              </h3>
+              <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-orange-100 text-[#EA580C] border border-orange-200">
+                मल्टीपल फोटो सपोर्ट
+              </span>
+            </div>
+            <p className="text-xs text-stone-500 font-medium mt-1">
+              {subtitleHint}
+            </p>
+          </div>
+
+          {/* Top Action Buttons */}
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            {/* Add Paragraph Above Button */}
+            <button
+              type="button"
+              onClick={() => handleAddBlock('top')}
+              className="flex-1 sm:flex-initial text-xs font-bold text-stone-700 bg-stone-100 hover:bg-stone-200 border border-stone-300 px-3.5 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+              title="लेख के सबसे ऊपर नया पैराग्राफ जोड़ें"
+            >
+              <Plus className="w-3.5 h-3.5 text-[#EA580C]" />
+              <span>+ ऊपर नया पैराग्राफ</span>
+            </button>
+
+            {/* Add Paragraph Button */}
+            <button
+              type="button"
+              onClick={() => handleAddBlock('bottom')}
+              className="flex-1 sm:flex-initial text-xs font-black text-white bg-[#EA580C] hover:bg-orange-700 border border-orange-600 px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm hover:shadow-md"
+              title="लेख के अंत में नया पैराग्राफ जोड़ें"
+            >
+              <Plus className="w-4 h-4" />
+              <span>+ नया पैराग्राफ जोड़ें</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {uploadError && (
         <div className="bg-red-50 border border-red-200 text-red-700 text-xs font-bold p-3 rounded-xl flex items-center justify-between">
@@ -590,9 +647,9 @@ export default function ParagraphBlockEditor({
                           />
                         </div>
                         <div className="flex flex-wrap items-center gap-2 pt-1">
-                          <label className="text-[11px] font-bold text-[#EA580C] hover:text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200 px-3 py-1 rounded-lg flex items-center gap-1.5 cursor-pointer transition-colors">
+                          <label className="text-[11px] font-bold text-[#EA580C] hover:text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200 px-3 py-1.5 rounded-xl flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs">
                             <Upload className="w-3 h-3" />
-                            <span>दूसरी फोटो बदलें</span>
+                            <span>कंप्यूटर से बदलें</span>
                             <input
                               type="file"
                               accept="image/*"
@@ -604,14 +661,27 @@ export default function ParagraphBlockEditor({
                               className="hidden"
                             />
                           </label>
+
+                          {/* Change from Gallery */}
+                          <button
+                            type="button"
+                            onClick={() => setGalleryTargetBlockId(block.id)}
+                            className="text-[11px] font-bold text-stone-800 hover:text-white bg-stone-100 hover:bg-stone-900 border border-stone-300 px-3 py-1.5 rounded-xl flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
+                            title="गैलरी से दूसरी फोटो चुनें"
+                          >
+                            <FolderOpen className="w-3.5 h-3.5 text-orange-500" />
+                            <span>🖼️ गैलरी से बदलें</span>
+                          </button>
+
                           <span className="text-[10px] text-stone-400 truncate max-w-xs">{block.imageUrl}</span>
                         </div>
                       </div>
                     </div>
                   ) : (
-                    /* Photo Upload / URL Dropzone */
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <label className="flex-1 border-2 border-dashed border-stone-300 hover:border-[#EA580C] hover:bg-orange-50/40 rounded-xl p-3.5 flex items-center justify-center gap-2.5 cursor-pointer transition-colors bg-white">
+                    /* Photo Upload / Gallery / URL Options */
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+                      {/* Option 1: File Upload (Computer or Phone) */}
+                      <label className="sm:col-span-5 border-2 border-dashed border-stone-300 hover:border-[#EA580C] hover:bg-orange-50/40 rounded-xl p-3 flex items-center justify-center gap-2.5 cursor-pointer transition-colors bg-white">
                         {isUploadingThis ? (
                           <>
                             <Loader2 className="w-4 h-4 animate-spin text-[#EA580C]" />
@@ -624,7 +694,7 @@ export default function ParagraphBlockEditor({
                             </div>
                             <div className="text-left">
                               <span className="text-xs font-extrabold text-stone-800 block">
-                                कंप्यूटर या मोबाइल से फोटो अपलोड करें
+                                कंप्यूटर या मोबाइल से अपलोड करें
                               </span>
                               <span className="text-[10px] text-stone-500 block">
                                 JPG, PNG, WEBP क्लिक या ड्रैग करें
@@ -644,8 +714,28 @@ export default function ParagraphBlockEditor({
                         />
                       </label>
 
-                      {/* Or image URL input */}
-                      <div className="sm:w-64 bg-white p-2 border border-stone-200 rounded-xl flex items-center gap-1.5">
+                      {/* Option 2: Gallery Modal Trigger (Fulfills: जहां पर फोटो है, वहां गैलरी से अपलोड करें का ऑप्शन अवश्य हो) */}
+                      <button
+                        type="button"
+                        onClick={() => setGalleryTargetBlockId(block.id)}
+                        className="sm:col-span-4 border-2 border-dashed border-stone-300 hover:border-stone-800 hover:bg-stone-100/60 rounded-xl p-3 flex items-center justify-center gap-2.5 cursor-pointer transition-colors bg-white group text-left"
+                        title="वेबसाइट की मीडिया गैलरी से फोटो चुनें या गैलरी में अपलोड करें"
+                      >
+                        <div className="w-7 h-7 rounded-lg bg-stone-900 text-orange-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                          <FolderOpen className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <span className="text-xs font-black text-stone-900 group-hover:text-[#EA580C] block transition-colors">
+                            🖼️ गैलरी से अपलोड करें / चुनें
+                          </span>
+                          <span className="text-[10px] text-stone-500 block">
+                            पोर्टल मीडिया गैलरी से फोटो लगाएं
+                          </span>
+                        </div>
+                      </button>
+
+                      {/* Option 3: Online URL Input */}
+                      <div className="sm:col-span-3 bg-white p-2.5 border border-stone-200 rounded-xl flex items-center gap-1.5">
                         <LinkIcon className="w-3.5 h-3.5 text-stone-400 shrink-0 ml-1" />
                         <input
                           type="text"
@@ -659,32 +749,187 @@ export default function ParagraphBlockEditor({
                   )}
                 </div>
 
-                {/* Paragraph Text Description */}
+                {/* Paragraph Text Description with Rich Formatting Toolbar */}
                 <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-[11px] font-extrabold text-stone-700 flex items-center gap-1">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-[11px] font-extrabold text-stone-800 flex items-center gap-1">
                       <span>पैराग्राफ विवरण (Paragraph Text Content) *</span>
                     </label>
-                    <div className="flex items-center gap-1 bg-stone-100 px-2 py-0.5 rounded-lg">
-                      <VoiceInputButton
-                        mode="append"
-                        onTranscript={(txt) => handleBlockChange(block.id, 'text', txt)}
-                        currentValue={block.text || ''}
-                        placeholderHint="पैराग्राफ बोलिए..."
-                        size="sm"
-                      />
-                      <span className="text-[10px] font-bold text-stone-600 select-none">बोलकर लिखें</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => toggleBlockPreview(block.id)}
+                        className={`text-[11px] font-bold px-2.5 py-0.5 rounded-lg border flex items-center gap-1 cursor-pointer transition-colors ${
+                          previewBlocks[block.id]
+                            ? 'bg-blue-50 text-blue-700 border-blue-200'
+                            : 'bg-stone-100 text-stone-600 border-stone-200 hover:bg-stone-200'
+                        }`}
+                        title="लाइव फ़ॉर्मेटिंग पूर्वावलोकन देखें"
+                      >
+                        {previewBlocks[block.id] ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                        <span>{previewBlocks[block.id] ? 'प्रीव्यू छुपाएं' : '👁️ प्रीव्यू देखें'}</span>
+                      </button>
+                      <div className="flex items-center gap-1 bg-stone-100 px-2 py-0.5 rounded-lg">
+                        <VoiceInputButton
+                          mode="append"
+                          onTranscript={(txt) => handleBlockChange(block.id, 'text', txt)}
+                          currentValue={block.text || ''}
+                          placeholderHint="पैराग्राफ बोलिए..."
+                          size="sm"
+                        />
+                        <span className="text-[10px] font-bold text-stone-600 select-none">बोलकर लिखें</span>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Inline Rich HTML Formatting Toolbar for this Paragraph Block */}
+                  <div className="bg-stone-100/90 p-1.5 rounded-t-xl border border-b-0 border-stone-300 flex flex-wrap items-center gap-1">
+                    <span className="text-[10px] font-bold text-stone-500 mr-1 select-none">फ़ॉर्मेट:</span>
+
+                    {/* Bold */}
+                    <button
+                      type="button"
+                      onClick={() => applyFormatToBlock(block.id, '<strong>', '</strong>', 'बोल्ड टेक्स्ट')}
+                      className="px-2 py-1 bg-white hover:bg-orange-50 hover:text-[#EA580C] hover:border-orange-300 border border-stone-200 rounded-md text-xs font-black text-stone-800 transition-colors shadow-2xs cursor-pointer flex items-center gap-1"
+                      title="टेक्स्ट को बोल्ड करें (Bold)"
+                    >
+                      <Bold className="w-3.5 h-3.5" />
+                      <span className="text-[11px]">बोल्ड</span>
+                    </button>
+
+                    {/* Italic */}
+                    <button
+                      type="button"
+                      onClick={() => applyFormatToBlock(block.id, '<em>', '</em>', 'इटैलिक टेक्स्ट')}
+                      className="px-2 py-1 bg-white hover:bg-orange-50 hover:text-[#EA580C] hover:border-orange-300 border border-stone-200 rounded-md text-xs font-bold text-stone-800 transition-colors shadow-2xs cursor-pointer flex items-center gap-1 italic"
+                      title="टेक्स्ट को इटैलिक करें (Italic)"
+                    >
+                      <Italic className="w-3.5 h-3.5" />
+                      <span className="text-[11px]">इटैलिक</span>
+                    </button>
+
+                    {/* Underline */}
+                    <button
+                      type="button"
+                      onClick={() => applyFormatToBlock(block.id, '<u>', '</u>', 'अंडरलाइन')}
+                      className="px-2 py-1 bg-white hover:bg-orange-50 hover:text-[#EA580C] hover:border-orange-300 border border-stone-200 rounded-md text-xs font-bold text-stone-800 transition-colors shadow-2xs cursor-pointer flex items-center gap-1 underline"
+                      title="टेक्स्ट के नीचे लाइन खींचें (Underline)"
+                    >
+                      <Underline className="w-3.5 h-3.5" />
+                      <span className="text-[11px]">अंडरलाइन</span>
+                    </button>
+
+                    <div className="h-4 w-px bg-stone-300 mx-0.5" />
+
+                    {/* H2 Heading */}
+                    <button
+                      type="button"
+                      onClick={() => applyFormatToBlock(block.id, '<h2 class="text-xl sm:text-2xl font-black text-stone-900 my-2">', '</h2>', 'बड़ी हेडिंग यहाँ लिखें')}
+                      className="px-2 py-1 bg-white hover:bg-orange-50 hover:text-[#EA580C] hover:border-orange-300 border border-stone-200 rounded-md text-xs font-black text-stone-800 transition-colors shadow-2xs cursor-pointer flex items-center gap-0.5"
+                      title="बड़ी हेडिंग (H2 Heading - 22px)"
+                    >
+                      <Heading2 className="w-3.5 h-3.5 text-[#EA580C]" />
+                      <span className="text-[11px]">H2 हेडिंग</span>
+                    </button>
+
+                    {/* H3 Heading */}
+                    <button
+                      type="button"
+                      onClick={() => applyFormatToBlock(block.id, '<h3 class="text-lg font-bold text-stone-800 my-1">', '</h3>', 'मध्यम हेडिंग यहाँ लिखें')}
+                      className="px-2 py-1 bg-white hover:bg-orange-50 hover:text-[#EA580C] hover:border-orange-300 border border-stone-200 rounded-md text-xs font-bold text-stone-800 transition-colors shadow-2xs cursor-pointer flex items-center gap-0.5"
+                      title="मध्यम हेडिंग (H3 Heading - 18px)"
+                    >
+                      <Heading3 className="w-3.5 h-3.5 text-stone-700" />
+                      <span className="text-[11px]">H3</span>
+                    </button>
+
+                    <div className="h-4 w-px bg-stone-300 mx-0.5" />
+
+                    {/* Font Size A+ */}
+                    <button
+                      type="button"
+                      onClick={() => applyFormatToBlock(block.id, '<span style="font-size: 1.18rem; font-weight: 600;">', '</span>', 'बड़ा फॉन्ट')}
+                      className="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-md text-xs font-black transition-colors shadow-2xs cursor-pointer flex items-center gap-1"
+                      title="फॉन्ट बड़ा करें (18px Large Font)"
+                    >
+                      <Type className="w-3.5 h-3.5 text-amber-700" />
+                      <span className="text-[11px]">A+ बड़ा फॉन्ट</span>
+                    </button>
+
+                    {/* Font Size A++ */}
+                    <button
+                      type="button"
+                      onClick={() => applyFormatToBlock(block.id, '<span style="font-size: 1.4rem; font-weight: 700;">', '</span>', 'विशाल फॉन्ट')}
+                      className="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-950 border border-amber-300 rounded-md text-xs font-black transition-colors shadow-2xs cursor-pointer flex items-center gap-1"
+                      title="फॉन्ट बहुत बड़ा करें (22px Extra Large Font)"
+                    >
+                      <Type className="w-4 h-4 text-amber-800" />
+                      <span className="text-[11px]">A++ बहुत बड़ा</span>
+                    </button>
+
+                    <div className="h-4 w-px bg-stone-300 mx-0.5" />
+
+                    {/* Highlight */}
+                    <button
+                      type="button"
+                      onClick={() => applyFormatToBlock(block.id, '<mark class="bg-yellow-200 px-1 py-0.5 rounded font-medium">', '</mark>', 'हाइलाइट')}
+                      className="px-1.5 py-1 bg-yellow-100 hover:bg-yellow-200 text-yellow-900 border border-yellow-300 rounded-md text-xs font-bold transition-colors cursor-pointer flex items-center gap-0.5"
+                      title="टेक्स्ट को हाइलाइट करें (Yellow Highlight)"
+                    >
+                      <Highlighter className="w-3 h-3" />
+                      <span className="text-[10px]">हाइलाइट</span>
+                    </button>
+
+                    {/* Bullet */}
+                    <button
+                      type="button"
+                      onClick={() => applyFormatToBlock(block.id, '• ', '', 'मुख्य बिंदु')}
+                      className="px-1.5 py-1 bg-white hover:bg-stone-50 border border-stone-200 rounded-md text-xs font-bold text-stone-700 transition-colors cursor-pointer flex items-center gap-0.5"
+                      title="बुलेट बिंदु जोड़ें"
+                    >
+                      <List className="w-3 h-3" />
+                      <span className="text-[10px]">बुलेट</span>
+                    </button>
+
+                    {/* Clear Format */}
+                    <button
+                      type="button"
+                      onClick={() => removeFormatFromBlock(block.id)}
+                      className="px-1.5 py-1 bg-white hover:bg-red-50 hover:text-red-700 border border-stone-200 rounded-md text-xs font-bold text-stone-600 transition-colors cursor-pointer flex items-center gap-0.5 ml-auto"
+                      title="चयनित टेक्स्ट से HTML फ़ॉर्मेटिंग हटाएं"
+                    >
+                      <Eraser className="w-3 h-3" />
+                      <span className="text-[10px]">फ़ॉर्मेट हटाएं</span>
+                    </button>
+                  </div>
+
                   <textarea
+                    id={`textarea-block-${block.id}`}
                     rows={4}
                     value={block.text}
                     onChange={(e) => handleBlockChange(block.id, 'text', e.target.value)}
-                    placeholder="इस पैराग्राफ का विस्तृत समाचार विवरण यहाँ दर्ज करें..."
-                    className="w-full p-3 border border-stone-300 rounded-xl text-sm font-normal text-stone-900 leading-relaxed focus:outline-hidden focus:border-[#EA580C] focus:ring-1 focus:ring-orange-500"
+                    placeholder="इस पैराग्राफ का विस्तृत समाचार विवरण यहाँ दर्ज करें... टेक्स्ट चुनकर ऊपर दिए गए बटनों से बोल्ड, इटैलिक, हेडिंग या बड़ा फॉन्ट बनाएं।"
+                    className="w-full p-3 border border-stone-300 rounded-b-xl text-sm font-normal text-stone-900 leading-relaxed focus:outline-hidden focus:border-[#EA580C] focus:ring-1 focus:ring-orange-500 font-sans"
                   />
+
+                  {/* Live Render Preview if toggled */}
+                  {previewBlocks[block.id] && (
+                    <div className="mt-2 p-3 bg-stone-50 border border-blue-200 rounded-xl">
+                      <div className="text-[11px] font-black text-blue-900 mb-1 flex items-center gap-1">
+                        <Eye className="w-3.5 h-3.5 text-blue-600" />
+                        <span>लाइव रेंडर प्रीव्यू (Live Rendered Preview):</span>
+                      </div>
+                      <div
+                        className="prose prose-stone max-w-none text-sm text-stone-900 bg-white p-3 rounded-lg border border-stone-200 leading-relaxed"
+                        dangerouslySetInnerHTML={{
+                          __html: formatTextToParagraphs(block.text) || '<span class="text-stone-400 italic">पैराग्राफ रिक्त है...</span>',
+                        }}
+                      />
+                    </div>
+                  )}
+
                   <div className="flex justify-between items-center text-[10px] text-stone-400 mt-1">
-                    <span>नया पैराग्राफ बनाने के लिए Enter दबाएं</span>
+                    <span>नया पैराग्राफ बनाने के लिए Enter दबाएं • टेक्स्ट चुनकर ऊपर दिए बटनों से फ़ॉर्मेट करें</span>
                     <span>{block.text ? `${block.text.length} अक्षर` : 'रिक्त'}</span>
                   </div>
                 </div>
@@ -722,6 +967,31 @@ export default function ParagraphBlockEditor({
           </div>
         </div>
       )}
+
+      {/* Media Gallery Modal for paragraph blocks (Fulfills: जहां पर फोटो है, वहां गैलरी से अपलोड करें का ऑप्शन अवश्य हो) */}
+      <MediaGalleryModal
+        isOpen={!!galleryTargetBlockId}
+        onClose={() => setGalleryTargetBlockId(null)}
+        onSelect={(url, caption) => {
+          if (galleryTargetBlockId) {
+            const next = blocks.map((b) =>
+              b.id === galleryTargetBlockId
+                ? {
+                    ...b,
+                    imageUrl: url,
+                    imageCaption: caption || b.imageCaption || '',
+                  }
+                : b
+            );
+            commitBlocks(next);
+            setGalleryTargetBlockId(null);
+          }
+        }}
+        title="🖼️ पैराग्राफ के लिए गैलरी से फोटो चुनें"
+        currentSelectedUrl={
+          blocks.find((b) => b.id === galleryTargetBlockId)?.imageUrl || ''
+        }
+      />
     </div>
   );
 }

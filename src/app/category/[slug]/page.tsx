@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import TopBar from '@/components/public/TopBar';
 import Header from '@/components/public/Header';
 import Navigation from '@/components/public/Navigation';
@@ -54,10 +54,14 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     decodedSlug = decodeURIComponent(slug);
   } catch (_) {}
 
+  if (decodedSlug === 'latest') {
+    redirect('/latest-news');
+  }
+
   let categoryName = '';
   let articles: any[] = [];
 
-  if (decodedSlug === 'latest' || decodedSlug === 'news') {
+  if (decodedSlug === 'news') {
     categoryName = '🔥 ताज़ा ख़बरें (All Latest News)';
     articles = await db.article.findMany({
       where: {

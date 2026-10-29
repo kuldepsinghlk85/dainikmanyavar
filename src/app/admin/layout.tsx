@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AdminSidebar from '@/components/admin/AdminSidebar';
+import { ReporterAlertsDropdown, ReporterAlertBanner } from '@/components/admin/ReporterAlertsDropdown';
 import { LogOut, Menu, X, Globe, ShieldCheck } from 'lucide-react';
 
 export default function AdminLayout({
@@ -85,6 +86,9 @@ export default function AdminLayout({
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Reporter News Notifications & Alerts Dropdown */}
+            <ReporterAlertsDropdown />
+
             {/* Role Badge */}
             {activeUser.role === 'SUPER_ADMIN' || activeUser.role === 'ADMINISTRATOR' ? (
               <div className="flex items-center gap-2">
@@ -123,6 +127,9 @@ export default function AdminLayout({
             </div>
           </div>
         </header>
+
+        {/* Reporter News Alert Banner (when pending submissions exist) */}
+        <ReporterAlertBanner />
 
         {/* Dynamic Page Content */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto" suppressHydrationWarning>

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save, Eye, CheckCircle2, Image as ImageIcon, Volume2, Tag as TagIcon, Sparkles, ExternalLink, Plus, MapPin, Upload, X, FolderArchive, Bell, Share2 } from 'lucide-react';
+import { ArrowLeft, Save, Eye, CheckCircle2, Image as ImageIcon, Volume2, Tag as TagIcon, Sparkles, ExternalLink, Plus, MapPin, Upload, X, FolderArchive, Bell, Share2, FileText } from 'lucide-react';
 import ImageUploadWidget from '@/components/admin/ImageUploadWidget';
 import HtmlContentEditor from '@/components/admin/HtmlContentEditor';
 import ParagraphBlockEditor from '@/components/admin/ParagraphBlockEditor';
@@ -353,10 +353,15 @@ export default function EditArticleAdminPage() {
     setLocSubmitting(false);
   };
 
-  const handleSubmitInternal = async (redirectToPush = false) => {
+  const handleSubmitInternal = async (overrideStatus?: string, redirectToPush = false) => {
     setSaving(true);
     setMsg('');
     setErrorMsg('');
+
+    const finalStatus = overrideStatus || form.status || 'DRAFT';
+    if (overrideStatus && overrideStatus !== form.status) {
+      setForm((prev) => ({ ...prev, status: overrideStatus }));
+    }
 
     try {
       const tagsArray = form.tagsString
@@ -369,6 +374,7 @@ export default function EditArticleAdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          status: finalStatus,
           primaryCategoryId: form.categoryId,
           locationId: selectedLocationIds[0] || null,
           locationIds: selectedLocationIds,
@@ -397,7 +403,11 @@ export default function EditArticleAdminPage() {
         if (redirectToPush) {
           router.push(`/admin/notifications?newsId=${id}`);
         } else {
-          setMsg('✅ समाचार सफलतापूर्वक अद्यतन (Updated) हो गया!');
+          setMsg(
+            finalStatus === 'DRAFT'
+              ? '✅ समाचार ड्राफ्ट (DRAFT) के रूप में सफलतापूर्वक सहेज दिया गया!'
+              : '✅ समाचार सफलतापूर्वक लाइव प्रकाशित (Published) हो गया!'
+          );
         }
       } else {
         setErrorMsg(data.error || 'अद्यतन करने में समस्या आई');
@@ -410,12 +420,22 @@ export default function EditArticleAdminPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    handleSubmitInternal(false);
+    handleSubmitInternal(form.status || 'DRAFT', false);
+  };
+
+  const handleSaveDraft = (e: React.MouseEvent) => {
+    e.preventDefault();
+    handleSubmitInternal('DRAFT', false);
+  };
+
+  const handlePublishDirectly = (e: React.MouseEvent) => {
+    e.preventDefault();
+    handleSubmitInternal('PUBLISHED', false);
   };
 
   const handleSaveAndPush = (e: React.MouseEvent) => {
     e.preventDefault();
-    handleSubmitInternal(true);
+    handleSubmitInternal('PUBLISHED', true);
   };
 
   if (loading) {
@@ -435,7 +455,24 @@ export default function EditArticleAdminPage() {
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>समाचार सूची पर वापस जाएं</span>
           </Link>
-          <h1 className="text-2xl font-black text-stone-900">✏️ समाचार संपादित करें (Edit News)</h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-black text-stone-900">✏️ समाचार संपादित करें (Edit News)</h1>
+            {form.status === 'DRAFT' ? (
+              <span className="px-3.5 py-1 rounded-full text-xs font-black bg-amber-400 text-amber-950 border border-amber-500 shadow-xs flex items-center gap-1.5 animate-pulse">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-900"></span>
+                <span>🟡 स्थिति: ड्राफ्ट मोड (DRAFT)</span>
+              </span>
+            ) : form.status === 'PUBLISHED' ? (
+              <span className="px-3.5 py-1 rounded-full text-xs font-black bg-emerald-500 text-white border border-emerald-600 shadow-xs flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
+                <span>🟢 स्थिति: लाइव प्रकाशित (LIVE)</span>
+              </span>
+            ) : (
+              <span className="px-3.5 py-1 rounded-full text-xs font-black bg-stone-200 text-stone-800 border border-stone-400 shadow-xs">
+                📦 {form.status}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
@@ -505,33 +542,49 @@ export default function EditArticleAdminPage() {
 
       {/* Edit Form */}
       <form onSubmit={handleSubmit} className="bg-white p-6 sm:p-8 rounded-2xl border border-stone-200 shadow-sm space-y-6">
-        {/* Main Headline */}
-        <div>
-          <label className="block text-xs font-extrabold text-stone-900 mb-1.5">
-            मुख्य समाचार शीर्षक (Headline) *
-          </label>
-          <input
-            type="text"
-            required
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-            placeholder="यहाँ मुख्य शीर्षक दर्ज करें..."
-            className="w-full p-3 border border-stone-300 rounded-xl text-sm font-bold text-stone-900 focus:outline-none focus:border-[#EA580C]"
-          />
-        </div>
+        {/* Top Header Section: Headline & Featured Image (मुख्य चित्र सबसे ऊपर हेडिंग में) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-6 border-b border-stone-200 bg-stone-50/50 p-4 sm:p-5 rounded-2xl border">
+          {/* Left Column (7 cols): Main Headline & Subtitle / Excerpt */}
+          <div className="lg:col-span-7 space-y-4">
+            {/* Main Headline */}
+            <div>
+              <label className="block text-xs font-extrabold text-stone-900 mb-1.5 flex items-center justify-between">
+                <span>मुख्य समाचार शीर्षक (Headline) *</span>
+                <span className="text-[10px] text-stone-400 font-bold">शीर्षक आकर्षक व स्पष्ट रखें</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                placeholder="यहाँ मुख्य शीर्षक दर्ज करें..."
+                className="w-full p-3 border border-stone-300 rounded-xl text-sm sm:text-base font-bold text-stone-900 focus:outline-hidden focus:border-[#EA580C]"
+              />
+            </div>
 
-        {/* Short Subtitle / Excerpt */}
-        <div>
-          <label className="block text-xs font-extrabold text-stone-900 mb-1.5">
-            संक्षिप्त सारांश / सब-टाइटल (Excerpt)
-          </label>
-          <textarea
-            rows={2}
-            value={form.excerpt}
-            onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
-            placeholder="मुख्य समाचार का 2 लाइन सारांश..."
-            className="w-full p-3 border border-stone-300 rounded-xl text-xs font-medium text-stone-800 focus:outline-none focus:border-[#EA580C]"
-          />
+            {/* Short Subtitle / Excerpt */}
+            <div>
+              <label className="block text-xs font-extrabold text-stone-900 mb-1.5">
+                संक्षिप्त सारांश / सब-टाइटल (Excerpt)
+              </label>
+              <textarea
+                rows={3}
+                value={form.excerpt}
+                onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
+                placeholder="मुख्य समाचार का 2 लाइन सारांश..."
+                className="w-full p-3 border border-stone-300 rounded-xl text-xs font-medium text-stone-800 focus:outline-hidden focus:border-[#EA580C]"
+              />
+            </div>
+          </div>
+
+          {/* Right Column (5 cols): Featured Image directly at the top in heading section */}
+          <div className="lg:col-span-5 bg-white p-4 rounded-xl border border-stone-200 shadow-2xs">
+            <ImageUploadWidget
+              value={form.featuredImage}
+              onChange={(url) => setForm({ ...form, featuredImage: url })}
+              label="मुख्य चित्र (Featured Image) *"
+            />
+          </div>
         </div>
 
         {/* ✍️ फोटो अपलोड के साथ पैराग्राफ (Paragraphs with Photo Uploads - User's Exact Feature) */}
@@ -542,15 +595,8 @@ export default function EditArticleAdminPage() {
           subtitleHint="प्रत्येक पैराग्राफ खंड के लिए उप-शीर्षक, विवरण और फोटो बदलें या नया जोड़ें।"
         />
 
-        {/* Image & Audio Settings */}
+        {/* Category, Content Type & District Settings */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-stone-100">
-          <div>
-            <ImageUploadWidget
-              value={form.featuredImage}
-              onChange={(url) => setForm({ ...form, featuredImage: url })}
-            />
-          </div>
-
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-extrabold text-stone-900 mb-1.5">
@@ -696,12 +742,10 @@ export default function EditArticleAdminPage() {
           </div>
         </div>
 
-        {/* Tags & Status */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-stone-100">
-          {/* Tags Section */}
-          <div className="space-y-3 bg-stone-50/80 p-4 rounded-2xl border border-stone-200">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <label className="text-xs font-extrabold text-stone-900 flex items-center gap-1.5">
+        {/* Tags Section */}
+        <div className="space-y-3 bg-stone-50/80 p-4 rounded-2xl border border-stone-200 pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <label className="text-xs font-extrabold text-stone-900 flex items-center gap-1.5">
                 <TagIcon className="w-4 h-4 text-[#EA580C]" />
                 <span>मल्टी-टैग्स (Multi-Tags)</span>
               </label>
@@ -804,57 +848,187 @@ export default function EditArticleAdminPage() {
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-extrabold text-stone-900 mb-1.5">
-              प्रकाशन स्थिति (Publishing Status)
-            </label>
-            <div className="flex items-center gap-4 pt-1">
-              <label className="flex items-center gap-1.5 text-xs font-extrabold text-green-700 cursor-pointer">
-                <input
-                  type="radio"
-                  name="status"
-                  value="PUBLISHED"
-                  checked={form.status === 'PUBLISHED'}
-                  onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  className="accent-green-600"
-                />
-                <span>🟢 PUBLISHED (लाइव)</span>
-              </label>
+        {/* 📢 विशेष रूप से हाइलाइटेड प्रकाशन स्थिति (Specially Highlighted Publishing Status) */}
+        <div className={`p-4 sm:p-5 rounded-2xl border-2 transition-all space-y-3.5 shadow-sm ${
+          form.status === 'DRAFT'
+            ? 'bg-gradient-to-br from-amber-50 via-orange-50/40 to-stone-50 border-amber-400 ring-2 ring-amber-300/30'
+            : form.status === 'PUBLISHED'
+            ? 'bg-gradient-to-br from-emerald-50 via-teal-50/40 to-stone-50 border-emerald-500 ring-2 ring-emerald-300/30'
+            : 'bg-stone-50 border-stone-300'
+        }`}>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-200/80 pb-3">
+            <div className="flex items-center gap-2.5">
+              <span className="w-8 h-8 rounded-lg flex items-center justify-center text-lg bg-white shadow-xs border border-stone-200">
+                📢
+              </span>
+              <div>
+                <span className="text-sm font-black text-stone-900 tracking-wide flex items-center gap-2">
+                  <span>प्रकाशन स्थिति (Publishing Status) *</span>
+                </span>
+                <p className="text-[11px] text-stone-600 font-medium">
+                  यहाँ से तय करें कि समाचार पोर्टल पर लाइव होगा अथवा ड्राफ्ट में सुरक्षित रहेगा
+                </p>
+              </div>
+            </div>
 
-              <label className="flex items-center gap-1.5 text-xs font-extrabold text-amber-700 cursor-pointer">
+            {/* Dynamic Prominent Current Status Pill */}
+            {form.status === 'DRAFT' ? (
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-black bg-amber-400 text-amber-950 border border-amber-500 shadow-sm animate-pulse">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-950"></span>
+                <span>वर्तमान स्थिति: 🟡 DRAFT (ड्राफ्ट — अप्रसारित)</span>
+              </span>
+            ) : form.status === 'PUBLISHED' ? (
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-black bg-emerald-600 text-white border border-emerald-700 shadow-sm">
+                <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
+                <span>वर्तमान स्थिति: 🟢 PUBLISHED (लाइव — सार्वजनिक)</span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-black bg-stone-200 text-stone-900 border border-stone-400 shadow-sm">
+                <span>वर्तमान स्थिति: 📦 {form.status}</span>
+              </span>
+            )}
+          </div>
+
+          {/* 2 Big High-Contrast Selectable Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+            {/* DRAFT CARD */}
+            <label
+              className={`relative p-4 rounded-xl border-2 cursor-pointer transition-all flex items-start gap-3.5 select-none ${
+                form.status === 'DRAFT'
+                  ? 'bg-amber-50/90 border-amber-500 ring-4 ring-amber-300/40 shadow-md'
+                  : 'bg-white border-stone-200 hover:border-amber-300 hover:bg-amber-50/30'
+              }`}
+            >
+              <div className="pt-0.5 shrink-0">
                 <input
                   type="radio"
                   name="status"
                   value="DRAFT"
                   checked={form.status === 'DRAFT'}
                   onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  className="accent-amber-600"
+                  className="w-5 h-5 accent-amber-600 cursor-pointer"
                 />
-                <span>🟡 DRAFT (ड्राफ्ट)</span>
-              </label>
-            </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1.5">
+                  <span className="text-sm font-black text-amber-950 flex items-center gap-1.5">
+                    <span className="text-base">📝</span>
+                    <span>DRAFT (ड्राफ्ट मोड)</span>
+                  </span>
+                  <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-950 border border-amber-400">
+                    एडमिन केवल / अप्रसारित
+                  </span>
+                </div>
+                <p className="text-xs font-medium text-amber-900/90 leading-relaxed">
+                  यह समाचार वेबसाइट पर <strong>दिखाई नहीं देगा</strong>। केवल आपके एडमिन पैनल में ड्राफ्ट रहेगा ताकि आप समीक्षा या संपादन कर सकें।
+                </p>
+              </div>
+            </label>
+
+            {/* PUBLISHED CARD */}
+            <label
+              className={`relative p-4 rounded-xl border-2 cursor-pointer transition-all flex items-start gap-3.5 select-none ${
+                form.status === 'PUBLISHED'
+                  ? 'bg-emerald-50/90 border-emerald-600 ring-4 ring-emerald-300/40 shadow-md'
+                  : 'bg-white border-stone-200 hover:border-emerald-400 hover:bg-emerald-50/30'
+              }`}
+            >
+              <div className="pt-0.5 shrink-0">
+                <input
+                  type="radio"
+                  name="status"
+                  value="PUBLISHED"
+                  checked={form.status === 'PUBLISHED'}
+                  onChange={(e) => setForm({ ...form, status: e.target.value })}
+                  className="w-5 h-5 accent-emerald-600 cursor-pointer"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1.5">
+                  <span className="text-sm font-black text-emerald-950 flex items-center gap-1.5">
+                    <span className="text-base">🌐</span>
+                    <span>PUBLISHED (लाइव करें)</span>
+                  </span>
+                  <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-emerald-200 text-emerald-950 border border-emerald-400">
+                    सार्वजनिक (Live Now)
+                  </span>
+                </div>
+                <p className="text-xs font-medium text-emerald-900/90 leading-relaxed">
+                  यह समाचार वेबसाइट पर <strong>तुरंत लाइव</strong> हो जाएगा और सभी पाठक एवं दर्शक इसे सार्वजनिक रूप से पढ़ सकेंगे।
+                </p>
+              </div>
+            </label>
           </div>
+
+          <p className="text-[11px] font-bold text-stone-600 flex items-center gap-1.5 pt-1">
+            <span className="text-amber-600">💡</span>
+            <span>नोट: ड्राफ्ट में समाचार केवल एडमिन को दिखता है। प्रकाशित करने पर यह पोर्टल पर लाइव हो जाता है।</span>
+          </p>
         </div>
 
         {/* Submit Action Bar */}
-        <div className="pt-6 border-t border-stone-200 flex flex-wrap items-center justify-end gap-3">
-          <button
-            type="button"
-            onClick={handleSaveAndPush}
-            disabled={saving}
-            className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-extrabold text-xs px-6 py-3 rounded-xl shadow-md flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
-          >
-            <Bell className="w-4 h-4 animate-bounce" />
-            <span>{saving ? 'अद्यतन हो रहा है...' : '🔔 सेव करें और पुश नोटिफिकेशन में भेजें'}</span>
-          </button>
-          <button
-            type="submit"
-            disabled={saving}
-            className="bg-[#EA580C] hover:bg-orange-700 text-white font-extrabold text-xs px-6 py-3 rounded-xl shadow-md flex items-center gap-2 cursor-pointer transition-colors disabled:opacity-50"
-          >
-            <Save className="w-4 h-4" />
-            <span>{saving ? 'अद्यतन हो रहा है...' : '💾 समाचार अद्यतन करें (Save Changes)'}</span>
-          </button>
+        <div className="pt-6 border-t border-stone-200 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="px-4 py-2.5 border border-stone-300 rounded-xl text-xs font-bold text-stone-700 hover:bg-stone-100 cursor-pointer"
+            >
+              ← वापस जाएं
+            </button>
+
+            {/* Fulfills: लाइव वेबसाइट पर देखें ऑप्शन यहां पर हो */}
+            {form.slug && (
+              <Link
+                href={`/news/${form.slug}`}
+                target="_blank"
+                className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-black text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 border border-emerald-300 shadow-xs transition-all active:scale-95 cursor-pointer"
+                title="इस समाचार को लाइव वेबसाइट पर नए टैब में खोलें"
+              >
+                <Eye className="w-4 h-4 text-emerald-600" />
+                <span>👁️ लाइव वेबसाइट पर देखें</span>
+                <ExternalLink className="w-3.5 h-3.5 text-emerald-600" />
+              </Link>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            {/* 1. ड्राफ्ट में सेव करें */}
+            <button
+              type="button"
+              onClick={handleSaveDraft}
+              disabled={saving}
+              className="bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow-sm flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+              title="समाचार को ड्राफ्ट के रूप में सहेजें (वेबसाइट पर लाइव नहीं होगा)"
+            >
+              <FileText className="w-4 h-4" />
+              <span>{saving ? 'सहेजा जा रहा है...' : '📁 ड्राफ्ट में सेव करें (Save as Draft)'}</span>
+            </button>
+
+            {/* 2. सीधे प्रकाशित करें */}
+            <button
+              type="button"
+              onClick={handlePublishDirectly}
+              disabled={saving}
+              className="bg-[#EA580C] hover:bg-orange-700 text-white font-extrabold text-xs px-6 py-2.5 rounded-xl shadow-md flex items-center gap-2 cursor-pointer transition-colors disabled:opacity-50"
+              title="समाचार को सीधे पोर्टल पर लाइव प्रकाशित करें"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>{saving ? 'प्रकाशित हो रहा है...' : '🚀 सीधे प्रकाशित करें (Publish Live)'}</span>
+            </button>
+
+            {/* 3. प्रकाशित करें और पुश नोटिफिकेशन भेजें */}
+            <button
+              type="button"
+              onClick={handleSaveAndPush}
+              disabled={saving}
+              className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow-md flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+              title="समाचार लाइव प्रकाशित करें और पाठकों को पुश नोटिफिकेशन भेजें"
+            >
+              <Bell className="w-4 h-4 animate-bounce" />
+              <span>{saving ? 'सहेजा जा रहा है...' : '🔔 प्रकाशित करें और पुश भेजें'}</span>
+            </button>
+          </div>
         </div>
       </form>
 

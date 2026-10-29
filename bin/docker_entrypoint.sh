@@ -42,6 +42,7 @@ if [ -n "$DATABASE_URL" ]; then
     seed_optional seed_up_locations.js     "UP mandals and districts seed"
     seed_optional deduplicate_tags.js      "tag deduplication & normalization"
     seed_optional seed_editor.js           "editor account seed"
+    seed_optional seed_reporter.js         "reporter account seed"
 
     # Ensure uploads volume has required subdirectories
     mkdir -p /app/public/uploads/epaper/pages /app/public/uploads/epaper/ads /app/public/uploads/news 2>/dev/null || true

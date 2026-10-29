@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Newspaper, PlusCircle, Trash2, Edit, Eye, CheckSquare, Square, AlertOctagon, Archive, RotateCcw, Film, Download, Link2, Share2 } from 'lucide-react';
+import { Newspaper, PlusCircle, Trash2, Edit, Eye, CheckSquare, Square, AlertOctagon, Archive, RotateCcw, Film, Download, Link2, Share2, FileText } from 'lucide-react';
 import DeleteConfirmModal from '@/components/admin/DeleteConfirmModal';
 import ExportLinksModal from '@/components/admin/ExportLinksModal';
 import SocialPostGeneratorModal from '@/components/admin/SocialPostGeneratorModal';
@@ -24,7 +24,7 @@ interface Article {
 export default function AdminNewsPage() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [statusFilter, setStatusFilter] = useState<'ACTIVE' | 'ARCHIVED' | 'ALL'>('ACTIVE');
+  const [statusFilter, setStatusFilter] = useState<'ACTIVE' | 'DRAFT' | 'ARCHIVED' | 'ALL'>('ACTIVE');
   const [archivedCount, setArchivedCount] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
@@ -343,7 +343,7 @@ export default function AdminNewsPage() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 border-b border-stone-200 pb-2">
+      <div className="flex flex-wrap items-center gap-2 border-b border-stone-200 pb-2">
         <button
           onClick={() => setStatusFilter('ACTIVE')}
           className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 ${
@@ -353,6 +353,18 @@ export default function AdminNewsPage() {
           }`}
         >
           <span>🟢 सक्रिय समाचार (Active Live)</span>
+        </button>
+
+        <button
+          onClick={() => setStatusFilter('DRAFT')}
+          className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 ${
+            statusFilter === 'DRAFT'
+              ? 'bg-amber-500 text-white shadow-sm ring-2 ring-amber-300'
+              : 'bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100'
+          }`}
+        >
+          <FileText className="w-3.5 h-3.5" />
+          <span>🟡 ड्राफ्ट समाचार (Drafts)</span>
         </button>
 
         <button
@@ -535,17 +547,26 @@ export default function AdminNewsPage() {
                       <td className="p-3 font-mono font-bold text-stone-600">👁 {art.viewCount || 0}</td>
 
                       <td className="p-3">
-                        <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${
-                            art.status === 'PUBLISHED'
-                              ? 'bg-green-100 text-green-700 border border-green-200'
-                              : art.status === 'ARCHIVED'
-                              ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                              : 'bg-stone-100 text-stone-700 border border-stone-200'
-                          }`}
-                        >
-                          {art.status === 'PUBLISHED' ? '🟢 LIVE' : art.status === 'ARCHIVED' ? '📦 ARCHIVED' : art.status}
-                        </span>
+                        {art.status === 'PUBLISHED' ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800 border-2 border-emerald-400 shadow-2xs">
+                            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+                            <span>🟢 लाइव (LIVE)</span>
+                          </span>
+                        ) : art.status === 'DRAFT' ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-amber-200 text-amber-950 border-2 border-amber-500 shadow-xs animate-pulse">
+                            <span className="w-2 h-2 rounded-full bg-amber-700"></span>
+                            <span>🟡 ड्राफ्ट (DRAFT)</span>
+                          </span>
+                        ) : art.status === 'ARCHIVED' ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-stone-100 text-stone-800 border-2 border-stone-300 shadow-2xs">
+                            <span className="w-2 h-2 rounded-full bg-stone-500"></span>
+                            <span>📦 आर्काइव (ARCHIVED)</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-stone-100 text-stone-700 border border-stone-200">
+                            {art.status}
+                          </span>
+                        )}
                       </td>
 
                       <td className="p-3 font-mono text-stone-500 text-[11px]">

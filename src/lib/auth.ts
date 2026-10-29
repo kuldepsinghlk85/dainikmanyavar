@@ -66,3 +66,36 @@ export async function getPortalUserSession() {
     return null;
   }
 }
+
+export async function getReporterSession() {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('reporter_token')?.value || cookieStore.get('admin_token')?.value;
+    if (!token) return null;
+
+    const [userId] = token.split(':');
+    if (!userId) return null;
+
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        active: true,
+        reporterProfile: {
+          include: {
+            location: true,
+            author: true,
+          },
+        },
+      },
+    });
+
+    if (!user || !user.active) return null;
+    return user;
+  } catch (err) {
+    return null;
+  }
+}

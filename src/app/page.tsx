@@ -115,17 +115,70 @@ export default async function HomePage() {
 
   const formattedSlider = curatedSliderArticles;
 
-  // Fetch trending articles
-  const trendingArticles = await db.article.findMany({
-    where: { status: 'PUBLISHED' },
-    orderBy: [
-      { forceTrending: 'desc' },
-      { viewCount: 'desc' },
-      { publishedAt: 'desc' },
-    ],
-    take: 5,
-    select: { id: true, title: true, slug: true, viewCount: true },
+  // Fetch trending section config & manual sequence (configured in /admin/trending)
+  const trendingSectionConfig = await db.homepageSection.findUnique({
+    where: { sectionKey: 'trending_widget' },
   });
+
+  const trendingStoryCount = trendingSectionConfig?.storyCount || 15;
+  let manualTrendingList: Array<{ id: string; order: number; enabled: boolean }> = [];
+  try {
+    if (trendingSectionConfig?.manualArticles) {
+      manualTrendingList = JSON.parse(trendingSectionConfig.manualArticles);
+    }
+  } catch (_) {}
+
+  const enabledTrendingIds = manualTrendingList
+    .filter((m) => m.enabled !== false)
+    .sort((a, b) => a.order - b.order)
+    .map((m) => m.id);
+
+  let curatedTrendingArticles: any[] = [];
+
+  if (enabledTrendingIds.length > 0) {
+    const dbTrending = await db.article.findMany({
+      where: {
+        id: { in: enabledTrendingIds },
+        status: 'PUBLISHED',
+      },
+      select: { id: true, newsId: true, title: true, slug: true, viewCount: true, publishedAt: true },
+    });
+
+    const dbMap = new Map(dbTrending.map((a) => [a.id, a]));
+    for (const id of enabledTrendingIds) {
+      const art = dbMap.get(id);
+      if (art && curatedTrendingArticles.length < trendingStoryCount) {
+        curatedTrendingArticles.push(art);
+      }
+    }
+  }
+
+  // If fewer than configured trendingStoryCount, fill remaining with newest published
+  if (curatedTrendingArticles.length < trendingStoryCount) {
+    const existingIds = new Set(curatedTrendingArticles.map((a) => a.id));
+    const needed = trendingStoryCount - curatedTrendingArticles.length;
+
+    const fallbackTrending = await db.article.findMany({
+      where: {
+        status: 'PUBLISHED',
+        id: { notIn: Array.from(existingIds) },
+        category: {
+          slug: { not: 'manoranjan' },
+        },
+      },
+      orderBy: [
+        { newsId: 'desc' },
+        { publishedAt: 'desc' },
+        { createdAt: 'desc' },
+      ],
+      take: needed,
+      select: { id: true, newsId: true, title: true, slug: true, viewCount: true, publishedAt: true },
+    });
+
+    curatedTrendingArticles.push(...fallbackTrending);
+  }
+
+  const trendingArticles = curatedTrendingArticles;
 
   // Fetch latest news cards (pure hard news, excluding Manoranjan)
   const latestArticles = await db.article.findMany({

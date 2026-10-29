@@ -35,13 +35,12 @@ next-env.d.ts
 Thumbs.db
 
 # Temporary / runtime uploads
-/public/uploads/epaper/1789*
-/public/uploads/epaper/pages/1789*
-/public/uploads/1789*
-/public/uploads/1790*
-/public/uploads/179*
-/public/uploads/epaper/179*
-/public/uploads/epaper/pages/179*
+/public/uploads/*
+/public/uploads/epaper/*
+/public/uploads/epaper/pages/*
+/public/uploads/akhbar-*/*
+/public/uploads/akhbar-*
+!/public/uploads/.gitkeep
 
 # Android builds & caches
 *.apk

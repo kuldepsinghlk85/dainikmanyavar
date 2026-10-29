@@ -62,6 +62,19 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
   const isSuperAdmin = userRole === 'SUPER_ADMIN' || userRole === 'ADMINISTRATOR';
   const isEditor = userRole === 'EDITOR';
 
+  const [pendingReporterCount, setPendingReporterCount] = React.useState<number>(0);
+
+  React.useEffect(() => {
+    fetch('/api/admin/news-by-reporters?limit=1')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.stats) {
+          setPendingReporterCount(data.stats.pendingCount || 0);
+        }
+      })
+      .catch(() => {});
+  }, [pathname]);
+
   const sections = [
     {
       id: 'editor-workspace',
@@ -73,10 +86,18 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
         { label: '🎯 संपादक मुख्य डेस्क (Editor Desk)', href: '/admin/editor', icon: Target },
         { label: 'डैशबोर्ड (Dashboard)', href: '/admin', icon: LayoutDashboard },
         { label: 'सभी समाचार (All News)', href: '/admin/news', icon: Newspaper },
+        {
+          label: 'News by News Reporter',
+          href: '/admin/news-by-reporters',
+          icon: Newspaper,
+          badge: pendingReporterCount,
+        },
         { label: 'नया समाचार जोड़ें', href: '/admin/news/new', icon: PlusCircle },
+        { label: '📰 अखबार से खबर (AI Extractor)', href: '/admin/akhbar-se-khabar', icon: FileText },
         { label: '🔗 शॉर्ट लिंक्स व सोशल (Short Links & Social)', href: '/admin/short-links', icon: Globe },
         { label: '🔥 ब्रेकिंग न्यूज़ टिकर (Breaking Ticker)', href: '/admin/breaking', icon: Flame },
         { label: '🌟 मुख्य स्लाइडर व टॉप न्यूज़ (Hero Slider)', href: '/admin/slider', icon: Sliders },
+        { label: '🔥 ट्रेंडिंग न्यूज़ क्रम (Trending News)', href: '/admin/trending', icon: TrendingUp },
         { label: '🔔 पुश नोटिफिकेशन (Push System)', href: '/admin/notifications', icon: Bell },
         { label: '📱 मोबाइल ऐप मेनू (Mobile Menu)', href: '/admin/mobile-menu', icon: Smartphone },
         { label: '📥 न्यूज़ इम्पोर्ट इनबॉक्स', href: '/admin/importer/inbox', icon: Inbox },
@@ -248,7 +269,12 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
                         }`}
                       >
                         <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
-                        <span className="truncate">{item.label}</span>
+                        <span className="truncate flex-1">{item.label}</span>
+                        {(item as any).badge !== undefined && (item as any).badge > 0 && (
+                          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-red-600 text-white leading-none shadow-sm animate-pulse">
+                            {(item as any).badge}
+                          </span>
+                        )}
                       </Link>
                     );
                   })}

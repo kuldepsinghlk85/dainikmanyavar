@@ -431,6 +431,26 @@ export default function MobileDrawer({
           </Link>
         </div>
 
+        {/* Reporter Corner Link */}
+        <div className="px-2.5 py-2 bg-orange-50/70 dark:bg-stone-900/90 border-b border-orange-100 dark:border-stone-800 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-orange-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+              ✍️
+            </div>
+            <div>
+              <p className="text-xs font-black text-stone-900 dark:text-white leading-tight">रिपोर्टर कॉर्नर</p>
+              <p className="text-[10px] text-orange-700 dark:text-orange-400">संवाददाता लॉगिन व खबर भेजें</p>
+            </div>
+          </div>
+          <Link
+            href="/reporter/login"
+            onClick={onClose}
+            className="px-2.5 py-1 bg-orange-600 text-white text-[11px] font-bold rounded-lg shadow-xs hover:bg-orange-700"
+          >
+            लॉगिन
+          </Link>
+        </div>
+
         {/* Dainik Manyavar Official Menu Items (Only with real data) */}
         <div className="p-2 space-y-0.5">
           {allVisibleItems.map((item) => (

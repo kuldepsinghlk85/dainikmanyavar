@@ -22,6 +22,7 @@ const SEEDS = [
   'seed_up_locations.js',
   'deduplicate_tags.js',
   'seed_editor.js',
+  'seed_reporter.js',
 ];
 
 const MODELS = [
