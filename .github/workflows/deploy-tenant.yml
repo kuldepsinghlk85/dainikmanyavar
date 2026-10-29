@@ -64,14 +64,23 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔐 Setup SSH
+        if: ${{ secrets.REMOTE_SERVER_SSH_KEY != '' }}
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.REMOTE_SERVER_SSH_KEY }}
 
       - name: 🔗 Persist SSH socket for self-hosted runner
+        if: ${{ secrets.REMOTE_SERVER_SSH_KEY != '' }}
         run: echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> $GITHUB_ENV
 
+      - name: ℹ️ Skip deployment when secrets are not configured
+        if: ${{ secrets.REMOTE_SERVER_SSH_KEY == '' }}
+        run: |
+          echo "ℹ️ Deployment to ${{ inputs.environment }} was skipped because REMOTE_SERVER_SSH_KEY is not configured in repository secrets."
+          echo "ℹ️ Image build and tests succeeded. To enable automated deployment, add REMOTE_SERVER_SSH_KEY to repository secrets."
+
       - name: 🚀 Deploy to ${{ inputs.environment }}
+        if: ${{ secrets.REMOTE_SERVER_SSH_KEY != '' }}
         env:
           REMOTE_HOST: ${{ vars.REMOTE_HOST }}
           REMOTE_USER: ${{ vars.REMOTE_USER }}
@@ -130,9 +139,11 @@ jobs:
           DEPLOY_SCRIPT
 
       - name: ⏳ Wait for service stabilization
+        if: ${{ secrets.REMOTE_SERVER_SSH_KEY != '' }}
         run: sleep 90
 
       - name: 🏥 Health check
+        if: ${{ secrets.REMOTE_SERVER_SSH_KEY != '' }}
         env:
           REMOTE_HOST: ${{ vars.REMOTE_HOST }}
           REMOTE_USER: ${{ vars.REMOTE_USER }}
@@ -175,7 +186,7 @@ jobs:
           HEALTH_SCRIPT
 
       - name: 🧹 Cleanup SSH
-        if: always()
+        if: ${{ always() && secrets.REMOTE_SERVER_SSH_KEY != '' }}
         run: |
           rm -rf ~/.ssh/known_hosts 2>/dev/null || true
           pkill ssh-agent 2>/dev/null || true
