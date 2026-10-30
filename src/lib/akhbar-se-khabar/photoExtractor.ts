@@ -80,11 +80,11 @@ export async function extractPhotoFromClipping(params: {
   }
 
   // 2. If Gemini API is configured, use Vision to detect the exact photograph bounding box
-  const geminiKey = process.env.GEMINI_API_KEY;
+  const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   if (geminiKey) {
     try {
       const genAI = new GoogleGenerativeAI(geminiKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const candidateModels = ['gemini-3-flash-preview', 'gemini-3.8-flash'];
       const prompt = `Locate the main news photograph or illustration inside this newspaper clipping image.
 Exclude headlines, advertisements, and newspaper text columns.
 Return ONLY valid JSON matching this schema:
@@ -104,12 +104,23 @@ Coordinates must be normalized floats between 0.0 and 1.0.`;
         },
       };
 
-      const photoGenPromise = model.generateContent([prompt, imagePart]);
-      const photoTimeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Photo detection timeout')), 12000)
-      );
-      const result = await Promise.race([photoGenPromise, photoTimeoutPromise]);
-      const text = result.response.text();
+      let result: any = null;
+      for (const modelName of candidateModels) {
+        try {
+          const model = genAI.getGenerativeModel({ model: modelName });
+          const photoGenPromise = model.generateContent([prompt, imagePart]);
+          const photoTimeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Photo detection timeout')), 16000)
+          );
+          result = await Promise.race([photoGenPromise, photoTimeoutPromise]);
+          if (result) break;
+        } catch (err) {
+          console.warn(`[PhotoExtractor] Model ${modelName} failed:`, err);
+        }
+      }
+
+      if (result) {
+        const text = result.response.text();
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const box = JSON.parse(jsonMatch[0]);
@@ -138,6 +149,7 @@ Coordinates must be normalized floats between 0.0 and 1.0.`;
             };
           }
         }
+      }
       }
     } catch (geminiErr) {
       console.warn('[Photo Extractor] Gemini Vision detection fallback:', geminiErr);

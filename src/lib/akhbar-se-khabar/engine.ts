@@ -5,6 +5,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createWorker } from 'tesseract.js';
 import os from 'os';
 import path from 'path';
+import fs from 'fs';
 
 export interface ProcessSourceInput {
   sampleId?: string;
@@ -68,12 +69,26 @@ async function extractTextWithTesseract(buffer: Buffer): Promise<string> {
   try {
     // Ensure writable cache directory for Tesseract traineddata (safe for both local & Linux Docker containers)
     const cachePath = os.tmpdir() || path.join(process.cwd(), 'public', 'uploads');
+    const defaultWorkerPath = path.join(
+      process.cwd(),
+      'node_modules',
+      'tesseract.js',
+      'src',
+      'worker-script',
+      'node',
+      'index.js'
+    );
+
+    const workerOptions: any = {
+      cachePath,
+      errorHandler: (err: any) => console.warn('[Tesseract Worker Warning]:', err),
+    };
+    if (fs.existsSync(defaultWorkerPath)) {
+      workerOptions.workerPath = defaultWorkerPath;
+    }
 
     const ocrPromise = (async () => {
-      worker = await createWorker('hin+eng', 1, {
-        cachePath,
-        errorHandler: (err) => console.warn('[Tesseract Worker Warning]:', err),
-      });
+      worker = await createWorker('hin+eng', 1, workerOptions);
       const ret = await worker.recognize(buffer);
       return ret.data.text || '';
     })();
@@ -200,7 +215,7 @@ async function processWithGeminiVision(
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const candidateModels = ['gemini-3-flash-preview', 'gemini-3.8-flash'];
 
     const prompt = `आप दैनिक मान्यवर समाचार पोर्टल (हिंदी दैनिक) के वरिष्ठ मुख्य संपादक हैं।
 इस संलग्न अखबार की कतरन, प्रेस विज्ञप्ति, PDF या ईमेल स्क्रीनशॉट को ध्यानपूर्वक पढ़ें।
@@ -259,11 +274,25 @@ async function processWithGeminiVision(
       },
     };
 
-    const generatePromise = model.generateContent([prompt, imagePart]);
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Gemini Vision timeout after 25s')), 25000)
-    );
-    const result = await Promise.race([generatePromise, timeoutPromise]);
+    let result: any = null;
+    let lastErr: any = null;
+
+    for (const modelName of candidateModels) {
+      try {
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const generatePromise = model.generateContent([prompt, imagePart]);
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error(`Gemini Vision timeout after 25s (${modelName})`)), 25000)
+        );
+        result = await Promise.race([generatePromise, timeoutPromise]);
+        if (result) break;
+      } catch (err: any) {
+        lastErr = err;
+        console.warn(`[Gemini Vision] Model ${modelName} attempt failed:`, err?.message || err);
+      }
+    }
+
+    if (!result) throw lastErr || new Error('Gemini Vision processing failed');
     const responseText = result.response.text();
     const cleanJson = responseText.replace(/^```json\s*/, '').replace(/\s*```$/, '').trim();
     const parsed = JSON.parse(cleanJson);
@@ -565,23 +594,23 @@ export async function processAkhbarSource(input: ProcessSourceInput): Promise<Ex
     };
   }
 
-  // 5.5 Extract embedded news photograph from image clipping so the full clipping is NEVER used as news photo
-  let extractedPhotoUrl = '';
-  try {
-    const photoResult = await extractPhotoFromClipping({
+  // 5.5 Run photo extraction and Gemini vision processing in PARALLEL to reduce latency
+  const [photoResult, geminiStories] = await Promise.all([
+    extractPhotoFromClipping({
       buffer,
       filename,
       sampleId: input.sampleId,
-    });
-    if (photoResult && photoResult.photoUrl) {
-      extractedPhotoUrl = photoResult.photoUrl;
-    }
-  } catch (photoErr) {
-    console.warn('[Engine] Photo extraction failed:', photoErr);
-  }
+    }).catch((photoErr) => {
+      console.warn('[Engine] Photo extraction failed:', photoErr);
+      return null;
+    }),
+    processWithGeminiVision(buffer, mimeType, categoriesList, locationsList).catch((visionErr) => {
+      console.warn('[Engine] Gemini Vision failed:', visionErr);
+      return null;
+    }),
+  ]);
 
-  // 6. Image Processing: Try Gemini Vision if API key present
-  const geminiStories = await processWithGeminiVision(buffer, mimeType, categoriesList, locationsList);
+  const extractedPhotoUrl = photoResult?.photoUrl || '';
   if (geminiStories && geminiStories.length > 0) {
     const storiesWithPhoto = geminiStories.map((s) => ({
       ...s,
