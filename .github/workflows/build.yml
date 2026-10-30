@@ -45,7 +45,7 @@ jobs:
   build:
     name: 🔨 Build & Push Image
     runs-on: [self-hosted, cl-ks-build]
-    timeout-minutes: 30
+    timeout-minutes: 40
     outputs:
       image_tag: ${{ steps.meta.outputs.short_sha }}
 
