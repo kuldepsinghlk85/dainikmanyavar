@@ -257,21 +257,90 @@ export default function AkhbarSeKhabarPage() {
   };
 
   // Process File upload (Image or PDF)
+  const parseSafeJson = async (res: Response) => {
+    const text = await res.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      if (res.status === 413) {
+        throw new Error('फ़ाइल का आकार बहुत बड़ा है (अधिकतम 20MB)। कृपया छोटी इमेज चुनें।');
+      }
+      if (res.status === 504 || res.status === 408) {
+        throw new Error('सर्वर से उत्तर मिलने में अधिक समय लगा (टाइमआउट)। कृपया पुनः प्रयास करें।');
+      }
+      if (res.status === 401) {
+        throw new Error('सत्र समाप्त हो गया है। कृपया पेज रीलोड कर पुनः लॉगिन करें।');
+      }
+      if (res.status === 502 || res.status === 503) {
+        throw new Error('सर्वर पर नया अपडेट तैनात हो रहा है। कृपया 10-15 सेकंड बाद पुनः प्रयास करें।');
+      }
+      throw new Error(`सर्वर से अमान्य उत्तर प्राप्त हुआ (${res.status})। कृपया पुनः प्रयास करें।`);
+    }
+  };
+
+  const optimizeImageIfNeeded = async (file: File): Promise<File> => {
+    if (!file.type.startsWith('image/') || file.size <= 2 * 1024 * 1024) {
+      return file;
+    }
+    return new Promise((resolve) => {
+      const img = new window.Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const maxDim = 1920;
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return resolve(file);
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (blob && blob.size < file.size) {
+              resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }));
+            } else {
+              resolve(file);
+            }
+          },
+          'image/jpeg',
+          0.85
+        );
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(file);
+      };
+      img.src = url;
+    });
+  };
+
+  // Process File upload (Image or PDF)
   const processImageFile = async (file: File) => {
     setIsProcessing(true);
     setProcessingStatus('दस्तावेज़ पढ़ा जा रहा है (OCR / Vision Extraction)...');
     setError(null);
 
-    const formData = new FormData();
-    formData.append('file', file);
-
     try {
+      const readyFile = await optimizeImageIfNeeded(file);
+      const formData = new FormData();
+      formData.append('file', readyFile);
+
       const res = await fetch('/api/admin/akhbar-se-khabar', {
         method: 'POST',
         body: formData,
       });
 
-      const data = await res.json();
+      const data = await parseSafeJson(res);
       if (!data.success) {
         throw new Error(data.error || 'दस्तावेज़ से खबर तैयार करने में समस्या आई');
       }
@@ -299,7 +368,7 @@ export default function AkhbarSeKhabarPage() {
         body: JSON.stringify({ sampleId }),
       });
 
-      const data = await res.json();
+      const data = await parseSafeJson(res);
       if (!data.success) {
         throw new Error(data.error || 'नमूना प्रोसेस करने में विफल');
       }
