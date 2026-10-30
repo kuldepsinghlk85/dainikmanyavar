@@ -3,6 +3,8 @@ import { BENCHMARK_SAMPLES, EditorialStory } from './benchmarkData';
 import { extractPhotoFromClipping } from './photoExtractor';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createWorker } from 'tesseract.js';
+import os from 'os';
+import path from 'path';
 
 export interface ProcessSourceInput {
   sampleId?: string;
@@ -64,14 +66,20 @@ async function extractTextFromPdf(buffer: Buffer): Promise<string> {
 async function extractTextWithTesseract(buffer: Buffer): Promise<string> {
   let worker: any = null;
   try {
+    // Ensure writable cache directory for Tesseract traineddata (safe for both local & Linux Docker containers)
+    const cachePath = os.tmpdir() || path.join(process.cwd(), 'public', 'uploads');
+
     const ocrPromise = (async () => {
-      worker = await createWorker('hin+eng');
+      worker = await createWorker('hin+eng', 1, {
+        cachePath,
+        errorHandler: (err) => console.warn('[Tesseract Worker Warning]:', err),
+      });
       const ret = await worker.recognize(buffer);
       return ret.data.text || '';
     })();
 
     const timeoutPromise = new Promise<string>((_, reject) =>
-      setTimeout(() => reject(new Error('Tesseract OCR timeout after 10s')), 10000)
+      setTimeout(() => reject(new Error('Tesseract OCR timeout after 35s')), 35000)
     );
 
     return await Promise.race([ocrPromise, timeoutPromise]);
@@ -192,7 +200,7 @@ async function processWithGeminiVision(
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const prompt = `आप दैनिक मान्यवर समाचार पोर्टल (हिंदी दैनिक) के वरिष्ठ मुख्य संपादक हैं।
 इस संलग्न अखबार की कतरन, प्रेस विज्ञप्ति, PDF या ईमेल स्क्रीनशॉट को ध्यानपूर्वक पढ़ें।
